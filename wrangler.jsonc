@@ -1,0 +1,36 @@
+{
+  "name": "aigen-studio",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "JWT_SECRET": "your-jwt-secret-key-here",
+    "REPLICATE_API_TOKEN": "your-replicate-api-token-here"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aigen-studio-db",
+      "database_id": "your-database-id-here"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "STORAGE",
+      "bucket_name": "aigen-studio-storage"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "your-kv-namespace-id-here"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+
+  "build": {
+    "command": "npm install && npm run build"
+  }
+} 

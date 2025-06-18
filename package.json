@@ -1,90 +1,26 @@
 {
-  "name": "jaaz",
-  "version": "1.0.6",
-  "description": "AI design agent local desktop app",
-  "author": "weixuanfu",
-  "main": "electron/main.js",
+  "name": "aigen-studio",
+  "version": "1.0.0",
+  "description": "AI Gen Studio - AI 驱动的创意生成工作室",
+  "main": "src/worker.ts",
+  "type": "module",
   "scripts": {
-    "start": "cd react && npx vite build && cd .. && npm run start:electron",
-    "dev:react": "cd react && npm run dev",
-    "dev:electron": "cross-env NODE_ENV=development npx electron electron/main.js",
-    "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
-    "start:frontend": "cd frontend && npm run dev",
-    "start:electron": "npx electron electron/main.js",
-    "build:electron": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:watch": "vitest --watch"
+    "build": "tsc -b",
+    "deploy": "wrangler deploy",
+    "deploy-full": "npm run build && npm run deploy && node scripts/deploy-with-assets.cjs",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
   },
-  "publish": "always",
-  "build": {
-    "appId": "com.jaaz.app",
-    "productName": "Jaaz",
-    "publish": {
-      "provider": "github",
-      "releaseType": "draft"
-    },
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "electron/**/*",
-      "package.json",
-      "assets/icons/*"
-    ],
-    "extraResources": [
-      {
-        "from": "server/dist/",
-        "to": "server/dist/"
-      },
-      {
-        "from": "react/dist/",
-        "to": "react/dist/"
-      }
-    ],
-    "mac": {
-      "category": "public.app-category.utilities",
-      "icon": "assets/icons/unicorn.icns",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "gatekeeperAssess": false,
-      "hardenedRuntime": true,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
-      "notarize": false
-    },
-    "afterSign": "scripts/notarize.js",
-    "win": {
-      "icon": "assets/icons/unicorn.ico",
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ]
-    }
-  },
+  "keywords": ["ai", "image-generation", "cloudflare", "workers", "hono", "react", "typescript", "flux", "replicate"],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
-    "@electron/notarize": "^3.0.1",
-    "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3",
-    "electron": "^35.1.0",
-    "electron-builder": "^24.0.0",
-    "vitest": "^3.2.1"
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.114.9"
   },
   "dependencies": {
-    "7zip-min": "^2.1.0",
-    "playwright": "^1.52.0",
-    "playwright-extra": "^4.3.6",
-    "playwright-extra-plugin-stealth": "^0.0.1"
+    "hono": "^4.6.15"
   }
 }

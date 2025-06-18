@@ -1,64 +1,152 @@
-# 🦄 Jaaz – AI Design Agent
-[中文入门指南](https://mxnpt25l6k.feishu.cn/docx/LvcTdlVbFoRAZWxnhBYcqVydnpc)
+# 🎨 AI Gen Studio - AI 驱动的创意生成工作室
 
-AI design agent. Local and free alternative for Lovart. AI agent with ability to design, edit and generate images, posters, storyboards, etc. with a creative canvas board for fast iterations and layout publishing
+AI Gen Studio 是一个基于 Cloudflare Workers 的现代化 AI 图像生成平台，集成了先进的 CoT（思维链）推理技术和 FLUX 模型，为用户提供智能化的创意生成体验。
 
-<div align="center"> <a href="https://github.com/11cafe/localart/releases/latest/download/Jaaz-1.0.5-arm64.dmg"> <img src="https://img.shields.io/badge/⬇️%20Download%20for-macOS-black?style=for-the-badge&logo=apple" alt="Download for macOS" /> </a> &nbsp;&nbsp; <a href="https://github.com/11cafe/localart/releases/latest/download/Jaaz-1.0.5.exe"> <img src="https://img.shields.io/badge/⬇️%20Download%20for-Windows-blue?style=for-the-badge&logo=windows" alt="Download for Windows" /> </a> </div>
+<div align="center">
+  <img src="https://img.shields.io/badge/Cloudflare-Workers-orange?style=for-the-badge&logo=cloudflare" alt="Cloudflare Workers" />
+  <img src="https://img.shields.io/badge/AI-FLUX-blue?style=for-the-badge" alt="FLUX AI" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+</div>
 
-<img width="900" alt="Screenshot 2025-06-02 at 3 51 56 AM" src="https://github.com/user-attachments/assets/5d8efe74-99b0-41bc-aa3e-6f7b92b69c36" />
+## ✨ 核心功能
 
-<img width="900" alt="Screenshot 2025-06-02 at 3 58 24 AM" src="https://github.com/user-attachments/assets/e4ca2740-c3a0-4d3b-be38-32d66fb419cc" />
+### 🧠 智能 CoT 推理
+- 使用 Chain of Thought（思维链）技术分析用户输入
+- 自动优化和增强用户提示词
+- 生成高质量的英文图像生成提示
 
-## ✨ Key Features
+### 🖼️ AI 图像生成
+- 集成 Replicate FLUX 模型
+- 支持实时图像生成状态监控
+- 无缝画布集成，直接在画布上展示生成结果
 
-- AI designer agent powered by LLM that can smartly write prompt and batch generate images or even a whole storyboard!
-- Support Ollama, Stable Diffusion, Flux Dev, local image and LLM models for free image generations
-- Edit images in conversation using GPT-4o, Flux Kontext: object removal, style transfer, edit specific elements in image, consistent character generation etc. All through chat!
-- Canvas and storyboard: unleash your creativity using our infinite canvas!
-- [Upcoming] Video generations through Wan2.1, Kling, and video creation and editing agent
+### 🎨 现代化画布界面
+- 基于 TLDraw 的交互式画布
+- 支持多种创意工具和编辑功能
+- 响应式设计，适配各种设备
 
----
+### 💬 智能对话系统
+- AI 驱动的聊天界面
+- 支持文本和图像生成混合对话
+- 实时状态反馈和进度显示
 
-- Available for **macOS** and **Windows**
-- Use Claude, OpenAI, Gemini via API key, or run locally with [Ollama](https://github.com/ollama/ollama) for **100% free** usage
-- Use image generation models like **GPT-4O, Recraft, Flux, Google Imagen**, etc. through Replicate API key
-- Support local Huggingface models like **SDXL, Flux Dev** for free local image generations
+## 🚀 技术架构
 
----
+- **后端**: Cloudflare Workers + Hono 框架
+- **前端**: React + TypeScript
+- **AI 服务**: Cloudflare AI Gateway + Replicate FLUX
+- **数据存储**: Cloudflare D1 + R2 + KV
+- **画布引擎**: TLDraw
 
-## Usage
+## 📦 快速开始
 
-1. Add LLM API key like OpenAI or Claude, or install [Ollama](https://ollama.com/) to use local models
-2. Add image generations API key like [Replicate](https://replicate.com/) 
+### 环境配置
 
-<img width="1485" alt="Screenshot 2025-06-02 at 3 08 51 PM" src="https://github.com/user-attachments/assets/80bf76b1-229b-4491-893e-3f5102062a37" />
+1. 克隆项目：
+```bash
+git clone https://github.com/your-username/aigen-studio.git
+cd aigen-studio
+```
 
-3. Start chatting with agent to generate stories or storyboards!
+2. 安装依赖：
+```bash
+npm install
+```
 
-<img width="1727" alt="Screenshot 2025-06-02 at 3 03 49 PM" src="https://github.com/user-attachments/assets/6001af3a-2e2d-4bce-8112-7ee81cc75670" />
+3. 配置环境变量：
+复制 `wrangler.jsonc` 并填入你的 API 密钥：
+- `REPLICATE_API_TOKEN`: Replicate API 令牌
+- `JWT_SECRET`: JWT 密钥
 
+4. 运行开发服务器：
+```bash
+npm run dev
+```
 
-## Manual Install (For Linux or local builds)
+### 部署
 
-First git clone this repo:
+```bash
+npm run deploy
+```
 
-`git clone https://github.com/11cafe/localart`
+## 🔧 配置说明
 
+### Replicate API
+项目使用 Replicate 平台的 FLUX 模型进行图像生成。你需要：
 
-`cd server`
+1. 在 [Replicate](https://replicate.com/) 注册账号
+2. 获取 API 令牌
+3. 在 `wrangler.jsonc` 中配置 `REPLICATE_API_TOKEN`
 
-`pip install -r requirements.txt`
+### Cloudflare 服务
+项目依赖以下 Cloudflare 服务：
 
-`python main.py`
+- **D1 数据库**: 存储用户数据和会话信息
+- **R2 存储**: 存储生成的图像和文件
+- **KV 存储**: 缓存和临时数据
+- **AI Gateway**: AI 服务调用管理
 
-## Development
+## 📚 API 文档
 
-`cd react`
+### 图像生成 API
 
-`npm i && npm run dev`
+#### POST `/api/ai/generate-image`
+生成 AI 图像
 
-`cd server`
+**请求体**:
+```json
+{
+  "prompt": "用户输入的描述",
+  "userId": "用户ID"
+}
+```
 
-`pip install -r requirements.txt`
+**响应**:
+```json
+{
+  "success": true,
+  "cotAnalysis": "CoT 分析结果",
+  "optimizedPrompt": "优化后的提示词",
+  "predictionId": "预测任务ID"
+}
+```
 
-`python main.py`
+#### GET `/api/ai/image-status/:predictionId`
+获取图像生成状态
+
+**响应**:
+```json
+{
+  "success": true,
+  "status": "succeeded",
+  "imageUrl": "生成的图像URL"
+}
+```
+
+## 🎯 使用场景
+
+- **创意设计**: 快速生成概念图和设计灵感
+- **内容创作**: 为文章、博客生成配图
+- **原型设计**: 快速可视化创意想法
+- **教育培训**: AI 技术学习和实践
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 项目
+2. 创建功能分支: `git checkout -b feature/AmazingFeature`
+3. 提交更改: `git commit -m 'Add some AmazingFeature'`
+4. 推送到分支: `git push origin feature/AmazingFeature`
+5. 提交 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🔗 相关链接
+
+- [Cloudflare Workers 文档](https://developers.cloudflare.com/workers/)
+- [Replicate API 文档](https://replicate.com/docs)
+- [TLDraw 文档](https://tldraw.dev/)
+- [Hono 框架文档](https://hono.dev/)
