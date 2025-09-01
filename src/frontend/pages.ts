@@ -11,38 +11,38 @@ export interface PageData {
 
 export function generateIndexPage(data?: PageData): string {
   const defaultData: PageData = {
-    title: '🎨 AI Gen Studio - AI 驱动的创意生成工作室',
-    description: '强大的多平台内容创作工具，支持AI对话、智能画布、文档编辑等功能，让创作更高效',
+    title: 'AI Gen Studio - 免费在线 AI 图像编辑器和生成工具',
+    description: '强大的AI驱动创意工具，支持智能图像生成、专业编辑、实时协作。无需下载，浏览器直接使用。',
     features: [
       {
-        icon: '🧠',
-        title: '智能 CoT 推理',
-        description: '使用 Chain of Thought 技术分析用户输入，自动优化和增强用户提示词，生成高质量图像'
+        icon: '🤖',
+        title: 'AI 图像生成器',
+        description: '使用最新的 Vertex AI 和 FLUX 模型，从文本描述生成高质量图像，支持多种风格和尺寸'
       },
       {
-        icon: '🖼️',
-        title: 'AI 图像生成',
-        description: '集成 Replicate FLUX 模型，支持实时图像生成状态监控，无缝画布集成展示结果'
+        icon: '✨',
+        title: 'AI 智能增强',
+        description: '一键智能优化图像质量，自动调整亮度、对比度、色彩饱和度，让照片更加专业'
       },
       {
         icon: '🎨',
-        title: '现代化画布界面',
-        description: 'AI驱动的绘图工具，支持图像编辑和创意工具，响应式设计适配各种设备'
+        title: '专业编辑工具',
+        description: '完整的图像编辑套件，包括画笔、文字、形状、滤镜等专业工具，支持图层操作'
       },
       {
-        icon: '💬',
-        title: '智能对话系统',
-        description: 'AI 驱动的聊天界面，支持文本和图像生成混合对话，实时状态反馈和进度显示'
-      },
-      {
-        icon: '📝',
-        title: '文档编辑',
-        description: '强大的在线文档编辑器，支持Markdown、富文本等多种格式，协作编辑更简单'
+        icon: '🧠',
+        title: 'CoT 智能推理',
+        description: '先进的思维链推理技术，自动优化用户提示词，提升AI生成效果和准确性'
       },
       {
         icon: '☁️',
-        title: '云端存储',
-        description: '基于 Cloudflare R2 + D1 + KV 的存储方案，安全可靠的数据管理和全球同步'
+        title: '云端协作',
+        description: '基于 Cloudflare 全球网络，支持实时同步、多设备访问、安全存储和团队协作'
+      },
+      {
+        icon: '📱',
+        title: '跨平台支持',
+        description: '响应式设计，完美适配桌面、平板、手机，随时随地进行创意工作'
       }
     ]
   }
@@ -56,83 +56,401 @@ export function generateIndexPage(data?: PageData): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageData.title}</title>
     <meta name="description" content="${pageData.description}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --surface-hover: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-primary);
+            background: var(--background);
             min-height: 100vh;
         }
-        
+
+        /* Navigation */
+        .navbar {
+            background: var(--background);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: var(--surface-hover);
+        }
+
+        .btn-google {
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-google:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
-            color: white;
+            padding: 0 2rem;
         }
         
-        .header {
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0 6rem 0;
             text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
             margin-bottom: 3rem;
         }
+
+        .btn-hero {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 0.75rem;
+        }
+
+        .btn-hero-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-hero-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-hero-secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid white;
+        }
+
+        .btn-hero-secondary:hover {
+            background: var(--surface);
+            transform: translateY(-2px);
+        }
         
-        .title {
-            font-size: 3.5rem;
-            font-weight: bold;
+        /* Features Section */
+        .features-section {
+            padding: 6rem 0;
+            background: var(--surface);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        
-        .subtitle {
-            font-size: 1.3rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
         }
-        
+
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
-            margin: 3rem 0;
         }
-        
+
         .feature-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: white;
             padding: 2rem;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
         }
-        
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
         .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
             display: block;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
+
         .feature-title {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600;
+            color: var(--text-primary);
             margin-bottom: 1rem;
         }
-        
+
         .feature-description {
-            font-size: 1rem;
-            opacity: 0.9;
+            color: var(--text-secondary);
             line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .features {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 1rem;
+            }
+
+            .nav-actions {
+                gap: 0.5rem;
+            }
+
+            .btn-google {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .hero {
+                padding: 3rem 0 4rem 0;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-hero {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.25rem;
+            }
+
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .btn-google svg {
+                width: 16px;
+                height: 16px;
+            }
         }
         
         .actions {
@@ -252,21 +570,83 @@ export function generateIndexPage(data?: PageData): string {
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 class="title">🎨 AI Gen Studio</h1>
-            <p class="subtitle">AI 驱动的创意生成工作室</p>
-        </header>
-        
-        <section class="features">
-            ${pageData.features?.map(feature => `
-                <div class="feature-card">
-                    <span class="feature-icon">${feature.icon}</span>
-                    <h3 class="feature-title">${feature.title}</h3>
-                    <p class="feature-description">${feature.description}</p>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-magic"></i>
+                AI Gen Studio
+            </a>
+
+            <ul class="nav-menu">
+                <li><a href="#features" class="nav-link">功能</a></li>
+                <li><a href="#tools" class="nav-link">工具</a></li>
+                <li><a href="#pricing" class="nav-link">定价</a></li>
+                <li><a href="#help" class="nav-link">帮助</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="btn btn-google" onclick="signInWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google 登录
+                </button>
+                <a href="/chat" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    开始创作
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">免费在线 AI 图像编辑器</h1>
+                <p class="hero-subtitle">
+                    强大的AI驱动创意工具，支持智能图像生成、专业编辑、实时协作。无需下载，浏览器直接使用。
+                </p>
+
+                <div class="hero-actions">
+                    <a href="/image-editor" class="btn btn-hero btn-hero-primary">
+                        <i class="fas fa-magic"></i>
+                        开始编辑
+                    </a>
+                    <a href="/canvas-multi" class="btn btn-hero btn-hero-secondary">
+                        <i class="fas fa-palette"></i>
+                        AI 画布
+                    </a>
                 </div>
-            `).join('')}
-        </section>
+            </div>
+        </div>
+    </section>
+        
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">强大的 AI 创意工具</h2>
+                <p class="section-subtitle">
+                    集成最新的人工智能技术，为您提供专业级的图像编辑和生成体验
+                </p>
+            </div>
+
+            <div class="features">
+                ${pageData.features?.map(feature => `
+                    <div class="feature-card">
+                        <span class="feature-icon">${feature.icon}</span>
+                        <h3 class="feature-title">${feature.title}</h3>
+                        <p class="feature-description">${feature.description}</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    </section>
         
         <section class="chat-container">
             <h2 style="margin-bottom: 1rem;">💬 智能聊天体验</h2>
@@ -279,14 +659,55 @@ export function generateIndexPage(data?: PageData): string {
             </div>
         </section>
         
-                 <section class="actions">
-             <a href="/chat" class="btn btn-primary">💬 开始对话</a>
-             <a href="/canvas-multi" class="btn btn-primary">🎨 AI 画布</a>
-             <a href="/image-editor" class="btn btn-primary">🖼️ 图像编辑器</a>
-             <a href="/canvas-modern" class="btn">🎨 现代画布</a>
-             <a href="/canvas" class="btn">🖌️ 基础画布</a>
-             <a href="/editor" class="btn">📝 文档编辑</a>
-         </section>
+    <!-- Tools Section -->
+    <section class="tools-section" style="padding: 4rem 0; background: white;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">选择您的创作工具</h2>
+                <p class="section-subtitle">
+                    从简单的快速编辑到专业的设计创作，我们为每种需求提供完美的工具
+                </p>
+            </div>
+
+            <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
+                <a href="/image-editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖼️</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 图像编辑器</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">专业的图像编辑工具，支持AI增强和智能修复</p>
+                </a>
+
+                <a href="/canvas-multi" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎨</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 多引擎画布</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">集成CoT推理和FLUX模型的智能画布</p>
+                </a>
+
+                <a href="/chat" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">💬</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 智能对话</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">与AI助手对话，获取创意灵感和技术支持</p>
+                </a>
+
+                <a href="/canvas-modern" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖌️</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">现代画布</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">现代化的绘图工具，支持专业创作</p>
+                </a>
+
+                <a href="/editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📝</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">文档编辑器</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">强大的Markdown编辑器，支持实时预览</p>
+                </a>
+
+                <a href="/canvas" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎯</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">基础画布</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">简单易用的绘图工具，快速创作原型</p>
+                </a>
+            </div>
+        </div>
+    </section>
         
         <section class="status">
             <h3>🚀 技术架构</h3>
@@ -357,12 +778,125 @@ export function generateIndexPage(data?: PageData): string {
             }
         });
         
-        // 页面加载完成后的初始化
+        // Google Auth 配置
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: '${process.env.GOOGLE_CLIENT_ID || "your-google-client-id"}',
+                callback: handleCredentialResponse,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+        };
+
+        function handleCredentialResponse(response) {
+            console.log('Google Auth Response:', response);
+
+            // 解析JWT token
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            console.log('User Info:', payload);
+
+            // 存储用户信息
+            localStorage.setItem('user', JSON.stringify({
+                id: payload.sub,
+                name: payload.name,
+                email: payload.email,
+                picture: payload.picture,
+                loginTime: new Date().toISOString()
+            }));
+
+            // 更新UI
+            updateUserUI(payload);
+
+            // 显示欢迎消息
+            showNotification(\`欢迎，\${payload.name}！您已成功登录。\`, 'success');
+        }
+
+        function signInWithGoogle() {
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // 如果弹窗没有显示，使用备用方法
+                    google.accounts.id.renderButton(
+                        document.createElement('div'),
+                        { theme: 'outline', size: 'large' }
+                    );
+                }
+            });
+        }
+
+        function updateUserUI(user) {
+            const navActions = document.querySelector('.nav-actions');
+            if (navActions) {
+                navActions.innerHTML = \`
+                    <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
+                        <img src="\${user.picture}" alt="\${user.name}" style="width: 32px; height: 32px; border-radius: 50%;">
+                        <span style="color: var(--text-primary); font-weight: 500;">\${user.name}</span>
+                        <button class="btn btn-outline" onclick="signOut()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            退出
+                        </button>
+                    </div>
+                \`;
+            }
+        }
+
+        function signOut() {
+            localStorage.removeItem('user');
+            location.reload();
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = \`
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: \${type === 'success' ? 'var(--success-color)' : 'var(--primary-color)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 0.5rem;
+                box-shadow: var(--shadow-lg);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            \`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // 工具卡片悬停效果
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🎨 AI Gen Studio 应用已加载');
 
+            // 检查用户登录状态
+            const user = localStorage.getItem('user');
+            if (user) {
+                const userData = JSON.parse(user);
+                updateUserUI(userData);
+            }
+
+            // 添加工具卡片悬停效果
+            const toolCards = document.querySelectorAll('.tool-card');
+            toolCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-4px)';
+                    this.style.boxShadow = 'var(--shadow-lg)';
+                    this.style.borderColor = 'var(--primary-color)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                    this.style.borderColor = 'var(--border)';
+                });
+            });
+
             // 检查 API 状态
-            fetch('/health')
+            fetch('/api/health')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok') {
@@ -373,6 +907,27 @@ export function generateIndexPage(data?: PageData): string {
                     console.warn('⚠️ API 服务检查失败:', error);
                 });
         });
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = \`
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+
+            .tool-card:hover {
+                transform: translateY(-4px) !important;
+                box-shadow: var(--shadow-lg) !important;
+                border-color: var(--primary-color) !important;
+            }
+        \`;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>`
