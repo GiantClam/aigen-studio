@@ -8,6 +8,9 @@ import { fileRoutes } from './routes/files'
 import { uploadRoutes } from './routes/upload'
 import { electronRoutes } from './routes/electron'
 import { generateIndexPage, generateChatPage, generateEditorPage, generateCanvasPage, generateMultiEngineCanvasPage } from './frontend/pages'
+import { generateCanvasGridPage } from './frontend/canvas-grid'
+import { generateModernCanvasPage } from './frontend/canvas-modern'
+import { generateImageEditorPage } from './frontend/image-editor-ui'
 
 type Bindings = {
   ASSETS: Fetcher
@@ -62,6 +65,24 @@ app.get('/canvas', (c) => {
 
 app.get('/canvas-multi', (c) => {
   return new Response(generateMultiEngineCanvasPage(), {
+    headers: { 'Content-Type': 'text/html' }
+  })
+})
+
+app.get('/canvas-modern', (c) => {
+  return new Response(generateModernCanvasPage(), {
+    headers: { 'Content-Type': 'text/html' }
+  })
+})
+
+app.get('/canvas-grid', (c) => {
+  return new Response(generateCanvasGridPage(), {
+    headers: { 'Content-Type': 'text/html' }
+  })
+})
+
+app.get('/image-editor', (c) => {
+  return new Response(generateImageEditorPage(), {
     headers: { 'Content-Type': 'text/html' }
   })
 })

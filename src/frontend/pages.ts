@@ -1,3 +1,4 @@
+// 页面模板生成器
 export interface PageData {
   title?: string
   description?: string
@@ -9,18 +10,52 @@ export interface PageData {
 }
 
 export function generateIndexPage(data?: PageData): string {
+  const defaultData: PageData = {
+    title: '🎨 AI Gen Studio - AI 驱动的创意生成工作室',
+    description: '强大的多平台内容创作工具，支持AI对话、智能画布、文档编辑等功能，让创作更高效',
+    features: [
+      {
+        icon: '🧠',
+        title: '智能 CoT 推理',
+        description: '使用 Chain of Thought 技术分析用户输入，自动优化和增强用户提示词，生成高质量图像'
+      },
+      {
+        icon: '🖼️',
+        title: 'AI 图像生成',
+        description: '集成 Replicate FLUX 模型，支持实时图像生成状态监控，无缝画布集成展示结果'
+      },
+      {
+        icon: '🎨',
+        title: '现代化画布界面',
+        description: 'AI驱动的绘图工具，支持图像编辑和创意工具，响应式设计适配各种设备'
+      },
+      {
+        icon: '💬',
+        title: '智能对话系统',
+        description: 'AI 驱动的聊天界面，支持文本和图像生成混合对话，实时状态反馈和进度显示'
+      },
+      {
+        icon: '📝',
+        title: '文档编辑',
+        description: '强大的在线文档编辑器，支持Markdown、富文本等多种格式，协作编辑更简单'
+      },
+      {
+        icon: '☁️',
+        title: '云端存储',
+        description: '基于 Cloudflare R2 + D1 + KV 的存储方案，安全可靠的数据管理和全球同步'
+      }
+    ]
+  }
+
+  const pageData = { ...defaultData, ...data }
+
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gen Studio - AI 驱动的创意生成工作室</title>
-    <link rel="icon" href="/unicorn.png" type="image/png">
-    <meta name="description" content="强大的多平台内容创作工具，支持AI对话、画布绘制、文档编辑等功能">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
+    <title>${pageData.title}</title>
+    <meta name="description" content="${pageData.description}">
     <style>
         * {
             margin: 0;
@@ -29,162 +64,189 @@ export function generateIndexPage(data?: PageData): string {
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #ffffff;
-            color: #37352f;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 2rem;
+            color: white;
         }
         
         .header {
             text-align: center;
-            padding: 80px 0 60px 0;
-            background: #fafafa;
-            border-radius: 12px;
-            margin-bottom: 60px;
+            margin-bottom: 3rem;
         }
-
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #2e2e2e;
-            letter-spacing: -0.02em;
+        
+        .title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-
-        .header p {
-            font-size: 1.1rem;
-            color: #787774;
-            max-width: 600px;
-            margin: 0 auto;
-            font-weight: 400;
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
         }
         
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-            margin: 60px 0;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
         }
         
         .feature-card {
-            background: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 32px 24px;
-            transition: all 0.2s ease;
-            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border-color: #d0d0d0;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         
         .feature-icon {
             font-size: 2.5rem;
-            margin-bottom: 16px;
+            margin-bottom: 1rem;
             display: block;
         }
         
         .feature-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2e2e2e;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
         }
         
         .feature-description {
-            color: #787774;
-            line-height: 1.5;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.6;
         }
-
-        .cta-section {
+        
+        .actions {
             text-align: center;
-            padding: 60px 0;
-            background: #fafafa;
-            border-radius: 12px;
-            margin-top: 40px;
+            margin: 3rem 0;
         }
-
-        .cta-section h2 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #2e2e2e;
-        }
-
-        .cta-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-top: 32px;
-        }
-
+        
         .btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 12px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            border: 1px solid;
-        }
-
-        .btn-primary {
-            background: #2e2e2e;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            border-color: #2e2e2e;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
-
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            border: none;
+        }
+        
         .btn-primary:hover {
-            background: #1a1a1a;
-            border-color: #1a1a1a;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(45deg, #ff5252, #ff9800);
         }
-
-        .btn-secondary {
-            background: white;
-            color: #37352f;
-            border-color: #e0e0e0;
+        
+        .chat-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
         }
-
-        .btn-secondary:hover {
-            background: #f7f7f7;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
-
+        
+        .chat-input-container {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .chat-send {
+            padding: 1rem 2rem;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-send:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
         @media (max-width: 768px) {
-            .header h1 {
+            .container {
+                padding: 1rem;
+            }
+            
+            .title {
                 font-size: 2.5rem;
             }
             
             .features {
                 grid-template-columns: 1fr;
-                gap: 16px;
+                gap: 1rem;
             }
             
-            .cta-buttons {
+            .feature-card {
+                padding: 1.5rem;
+            }
+            
+            .chat-input-container {
                 flex-direction: column;
-                align-items: center;
-            }
-            
-            .container {
-                padding: 20px 16px;
             }
         }
     </style>
@@ -192,261 +254,135 @@ export function generateIndexPage(data?: PageData): string {
 <body>
     <div class="container">
         <header class="header">
-            <h1>🎨 AI Gen Studio</h1>
-            <p>强大的多平台内容创作工具，集成AI对话、智能画布、文档编辑等多种功能，让创作更高效</p>
+            <h1 class="title">🎨 AI Gen Studio</h1>
+            <p class="subtitle">AI 驱动的创意生成工作室</p>
         </header>
         
         <section class="features">
+            ${pageData.features?.map(feature => `
                 <div class="feature-card">
-                <span class="feature-icon">💬</span>
-                <h3 class="feature-title">AI 智能对话</h3>
-                <p class="feature-description">与先进的AI助手对话，获得创作灵感、技术支持、学习指导等全方位帮助</p>
+                    <span class="feature-icon">${feature.icon}</span>
+                    <h3 class="feature-title">${feature.title}</h3>
+                    <p class="feature-description">${feature.description}</p>
                 </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">🎨</span>
-                <h3 class="feature-title">智能画布</h3>
-                <p class="feature-description">AI驱动的绘图工具，支持CoT思维链分析和FLUX图片生成，让创作更智能</p>
+            `).join('')}
+        </section>
+        
+        <section class="chat-container">
+            <h2 style="margin-bottom: 1rem;">💬 智能聊天体验</h2>
+            <div class="chat-messages" id="chatMessages">
+                <p style="opacity: 0.7;">欢迎使用 Jaaz 智能聊天功能！请输入您的问题。</p>
             </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">📝</span>
-                <h3 class="feature-title">文档编辑</h3>
-                <p class="feature-description">强大的在线文档编辑器，支持Markdown、富文本等多种格式，协作编辑更简单</p>
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="请输入您的消息..." />
+                <button class="chat-send" onclick="sendMessage()">发送</button>
             </div>
         </section>
         
-        <section class="cta-section">
-            <h2>开始您的创作之旅</h2>
-            <div class="cta-buttons">
-                <a href="/chat" class="btn btn-primary">💬 开始对话</a>
-                <a href="/canvas-multi" class="btn btn-primary">🎨 AI 画布</a>
-                <a href="/canvas" class="btn btn-secondary">🖌️ 基础画布</a>
-                <a href="/editor" class="btn btn-secondary">📝 文档编辑</a>
-            </div>
+                 <section class="actions">
+             <a href="/chat" class="btn btn-primary">💬 开始对话</a>
+             <a href="/canvas-multi" class="btn btn-primary">🎨 AI 画布</a>
+             <a href="/image-editor" class="btn btn-primary">🖼️ 图像编辑器</a>
+             <a href="/canvas-modern" class="btn">🎨 现代画布</a>
+             <a href="/canvas" class="btn">🖌️ 基础画布</a>
+             <a href="/editor" class="btn">📝 文档编辑</a>
+         </section>
+        
+        <section class="status">
+            <h3>🚀 技术架构</h3>
+            <p><strong>后端：</strong> Cloudflare Workers + Hono 框架</p>
+            <p><strong>AI 服务：</strong> Cloudflare AI Gateway + Replicate FLUX</p>
+            <p><strong>数据存储：</strong> Cloudflare D1 + R2 + KV 存储</p>
+            <p><strong>画布引擎：</strong> Fabric.js + TLDraw 提供流畅创意体验</p>
         </section>
     </div>
-</body>
-</html>`;
-}
-
-export function generateChatPage(): string {
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 对话 - AI Gen Studio</title>
-    <link rel="icon" href="/unicorn.png" type="image/png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            background: #fafafa; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            color: #37352f;
-        }
-        
-        .header { 
-            background: white; 
-            padding: 16px 24px; 
-            border-bottom: 1px solid #e0e0e0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        }
-        
-        .title { 
-            font-size: 1.25rem; 
-            font-weight: 600;
-            color: #2e2e2e;
-        }
-        
-        .nav-btn { 
-            padding: 8px 16px; 
-            background: white; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 6px;
-            text-decoration: none;
-            color: #37352f; 
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            background: #f7f7f7;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
-        }
-        
-        .chat-container { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            max-width: 900px; 
-            margin: 0 auto; 
-            width: 100%; 
-            padding: 24px; 
-            background: white;
-            border-radius: 12px;
-            margin: 24px auto;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            border: 1px solid #e0e0e0;
-        }
-        
-        .messages { 
-            flex: 1;
-            overflow-y: auto; 
-            margin-bottom: 24px; 
-            padding: 16px 0;
-        }
-        
-        .message { 
-            margin-bottom: 16px; 
-        }
-        
-        .user { 
-            text-align: right; 
-        }
-        
-        .message-content { 
-            display: inline-block; 
-            max-width: 80%; 
-            padding: 12px 16px; 
-            border-radius: 8px; 
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-        
-        .user .message-content { 
-            background: #2e2e2e; 
-            color: white;
-        }
-        
-        .assistant .message-content { 
-            background: #f7f7f7; 
-            color: #37352f; 
-            border: 1px solid #e0e0e0; 
-        }
-        
-        .input-area { 
-            display: flex;
-            gap: 12px; 
-            align-items: flex-end;
-            padding: 16px;
-            background: #fafafa;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .input { 
-            flex: 1; 
-            padding: 12px 16px; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 8px; 
-            outline: none; 
-            font-family: inherit;
-            font-size: 0.95rem;
-            background: white;
-            transition: border-color 0.2s ease;
-        }
-
-        .input:focus {
-            border-color: #2e2e2e;
-            box-shadow: 0 0 0 2px rgba(46, 46, 46, 0.1);
-        }
-        
-        .send-btn { 
-            padding: 12px 20px; 
-            background: #2e2e2e; 
-            color: white;
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .send-btn:hover {
-            background: #1a1a1a;
-            transform: translateY(-1px);
-        }
-
-        .send-btn:disabled {
-            background: #d0d0d0;
-            cursor: not-allowed;
-            transform: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="title">💬 AI 对话助手</div>
-        <a href="/" class="nav-btn">🏠 返回首页</a>
-                    </div>
-    <div class="chat-container">
-        <div class="messages" id="messages">
-            <div class="message assistant">
-                <div class="message-content">👋 您好！我是AI助手，很高兴为您服务。您可以向我询问任何问题，我会尽力帮助您。</div>
-                </div>
-                    </div>
-        <div class="input-area">
-            <input type="text" class="input" id="messageInput" placeholder="输入您的问题..." />
-            <button class="send-btn" id="sendBtn">发送</button>
-                </div>
-            </div>
+    
     <script>
-        const messages = document.getElementById('messages');
-        const input = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        
-        function addMessage(content, isUser = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + (isUser ? 'user' : 'assistant');
-            messageDiv.innerHTML = '<div class="message-content">' + content + '</div>';
-            messages.appendChild(messageDiv);
-            messages.scrollTop = messages.scrollHeight;
-        }
+        let isLoading = false;
         
         async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const messages = document.getElementById('chatMessages');
             const message = input.value.trim();
-            if (!message) return;
             
-            addMessage(message, true);
+            if (!message || isLoading) return;
+            
+            isLoading = true;
             input.value = '';
-            sendBtn.disabled = true;
+            
+            // 添加用户消息
+            addMessage(message, 'user');
             
             try {
                 const response = await fetch('/api/ai/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [{ content: message, role: 'user' }]
+                    })
                 });
                 
                 const data = await response.json();
-                addMessage(data.success ? data.data.content : '抱歉，发生了错误，请重试。');
+                const reply = data.success ? data.data.content : '抱歉，我遇到了一个错误。';
+                addMessage(reply, 'assistant');
             } catch (error) {
-                addMessage('网络错误，请检查连接后重试。');
+                addMessage('抱歉，我遇到了网络错误。请重试。', 'assistant');
             } finally {
-                sendBtn.disabled = false;
+                isLoading = false;
             }
         }
         
-        sendBtn.addEventListener('click', sendMessage);
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+        function addMessage(content, role) {
+            const messages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = \`
+                margin: 0.5rem 0;
+                padding: 0.8rem;
+                border-radius: 8px;
+                background: \${role === 'user' ? 'rgba(70, 130, 180, 0.3)' : 'rgba(255, 255, 255, 0.1)'};
+                border-left: 3px solid \${role === 'user' ? '#4682b4' : '#ffa500'};
+            \`;
+            messageDiv.innerHTML = \`<strong>\${role === 'user' ? '您' : 'AI'}：</strong> \${content}\`;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // 支持回车发送
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎨 AI Gen Studio 应用已加载');
+
+            // 检查 API 状态
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        console.log('✅ API 服务正常');
+                    }
+                })
+                .catch(error => {
+                    console.warn('⚠️ API 服务检查失败:', error);
+                });
         });
     </script>
 </body>
-</html>`;
+</html>`
+}
+
+export function generateChatPage(): string {
+  return generateIndexPage({
+    title: '💬 AI Gen Studio Chat - AI 智能聊天',
+    description: '基于 Cloudflare AI 的智能聊天界面，支持CoT推理和图像生成'
+  })
 }
 
 export function generateEditorPage(): string {
@@ -455,211 +391,685 @@ export function generateEditorPage(): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文档编辑器 - AI Gen Studio</title>
-    <link rel="icon" href="/unicorn.png" type="image/png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>📝 Jaaz Editor - 文档编辑器</title>
+    <!-- SimpleMDE CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 1rem; height: 100vh; display: flex; flex-direction: column; }
+        .header { text-align: center; margin-bottom: 1rem; }
+        .title { font-size: 2.5rem; margin-bottom: 0.5rem; }
         
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            background: #fafafa; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            color: #37352f;
+        .editor-layout { display: flex; gap: 1rem; flex: 1; min-height: 0; }
+        .main-editor { flex: 1; display: flex; flex-direction: column; }
+        .sidebar { width: 350px; display: flex; flex-direction: column; gap: 1rem; }
+        
+        .editor-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
         }
         
-        .header { 
-            background: white; 
-            padding: 16px 24px; 
-            border-bottom: 1px solid #e0e0e0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        .title-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        .title-input::placeholder { color: rgba(255, 255, 255, 0.7); }
+        
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
         
-        .title { 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #2e2e2e;
-        }
-        
-        .nav-btn { 
-            padding: 8px 16px; 
-            background: white; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            color: #37352f; 
-            margin-left: 8px; 
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
         }
-
-        .nav-btn:hover {
-            background: #f7f7f7;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
+        .btn:hover { background: rgba(255, 255, 255, 0.3); }
+        .btn.primary { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .btn.success { background: linear-gradient(45deg, #56ab2f, #a8e6cf); }
+        .btn.danger { background: linear-gradient(45deg, #ff6b6b, #ffa500); }
+        
+        .editor-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            flex: 1;
+            min-height: 0;
         }
         
-        .editor-container { 
-            flex: 1; 
-            display: flex; 
-            max-width: 1400px; 
-            margin: 0 auto; 
-            width: 100%; 
-            gap: 24px;
-            padding: 24px;
+        /* SimpleMDE 样式覆盖 */
+        .CodeMirror {
+            background: rgba(0, 0, 0, 0.3) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            height: auto !important;
+            min-height: 400px !important;
+        }
+        .CodeMirror-cursor { border-color: white !important; }
+        .CodeMirror-selected { background: rgba(255, 255, 255, 0.2) !important; }
+        .CodeMirror-line { color: white !important; }
+        
+        .editor-toolbar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-bottom: none !important;
+            border-radius: 8px 8px 0 0 !important;
+            padding: 0.5rem !important;
+        }
+        .editor-toolbar a {
+            color: rgba(255, 255, 255, 0.8) !important;
+            border-radius: 4px !important;
+            padding: 0.25rem !important;
+        }
+        .editor-toolbar a:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+        }
+        .editor-toolbar a.active {
+            background: rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
         }
         
-        .editor { 
-            flex: 1; 
-            padding: 0; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            border: 1px solid #e0e0e0;
-            overflow: hidden;
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
         }
         
-        .editor textarea { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            outline: none; 
-            font-family: 'Inter', 'Monaco', 'Courier New', monospace; 
-            font-size: 14px; 
-            line-height: 1.6; 
-            resize: none; 
-            padding: 24px;
-            color: #37352f;
-            background: white;
+        .panel h3 {
+            margin-bottom: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        .preview { 
-            flex: 1; 
-            padding: 24px; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+        .file-list {
+            max-height: 200px;
             overflow-y: auto;
-            border: 1px solid #e0e0e0;
         }
-
-        .preview h1, .preview h2, .preview h3 {
-            color: #2e2e2e;
-            margin-bottom: 12px;
-            font-weight: 600;
+        
+        .file-item {
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
         }
-
-        .preview h1 { font-size: 1.75rem; }
-        .preview h2 { font-size: 1.5rem; }
-        .preview h3 { font-size: 1.25rem; }
-
-        .preview p {
-            color: #37352f;
-            line-height: 1.6;
-            margin-bottom: 16px;
+        .file-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .file-item.active { background: rgba(255, 255, 255, 0.2); }
+        
+        .publish-platforms {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
-
-        .preview strong {
-            color: #2e2e2e;
-            font-weight: 600;
-        }
-
-        .preview em {
-            font-style: italic;
-            color: #787774;
-        }
-
-        .placeholder {
-            color: #9b9a97;
+        
+        .platform-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-align: center;
-            margin-top: 3rem;
-            font-style: italic;
+            font-size: 0.8rem;
         }
-
-        @media (max-width: 768px) {
-            .editor-container {
-                flex-direction: column;
-                padding: 16px;
-                gap: 16px;
-            }
+        .platform-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        .media-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .media-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .media-item img, .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .media-remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .nav-links {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .editor-layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+        }
+        
+        .status-bar {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">📝 文档编辑器</div>
-        <div>
-            <a href="/" class="nav-btn">🏠 首页</a>
-            <button class="nav-btn" onclick="saveDocument()">💾 保存</button>
-        </div>
-    </div>
-    <div class="editor-container">
-        <div class="editor">
-            <textarea id="editor" placeholder="开始编写您的文档...支持 Markdown 语法
-
-# 标题示例
-## 二级标题
-### 三级标题
-
-**粗体文本** 和 *斜体文本*
-
-这是一个段落示例..."></textarea>
-                        </div>
-        <div class="preview" id="preview">
-            <p class="placeholder">实时预览将显示在这里</p>
-        </div>
-    </div>
-    <script>
-        const editor = document.getElementById('editor');
-        const preview = document.getElementById('preview');
+    <div class="container">
+        <header class="header">
+            <h1 class="title">📝 AI Gen Studio Editor</h1>
+            <p>强大的 Markdown 编辑器，支持实时预览和多平台发布</p>
+        </header>
         
-        // 简单的 Markdown 转换
-        function markdownToHtml(text) {
-            return text
-                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-                .replace(/\*(.*)\*/gim, '<em>$1</em>')
-                .replace(/\n\n/gim, '</p><p>')
-                .replace(/\n/gim, '<br>');
+        <div class="editor-layout">
+            <!-- 主编辑器区域 -->
+            <div class="main-editor">
+                <div class="editor-header">
+                    <input type="text" class="title-input" id="documentTitle" placeholder="输入文档标题..." value="">
+                    
+                    <div class="toolbar">
+                        <button class="btn" onclick="newDocument()">
+                            <i class="fas fa-file"></i> 新建
+                        </button>
+                        <button class="btn" onclick="saveDocument()">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                        <button class="btn" onclick="loadDocument()">
+                            <i class="fas fa-folder-open"></i> 打开
+                        </button>
+                        <button class="btn" onclick="exportDocument()">
+                            <i class="fas fa-download"></i> 导出
+                        </button>
+                        <button class="btn" onclick="togglePreview()">
+                            <i class="fas fa-eye"></i> 预览
+                        </button>
+                        <button class="btn" onclick="insertImage()">
+                            <i class="fas fa-image"></i> 图片
+                        </button>
+                        <button class="btn" onclick="insertVideo()">
+                            <i class="fas fa-video"></i> 视频
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-container">
+                    <textarea id="editor"></textarea>
+                    <div class="status-bar">
+                        <span id="statusText">就绪</span>
+                        <span id="wordCount">0 字符</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <!-- 文件列表 -->
+                <div class="panel">
+                    <h3>
+                        <i class="fas fa-folder"></i>
+                        文件列表
+                    </h3>
+                    <div class="file-list" id="fileList">
+                        <div class="file-item">
+                            <span>📄 加载中...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 媒体文件 -->
+                <div class="panel">
+                    <h3>
+                        <i class="fas fa-images"></i>
+                        媒体文件
+                    </h3>
+                    <div class="media-preview" id="mediaPreview">
+                        <!-- 媒体文件预览将在这里显示 -->
+                    </div>
+                </div>
+                
+                <!-- 发布平台 -->
+                <div class="panel">
+                    <h3>
+                        <i class="fas fa-share"></i>
+                        发布到平台
+                    </h3>
+                    <div class="publish-platforms">
+                        <button class="platform-btn" onclick="publishTo('xiaohongshu')">小红书</button>
+                        <button class="platform-btn" onclick="publishTo('bilibili')">Bilibili</button>
+                        <button class="platform-btn" onclick="publishTo('x')">X (Twitter)</button>
+                        <button class="platform-btn" onclick="publishTo('youtube')">YouTube</button>
+                        <button class="platform-btn" onclick="publishTo('douyin')">抖音</button>
+                        <button class="platform-btn" onclick="publishTo('weixin_channels')">微信视频号</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-links">
+            <a href="/" class="btn">🏠 返回首页</a>
+            <a href="/chat" class="btn">💬 智能聊天</a>
+            <a href="/canvas" class="btn">🎨 画布绘制</a>
+        </div>
+    </div>
+    
+    <!-- SimpleMDE JS -->
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    
+    <script>
+        let simplemde;
+        let currentFile = null;
+        let mediaFiles = [];
+        let isPreviewMode = false;
+        
+        // 初始化 SimpleMDE 编辑器
+        function initializeEditor() {
+            simplemde = new SimpleMDE({
+                element: document.getElementById('editor'),
+                placeholder: '开始编写您的内容...',
+                spellChecker: false,
+                autofocus: true,
+                status: false, // 我们使用自定义状态栏
+                toolbar: [
+                    'bold', 'italic', 'heading', '|',
+                    'quote', 'unordered-list', 'ordered-list', '|',
+                    'link', 'image', 'table', '|',
+                    'preview', 'side-by-side', 'fullscreen', '|',
+                    'guide'
+                ],
+                renderingConfig: {
+                    singleLineBreaks: false,
+                    codeSyntaxHighlighting: true,
+                },
+                shortcuts: {
+                    'drawTable': 'Cmd-Alt-T',
+                    'toggleBlockquote': 'Cmd-\\'',
+                    'toggleBold': 'Cmd-B',
+                    'cleanBlock': 'Cmd-E',
+                    'toggleHeadingSmaller': 'Cmd-H',
+                    'toggleItalic': 'Cmd-I',
+                    'drawLink': 'Cmd-K',
+                    'toggleUnorderedList': 'Cmd-L',
+                    'togglePreview': 'Cmd-P',
+                    'toggleCodeBlock': 'Cmd-Alt-C',
+                    'toggleOrderedList': 'Cmd-Alt-L',
+                    'drawHorizontalRule': 'Cmd-R',
+                    'toggleSideBySide': 'F9',
+                    'toggleFullScreen': 'F11'
+                }
+            });
+            
+            // 监听编辑器变化
+            simplemde.codemirror.on('change', function() {
+                updateWordCount();
+                updateStatus('编辑中...');
+                debouncedSave();
+            });
+            
+            // 监听标题变化
+            document.getElementById('documentTitle').addEventListener('input', function() {
+                updateStatus('编辑中...');
+                debouncedSave();
+            });
         }
         
-        editor.addEventListener('input', () => {
-            const html = markdownToHtml(editor.value);
-            if (html.trim()) {
-                preview.innerHTML = '<p>' + html + '</p>';
-            } else {
-                preview.innerHTML = '<p class="placeholder">实时预览将显示在这里</p>';
-            }
-        });
+        // 防抖保存
+        let saveTimeout;
+        function debouncedSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if (currentFile) {
+                    saveDocument();
+                }
+            }, 1000);
+        }
         
-        function saveDocument() {
-            const content = editor.value;
-            if (!content.trim()) {
-                alert('文档内容为空，无法保存');
+        // 更新字数统计
+        function updateWordCount() {
+            const content = simplemde.value();
+            const charCount = content.length;
+            const wordCount = content.split(/\\s+/).filter(word => word.length > 0).length;
+            document.getElementById('wordCount').textContent = \`\${charCount} 字符, \${wordCount} 词\`;
+        }
+        
+        // 更新状态
+        function updateStatus(status) {
+            document.getElementById('statusText').textContent = status;
+        }
+        
+        // 新建文档
+        function newDocument() {
+            if (confirm('确定要新建文档吗？未保存的更改将丢失。')) {
+                document.getElementById('documentTitle').value = '';
+                simplemde.value('');
+                currentFile = null;
+                mediaFiles = [];
+                updateMediaPreview();
+                updateStatus('新文档');
+                updateWordCount();
+            }
+        }
+        
+        // 保存文档
+        async function saveDocument() {
+            const title = document.getElementById('documentTitle').value.trim();
+            const content = simplemde.value();
+            
+            if (!title) {
+                alert('请输入文档标题');
                 return;
             }
-            const blob = new Blob([content], { type: 'text/markdown' });
+            
+            const filename = currentFile || \`\${title.replace(/[^\\w\\s-]/g, '').replace(/\\s+/g, '-')}.md\`;
+            const fullContent = \`# \${title}\\n\\n\${content}\`;
+            
+            try {
+                updateStatus('保存中...');
+                const response = await fetch('/api/update_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        path: filename,
+                        content: fullContent
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    currentFile = filename;
+                    updateStatus('已保存');
+                    loadFileList();
+                } else {
+                    updateStatus('保存失败');
+                    alert('保存失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                updateStatus('保存失败');
+                alert('保存失败: ' + error.message);
+            }
+        }
+        
+        // 加载文档
+        function loadDocument() {
+            const filename = prompt('请输入要打开的文件名:');
+            if (filename) {
+                loadFileContent(filename);
+            }
+        }
+        
+        // 加载文件内容
+        async function loadFileContent(filename) {
+            try {
+                updateStatus('加载中...');
+                const response = await fetch(\`/api/read_file?path=\${encodeURIComponent(filename)}\`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const content = result.content;
+                    const lines = content.split('\\n');
+                    const title = lines[0].replace(/^#+\\s*/, '').trim();
+                    const body = lines.slice(lines[0].startsWith('#') ? 2 : 0).join('\\n');
+                    
+                    document.getElementById('documentTitle').value = title;
+                    simplemde.value(body);
+                    currentFile = filename;
+                    updateStatus('已加载');
+                    updateWordCount();
+                } else {
+                    updateStatus('加载失败');
+                    alert('加载失败: ' + (result.error || '文件不存在'));
+                }
+            } catch (error) {
+                updateStatus('加载失败');
+                alert('加载失败: ' + error.message);
+            }
+        }
+        
+        // 导出文档
+        function exportDocument() {
+            const title = document.getElementById('documentTitle').value.trim() || 'untitled';
+            const content = simplemde.value();
+            const fullContent = \`# \${title}\\n\\n\${content}\`;
+            
+            const blob = new Blob([fullContent], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'document.md';
+            a.download = \`\${title.replace(/[^\\w\\s-]/g, '').replace(/\\s+/g, '-')}.md\`;
             a.click();
             URL.revokeObjectURL(url);
         }
+        
+        // 切换预览
+        function togglePreview() {
+            simplemde.togglePreview();
+        }
+        
+        // 插入图片
+        function insertImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+            
+            input.onchange = function(e) {
+                const files = e.target.files;
+                for (let file of files) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const mediaFile = {
+                            type: 'image',
+                            name: file.name,
+                            url: e.target.result,
+                            file: file
+                        };
+                        mediaFiles.push(mediaFile);
+                        updateMediaPreview();
+                        
+                        // 在编辑器中插入图片
+                        const cm = simplemde.codemirror;
+                        const pos = cm.getCursor();
+                        cm.replaceRange(\`![图片](\${e.target.result})\\n\`, pos);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            input.click();
+        }
+        
+        // 插入视频
+        function insertVideo() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'video/*';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const mediaFile = {
+                            type: 'video',
+                            name: file.name,
+                            url: e.target.result,
+                            file: file
+                        };
+                        mediaFiles.push(mediaFile);
+                        updateMediaPreview();
+                        
+                        // 在编辑器中插入视频链接
+                        const cm = simplemde.codemirror;
+                        const pos = cm.getCursor();
+                        cm.replaceRange(\`[视频: \${file.name}](\${e.target.result})\\n\`, pos);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            input.click();
+        }
+        
+        // 更新媒体预览
+        function updateMediaPreview() {
+            const container = document.getElementById('mediaPreview');
+            container.innerHTML = '';
+            
+            mediaFiles.forEach((media, index) => {
+                const item = document.createElement('div');
+                item.className = 'media-item';
+                
+                if (media.type === 'image') {
+                    item.innerHTML = \`
+                        <img src="\${media.url}" alt="\${media.name}" title="\${media.name}">
+                        <button class="media-remove" onclick="removeMedia(\${index})">×</button>
+                    \`;
+                } else if (media.type === 'video') {
+                    item.innerHTML = \`
+                        <video src="\${media.url}" title="\${media.name}"></video>
+                        <button class="media-remove" onclick="removeMedia(\${index})">×</button>
+                    \`;
+                }
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // 移除媒体文件
+        function removeMedia(index) {
+            mediaFiles.splice(index, 1);
+            updateMediaPreview();
+        }
+        
+        // 发布到平台
+        async function publishTo(platform) {
+            const title = document.getElementById('documentTitle').value.trim();
+            const content = simplemde.value();
+            
+            if (!title || !content) {
+                alert('请输入标题和内容');
+                return;
+            }
+            
+            try {
+                updateStatus('发布中...');
+                const response = await fetch('/api/electron/publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        channel: platform,
+                        title: title,
+                        content: content
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    updateStatus('发布成功');
+                    alert(\`发布到 \${platform} 成功！\`);
+                } else {
+                    updateStatus('发布失败');
+                    alert(\`发布失败: \${result.error || '未知错误'}\`);
+                }
+            } catch (error) {
+                updateStatus('发布失败');
+                alert('发布失败: ' + error.message);
+            }
+        }
+        
+        // 加载文件列表
+        async function loadFileList() {
+            try {
+                const response = await fetch('/api/list');
+                const result = await response.json();
+                
+                if (result.success && result.files) {
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = result.files.map(file => \`
+                        <div class="file-item \${currentFile === file.name ? 'active' : ''}" onclick="loadFileContent('\${file.name}')">
+                            <span>📄 \${file.name}</span>
+                            <span>\${(file.size / 1024).toFixed(1)}KB</span>
+                        </div>
+                    \`).join('');
+                }
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+            }
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📝 Jaaz Editor 高级版已加载');
+            initializeEditor();
+            loadFileList();
+            updateWordCount();
+        });
     </script>
 </body>
-</html>`;
+</html>`
 }
 
 export function generateCanvasPage(): string {
@@ -668,320 +1078,1214 @@ export function generateCanvasPage(): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画布编辑器 - AI Gen Studio</title>
-    <link rel="icon" href="/unicorn.png" type="image/png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Canvas - 创意画布</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 2D 绘图工具库 -->
+    <script src="https://unpkg.com/perfect-freehand@1.2.0/dist/perfect-freehand.umd.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            background: #fafafa; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            color: #37352f;
-        }
-        
-        .header { 
-            background: white; 
-            padding: 16px 24px; 
-            border-bottom: 1px solid #e0e0e0; 
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        }
-        
-        .title { 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #2e2e2e;
-        }
-        
-        .nav-btn { 
-            padding: 8px 16px; 
-            background: white; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            color: #37352f; 
-            margin-left: 8px; 
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .nav-btn:hover {
-            background: #f7f7f7;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
-        }
-        
-        .canvas-container { 
-            flex: 1; 
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            gap: 16px;
-        }
-        
-        .toolbar { 
-            background: white; 
-            padding: 16px 24px; 
-            border: 1px solid #e0e0e0; 
-            display: flex;
-            gap: 16px; 
-            align-items: center;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-        
-        .tool-btn { 
-            padding: 8px 16px; 
-            border: 1px solid #e0e0e0; 
-            background: white; 
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .tool-btn.active { 
-            background: #2e2e2e; 
-            color: white; 
-            border-color: #2e2e2e;
-        }
-
-        .tool-btn:hover:not(.active) {
-            background: #f7f7f7;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
-        }
-        
-        .canvas-area { 
-            flex: 1; 
-            padding: 0;
-        }
-        
-        .canvas-wrapper { 
-            width: 100%; 
-            height: 100%; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            position: relative; 
-            border: 1px solid #e0e0e0;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
             overflow: hidden;
         }
         
-        #canvas { 
-            width: 100%; 
-            height: 100%; 
-            border-radius: 12px; 
-            cursor: crosshair; 
-            display: block;
+        .canvas-layout { 
+            display: flex; 
+            height: 100vh; 
         }
-
+        
+        .toolbar-left {
+            width: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0.5rem;
+            gap: 0.5rem;
+        }
+        
+        .main-canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .toolbar-top {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        
+        .sidebar-right {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 工具按钮样式 */
+        .tool-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        .tool-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .tool-btn.active { 
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn.primary { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .btn.danger { background: linear-gradient(45deg, #ff6b6b, #ffa500); }
+        .btn.success { background: linear-gradient(45deg, #56ab2f, #a8e6cf); }
+        
+        /* 颜色选择器和滑块 */
         .control-group {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #fafafa;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
+            gap: 0.5rem;
         }
-
-        .control-label {
-            font-size: 0.85rem;
-            color: #787774;
-            font-weight: 500;
+        
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            background: #000;
         }
-
-        input[type="color"] {
-            width: 32px;
-            height: 32px;
+        
+        .slider {
+            width: 120px;
+            margin: 0 0.5rem;
+        }
+        
+        .slider-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            min-width: 80px;
+        }
+        
+        /* 侧边栏面板 */
+        .panel {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+        }
+        
+        .panel h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .panel-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        /* 图层列表 */
+        .layer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .layer-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .layer-item.active { background: rgba(255, 255, 255, 0.2); }
+        
+        .layer-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .layer-btn {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             border-radius: 4px;
+            color: white;
             cursor: pointer;
+            font-size: 0.8rem;
         }
-
-        input[type="range"] {
-            width: 80px;
-            height: 4px;
-            border-radius: 2px;
-            background: #e0e0e0;
-            outline: none;
+        
+        /* AI 聊天面板 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .message.user {
+            background: rgba(102, 126, 234, 0.3);
+            margin-left: 1rem;
+        }
+        .message.assistant {
+            background: rgba(255, 255, 255, 0.1);
+            margin-right: 1rem;
+        }
+        
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .chat-input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .canvas-layout { flex-direction: column; }
+            .toolbar-left { 
+                width: 100%; 
+                height: auto; 
+                flex-direction: row; 
+                justify-content: center;
+                order: 2;
+            }
+            .sidebar-right { 
+                width: 100%; 
+                height: 200px;
+                order: 3;
+            }
+            .main-canvas-area { order: 1; }
+        }
+        
+        /* Canvas 特定样式 */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        #fabricCanvas {
+            border: none;
+            background: white;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* 缩放控制 */
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
             cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .toolbar {
-                flex-wrap: wrap;
-                gap: 8px;
-                padding: 12px 16px;
-            }
-            
-            .canvas-container {
-                padding: 16px;
-            }
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">🎨 画布编辑器</div>
-        <div>
-            <a href="/" class="nav-btn">🏠 首页</a>
-            <a href="/canvas-multi" class="nav-btn">🧠 AI 画布</a>
-            <button class="nav-btn" onclick="clearCanvas()">🗑️ 清空</button>
+    <div class="canvas-layout">
+        <!-- 左侧工具栏 -->
+        <div class="toolbar-left">
+            <button class="tool-btn active" id="selectTool" onclick="setTool('select')" title="选择工具">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+            <button class="tool-btn" id="drawTool" onclick="setTool('draw')" title="自由绘制">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button class="tool-btn" id="lineTool" onclick="setTool('line')" title="直线">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="tool-btn" id="rectTool" onclick="setTool('rect')" title="矩形">
+                <i class="far fa-square"></i>
+            </button>
+            <button class="tool-btn" id="circleTool" onclick="setTool('circle')" title="圆形">
+                <i class="far fa-circle"></i>
+            </button>
+            <button class="tool-btn" id="textTool" onclick="setTool('text')" title="文本">
+                <i class="fas fa-font"></i>
+            </button>
+            <button class="tool-btn" id="arrowTool" onclick="setTool('arrow')" title="箭头">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="tool-btn" id="eraserTool" onclick="setTool('eraser')" title="橡皮擦">
+                <i class="fas fa-eraser"></i>
+            </button>
         </div>
+        
+        <!-- 主画布区域 -->
+        <div class="main-canvas-area">
+            <!-- 顶部工具栏 -->
+            <div class="toolbar-top">
+                <div class="control-group">
+                    <button class="btn" onclick="newCanvas()">
+                        <i class="fas fa-file"></i> 新建
+                    </button>
+                    <button class="btn" onclick="saveCanvas()">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button class="btn" onclick="loadCanvas()">
+                        <i class="fas fa-folder-open"></i> 打开
+                    </button>
+                    <button class="btn" onclick="exportCanvas()">
+                        <i class="fas fa-download"></i> 导出
+                    </button>
                 </div>
-    <div class="canvas-container">
-        <div class="toolbar">
-            <button class="tool-btn active" onclick="setTool('draw')">✏️ 画笔</button>
-            <button class="tool-btn" onclick="setTool('erase')">🧽 橡皮擦</button>
-            <button class="tool-btn" onclick="setTool('line')">📏 直线</button>
                 
                 <div class="control-group">
-                <span class="control-label">颜色</span>
-                <input type="color" id="colorPicker" value="#2e2e2e">
+                    <button class="btn" onclick="undo()">
+                        <i class="fas fa-undo"></i> 撤销
+                    </button>
+                    <button class="btn" onclick="redo()">
+                        <i class="fas fa-redo"></i> 重做
+                    </button>
                 </div>
                 
                 <div class="control-group">
-                <span class="control-label">粗细</span>
-                <input type="range" id="brushSize" min="1" max="50" value="3">
+                    <span class="slider-label">颜色:</span>
+                    <input type="color" class="color-picker" id="colorPicker" value="#000000" onchange="setColor(this.value)">
                 </div>
+                
+                <div class="control-group">
+                    <span class="slider-label">粗细:</span>
+                    <input type="range" class="slider" id="strokeWidth" min="1" max="20" value="2" onchange="setStrokeWidth(this.value)">
+                    <span id="strokeWidthDisplay">2px</span>
                 </div>
-        <div class="canvas-area">
+                
+                <div class="control-group">
+                    <span class="slider-label">透明度:</span>
+                    <input type="range" class="slider" id="opacity" min="0" max="1" step="0.1" value="1" onchange="setOpacity(this.value)">
+                    <span id="opacityDisplay">100%</span>
+                </div>
+            </div>
+            
+            <!-- 画布容器 -->
+            <div class="canvas-container">
                 <div class="canvas-wrapper">
-                <canvas id="canvas"></canvas>
+                    <canvas id="fabricCanvas"></canvas>
                 </div>
+                
+                <!-- 状态栏 -->
+                <div class="status-bar" id="statusBar">
+                    就绪 - 选择工具已激活
                 </div>
+                
+                <!-- 缩放控制 -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="zoomOut()" title="缩小">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="zoom-btn" onclick="resetZoom()" title="适应窗口">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="zoom-btn" onclick="zoomIn()" title="放大">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- 右侧边栏 -->
+        <div class="sidebar-right">
+            <!-- 图层面板 -->
+            <div class="panel">
+                <h3>
+                    <i class="fas fa-layer-group"></i>
+                    图层
+                </h3>
+                <div class="panel-content" id="layersPanel">
+                    <div class="layer-item active">
+                        <span>📄 背景层</span>
+                        <div class="layer-controls">
+                            <button class="layer-btn" title="显示/隐藏">👁️</button>
+                            <button class="layer-btn" title="锁定">🔒</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <button class="btn" onclick="addLayer()" style="width: 100%;">
+                        <i class="fas fa-plus"></i> 新建图层
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 形状库面板 -->
+            <div class="panel">
+                <h3>
+                    <i class="fas fa-shapes"></i>
+                    形状库
+                </h3>
+                <div class="panel-content">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                        <button class="tool-btn" onclick="addShape('circle')" title="圆形">
+                            <i class="far fa-circle"></i>
+                        </button>
+                        <button class="tool-btn" onclick="addShape('rect')" title="矩形">
+                            <i class="far fa-square"></i>
+                        </button>
+                        <button class="tool-btn" onclick="addShape('triangle')" title="三角形">
+                            <i class="fas fa-play" style="transform: rotate(90deg);"></i>
+                        </button>
+                        <button class="tool-btn" onclick="addShape('star')" title="星形">
+                            <i class="far fa-star"></i>
+                        </button>
+                        <button class="tool-btn" onclick="addShape('heart')" title="心形">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <button class="tool-btn" onclick="addShape('hexagon')" title="六边形">
+                            <i class="fas fa-hexagon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI 助手面板 -->
+            <div class="panel">
+                <h3>
+                    <i class="fas fa-robot"></i>
+                    AI 助手
+                </h3>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant">
+                            👋 我是您的绘图助手！我可以帮您：<br>
+                            • 生成创意图形<br>
+                            • 优化设计布局<br>
+                            • 提供绘图建议
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="描述您想要的图形..." onkeydown="handleChatKeydown(event)">
+                        <button class="btn" onclick="sendChatMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 导航链接 -->
+            <div class="panel">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a href="/" class="btn" style="text-decoration: none;">🏠 首页</a>
+                    <a href="/chat" class="btn" style="text-decoration: none;">💬 聊天</a>
+                    <a href="/editor" class="btn" style="text-decoration: none;">📝 编辑</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        let canvas;
+        let currentTool = 'select';
         let isDrawing = false;
-        let currentTool = 'draw';
-        let lastX = 0, lastY = 0;
+        let drawingPath = [];
+        let currentColor = '#000000';
+        let currentStrokeWidth = 2;
+        let currentOpacity = 1;
+        let undoStack = [];
+        let redoStack = [];
+        let chatMessages = [];
         
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width - 2;
-            canvas.height = rect.height - 2;
+        // 初始化 Fabric.js 画布
+        function initializeCanvas() {
+            console.log('开始初始化 Canvas...');
+            
+            // 等待 Fabric.js 加载
+            if (typeof fabric === 'undefined') {
+                console.error('Fabric.js 未加载');
+                setTimeout(initializeCanvas, 100);
+                return;
+            }
+            
+            const canvasElement = document.getElementById('fabricCanvas');
+            if (!canvasElement) {
+                console.error('Canvas 元素未找到');
+                return;
+            }
+            
+            const container = canvasElement.parentElement;
+            
+            // 设置画布大小
+            const containerWidth = container.clientWidth || 800;
+            const containerHeight = container.clientHeight || 600;
+            
+            console.log('Canvas 尺寸:', containerWidth, 'x', containerHeight);
+            
+            canvas = new fabric.Canvas('fabricCanvas', {
+                width: containerWidth,
+                height: containerHeight,
+                backgroundColor: 'white',
+                selection: true,
+                preserveObjectStacking: true
+            });
+            
+            console.log('Canvas 对象创建成功:', canvas);
+            
+            // 设置画布事件
+            setupCanvasEvents();
+            
+            // 保存初始状态
+            saveCanvasState();
+            
+            updateStatus('画布初始化完成 ✓');
+            console.log('Canvas 初始化完成');
         }
         
+        // 设置画布事件
+        function setupCanvasEvents() {
+            console.log('设置画布事件...');
+            
+            // 鼠标按下事件
+            canvas.on('mouse:down', function(options) {
+                console.log('鼠标按下，当前工具:', currentTool);
+                
+                if (currentTool === 'draw') {
+                    isDrawing = true;
+                    const pointer = canvas.getPointer(options.e);
+                    drawingPath = [pointer];
+                    console.log('开始绘制，坐标:', pointer);
+                } else if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'arrow') {
+                    startDrawingShape(options);
+                } else if (currentTool === 'text') {
+                    addText(options);
+                }
+            });
+            
+            // 鼠标移动事件
+            canvas.on('mouse:move', function(options) {
+                if (isDrawing && currentTool === 'draw') {
+                    const pointer = canvas.getPointer(options.e);
+                    drawingPath.push(pointer);
+                    drawFreehand();
+                }
+            });
+            
+            // 鼠标抬起事件
+            canvas.on('mouse:up', function(options) {
+                if (isDrawing) {
+                    isDrawing = false;
+                    drawingPath = [];
+                    saveCanvasState();
+                }
+            });
+            
+            // 对象选择事件
+            canvas.on('selection:created', function(options) {
+                updateStatus(\`已选择 \${options.selected.length} 个对象\`);
+            });
+            
+            canvas.on('selection:cleared', function() {
+                updateStatus('未选择任何对象');
+            });
+        }
+        
+        // 设置工具
         function setTool(tool) {
-            currentTool = tool;
+            // 更新工具按钮状态
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.getElementById(tool + 'Tool').classList.add('active');
+            
+            currentTool = tool;
+            
+            // 设置画布交互模式
+            if (tool === 'select') {
+                canvas.isDrawingMode = false;
+                canvas.selection = true;
+                canvas.forEachObject(obj => obj.selectable = true);
+            } else {
+                canvas.isDrawingMode = false;
+                canvas.selection = false;
+                canvas.discardActiveObject();
+                canvas.forEachObject(obj => obj.selectable = false);
+            }
+            
+            canvas.renderAll();
+            updateStatus(\`已切换到\${getToolName(tool)}工具\`);
         }
         
-        function startDrawing(e) {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
+        // 获取工具名称
+        function getToolName(tool) {
+            const names = {
+                'select': '选择',
+                'draw': '绘制',
+                'line': '直线',
+                'rect': '矩形',
+                'circle': '圆形',
+                'text': '文本',
+                'arrow': '箭头',
+                'eraser': '橡皮擦'
+            };
+            return names[tool] || tool;
         }
         
-        function draw(e) {
-            if (!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        // 自由绘制
+        function drawFreehand() {
+            if (drawingPath.length < 2) return;
             
-            ctx.lineWidth = document.getElementById('brushSize').value;
-            ctx.strokeStyle = document.getElementById('colorPicker').value;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            // 移除之前的临时路径
+            const tempObjects = canvas.getObjects().filter(obj => obj.isTemporary);
+            tempObjects.forEach(obj => canvas.remove(obj));
             
-            if (currentTool === 'erase') {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = parseInt(document.getElementById('brushSize').value) * 3;
+            const pathString = \`M \${drawingPath[0].x} \${drawingPath[0].y} \` + 
+                drawingPath.slice(1).map(point => \`L \${point.x} \${point.y}\`).join(' ');
+            
+            const path = new fabric.Path(pathString, {
+                stroke: currentColor,
+                strokeWidth: currentStrokeWidth,
+                fill: '',
+                opacity: currentOpacity,
+                selectable: false,
+                isTemporary: true
+            });
+            
+            canvas.add(path);
+            canvas.renderAll();
+            console.log('绘制路径:', pathString);
+        }
+        
+        // 开始绘制形状
+        let startPoint = null;
+        let tempShape = null;
+        
+        function startDrawingShape(options) {
+            const pointer = canvas.getPointer(options.e);
+            startPoint = pointer;
+            
+            // 添加临时形状
+            if (currentTool === 'line') {
+                tempShape = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+                    stroke: currentColor,
+                    strokeWidth: currentStrokeWidth,
+                    opacity: currentOpacity,
+                    selectable: false,
+                    isTemporary: true
+                });
+            } else if (currentTool === 'rect') {
+                tempShape = new fabric.Rect({
+                    left: pointer.x,
+                    top: pointer.y,
+                    width: 0,
+                    height: 0,
+                    stroke: currentColor,
+                    strokeWidth: currentStrokeWidth,
+                    fill: 'transparent',
+                    opacity: currentOpacity,
+                    selectable: false,
+                    isTemporary: true
+                });
+            } else if (currentTool === 'circle') {
+                tempShape = new fabric.Circle({
+                    left: pointer.x,
+                    top: pointer.y,
+                    radius: 0,
+                    stroke: currentColor,
+                    strokeWidth: currentStrokeWidth,
+                    fill: 'transparent',
+                    opacity: currentOpacity,
+                    selectable: false,
+                    isTemporary: true
+                });
+            }
+            
+            if (tempShape) {
+                canvas.add(tempShape);
+                
+                // 绑定鼠标移动事件来更新形状
+                const updateShape = function(options) {
+                    const pointer = canvas.getPointer(options.e);
+                    
+                    if (currentTool === 'line') {
+                        tempShape.set({
+                            x2: pointer.x,
+                            y2: pointer.y
+                        });
+                    } else if (currentTool === 'rect') {
+                        const width = Math.abs(pointer.x - startPoint.x);
+                        const height = Math.abs(pointer.y - startPoint.y);
+                        tempShape.set({
+                            left: Math.min(startPoint.x, pointer.x),
+                            top: Math.min(startPoint.y, pointer.y),
+                            width: width,
+                            height: height
+                        });
+                    } else if (currentTool === 'circle') {
+                        const radius = Math.sqrt(Math.pow(pointer.x - startPoint.x, 2) + Math.pow(pointer.y - startPoint.y, 2));
+                        tempShape.set({
+                            radius: radius
+                        });
+                    }
+                    
+                    canvas.renderAll();
+                };
+                
+                const finishShape = function() {
+                    canvas.off('mouse:move', updateShape);
+                    canvas.off('mouse:up', finishShape);
+                    
+                    if (tempShape) {
+                        tempShape.set({
+                            selectable: currentTool === 'select',
+                            isTemporary: false
+                        });
+                        saveCanvasState();
+                    }
+                };
+                
+                canvas.on('mouse:move', updateShape);
+                canvas.on('mouse:up', finishShape);
+            }
+        }
+        
+        // 添加文本
+        function addText(options) {
+            const pointer = canvas.getPointer(options.e);
+            const text = prompt('请输入文本:', '文本') || '文本';
+            
+            const textObj = new fabric.Text(text, {
+                left: pointer.x,
+                top: pointer.y,
+                fontSize: 20,
+                fill: currentColor,
+                opacity: currentOpacity,
+                selectable: currentTool === 'select'
+            });
+            
+            canvas.add(textObj);
+            canvas.renderAll();
+            saveCanvasState();
+            updateStatus(\`已添加文本: \${text}\`);
+        }
+        
+        // 添加文本
+        function addText(options) {
+            const pointer = canvas.getPointer(options.e);
+            const text = prompt('请输入文本:', '文本') || '文本';
+            
+            const textObj = new fabric.Text(text, {
+                left: pointer.x,
+                top: pointer.y,
+                fontSize: 20,
+                fill: currentColor,
+                opacity: currentOpacity,
+                selectable: currentTool === 'select'
+            });
+            
+            canvas.add(textObj);
+            saveCanvasState();
+        }
+        
+        // 添加预定义形状
+        function addShape(shapeType) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            let shape;
+            
+            switch(shapeType) {
+                case 'circle':
+                    shape = new fabric.Circle({
+                        radius: 50,
+                        left: centerX - 50,
+                        top: centerY - 50,
+                        stroke: currentColor,
+                        strokeWidth: currentStrokeWidth,
+                        fill: 'transparent',
+                        opacity: currentOpacity
+                    });
+                    break;
+                case 'rect':
+                    shape = new fabric.Rect({
+                        width: 100,
+                        height: 60,
+                        left: centerX - 50,
+                        top: centerY - 30,
+                        stroke: currentColor,
+                        strokeWidth: currentStrokeWidth,
+                        fill: 'transparent',
+                        opacity: currentOpacity
+                    });
+                    break;
+                case 'triangle':
+                    shape = new fabric.Triangle({
+                        width: 80,
+                        height: 80,
+                        left: centerX - 40,
+                        top: centerY - 40,
+                        stroke: currentColor,
+                        strokeWidth: currentStrokeWidth,
+                        fill: 'transparent',
+                        opacity: currentOpacity
+                    });
+                    break;
+                case 'star':
+                    shape = createStar(centerX, centerY, 5, 40, 20);
+                    break;
+                case 'heart':
+                    shape = createHeart(centerX, centerY);
+                    break;
+                case 'hexagon':
+                    shape = createPolygon(centerX, centerY, 6, 40);
+                    break;
+            }
+            
+            if (shape) {
+                canvas.add(shape);
+                saveCanvasState();
+                updateStatus(\`添加了\${shapeType}形状\`);
+            }
+        }
+        
+        // 创建星形
+        function createStar(centerX, centerY, points, outerRadius, innerRadius) {
+            const starPoints = [];
+            const step = Math.PI / points;
+            
+            for (let i = 0; i < 2 * points; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = i * step - Math.PI / 2;
+                starPoints.push({
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+            
+            return new fabric.Polygon(starPoints, {
+                stroke: currentColor,
+                strokeWidth: currentStrokeWidth,
+                fill: 'transparent',
+                opacity: currentOpacity
+            });
+        }
+        
+        // 创建心形
+        function createHeart(centerX, centerY) {
+            const heartPath = \`M \${centerX},\${centerY + 10} C \${centerX - 20},\${centerY - 10} \${centerX - 40},\${centerY - 10} \${centerX - 20},\${centerY - 30} C \${centerX - 20},\${centerY - 40} \${centerX},\${centerY - 30} \${centerX},\${centerY - 10} C \${centerX},\${centerY - 30} \${centerX + 20},\${centerY - 40} \${centerX + 20},\${centerY - 30} C \${centerX + 40},\${centerY - 10} \${centerX + 20},\${centerY - 10} \${centerX},\${centerY + 10} Z\`;
+            
+            return new fabric.Path(heartPath, {
+                stroke: currentColor,
+                strokeWidth: currentStrokeWidth,
+                fill: 'transparent',
+                opacity: currentOpacity
+            });
+        }
+        
+        // 创建多边形
+        function createPolygon(centerX, centerY, sides, radius) {
+            const points = [];
+            for (let i = 0; i < sides; i++) {
+                const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+                points.push({
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+            
+            return new fabric.Polygon(points, {
+                stroke: currentColor,
+                strokeWidth: currentStrokeWidth,
+                fill: 'transparent',
+                opacity: currentOpacity
+            });
+        }
+        
+        // 设置颜色
+        function setColor(color) {
+            currentColor = color;
+            
+            // 更新选中对象的颜色
+            const activeObject = canvas.getActiveObject();
+            if (activeObject) {
+                if (activeObject.type === 'text') {
+                    activeObject.set('fill', color);
                 } else {
-                ctx.globalCompositeOperation = 'source-over';
+                    activeObject.set('stroke', color);
+                }
+                canvas.renderAll();
+                saveCanvasState();
             }
             
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            updateStatus(\`颜色已设置为 \${color}\`);
+        }
+        
+        // 设置笔刷宽度
+        function setStrokeWidth(width) {
+            currentStrokeWidth = width;
+            document.getElementById('strokeWidthDisplay').textContent = width + 'px';
             
-            lastX = x;
-            lastY = y;
-        }
-        
-        function stopDrawing() {
-            isDrawing = false;
-        }
-        
-        function clearCanvas() {
-            if (confirm('确定要清空画布吗？')) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 更新选中对象的线宽
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.set) {
+                activeObject.set('strokeWidth', parseInt(width));
+                canvas.renderAll();
+                saveCanvasState();
             }
         }
         
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
+        // 设置透明度
+        function setOpacity(opacity) {
+            currentOpacity = opacity;
+            document.getElementById('opacityDisplay').textContent = Math.round(opacity * 100) + '%';
+            
+            // 更新选中对象的透明度
+            const activeObject = canvas.getActiveObject();
+            if (activeObject) {
+                activeObject.set('opacity', parseFloat(opacity));
+                canvas.renderAll();
+                saveCanvasState();
+            }
+        }
         
-        // 触摸事件支持
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
+        // 画布操作
+        function newCanvas() {
+            if (confirm('确定要新建画布吗？当前内容将被清除。')) {
+                canvas.clear();
+                canvas.backgroundColor = 'white';
+                undoStack = [];
+                redoStack = [];
+                saveCanvasState();
+                updateStatus('已新建画布');
+            }
+        }
+        
+        function saveCanvas() {
+            try {
+                const jsonData = JSON.stringify(canvas.toJSON());
+                localStorage.setItem('jaaz-canvas-data', jsonData);
+                updateStatus('画布已保存到本地存储');
+            } catch (error) {
+                updateStatus('保存失败: ' + error.message);
+            }
+        }
+        
+        function loadCanvas() {
+            try {
+                const jsonData = localStorage.getItem('jaaz-canvas-data');
+                if (jsonData) {
+                    canvas.loadFromJSON(jsonData, function() {
+                        canvas.renderAll();
+                        saveCanvasState();
+                        updateStatus('画布已加载');
+                    });
+                } else {
+                    updateStatus('没有找到保存的画布');
+                }
+            } catch (error) {
+                updateStatus('加载失败: ' + error.message);
+            }
+        }
+        
+        function exportCanvas() {
+            try {
+                const dataURL = canvas.toDataURL({
+                    format: 'png',
+                    quality: 1.0
+                });
+                
+                const link = document.createElement('a');
+                link.download = 'jaaz-canvas-' + new Date().getTime() + '.png';
+                link.href = dataURL;
+                link.click();
+                
+                updateStatus('画布已导出');
+            } catch (error) {
+                updateStatus('导出失败: ' + error.message);
+            }
+        }
+        
+        // 撤销/重做
+        function saveCanvasState() {
+            const state = JSON.stringify(canvas.toJSON());
+            undoStack.push(state);
+            
+            // 限制撤销堆栈大小
+            if (undoStack.length > 50) {
+                undoStack.shift();
+            }
+            
+            // 清空重做堆栈
+            redoStack = [];
+        }
+        
+        function undo() {
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const previousState = undoStack[undoStack.length - 1];
+                
+                canvas.loadFromJSON(previousState, function() {
+                    canvas.renderAll();
+                    updateStatus('已撤销操作');
+                });
+            }
+        }
+        
+        function redo() {
+            if (redoStack.length > 0) {
+                const nextState = redoStack.pop();
+                undoStack.push(nextState);
+                
+                canvas.loadFromJSON(nextState, function() {
+                    canvas.renderAll();
+                    updateStatus('已重做操作');
+                });
+            }
+        }
+        
+        // 缩放功能
+        function zoomIn() {
+            const zoom = canvas.getZoom();
+            canvas.setZoom(zoom * 1.1);
+            updateStatus(\`缩放: \${Math.round(zoom * 110)}%\`);
+        }
+        
+        function zoomOut() {
+            const zoom = canvas.getZoom();
+            canvas.setZoom(zoom * 0.9);
+            updateStatus(\`缩放: \${Math.round(zoom * 90)}%\`);
+        }
+        
+        function resetZoom() {
+            canvas.setZoom(1);
+            canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+            canvas.renderAll();
+            updateStatus('缩放已重置');
+        }
+        
+        // 图层管理
+        function addLayer() {
+            const layerName = prompt('请输入图层名称:', '新图层') || '新图层';
+            // 图层功能的实现可以通过分组对象来模拟
+            updateStatus(\`已添加图层: \${layerName}\`);
+        }
+        
+        // AI 聊天功能
+        function handleChatKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 添加用户消息
+            addChatMessage('user', message);
+            input.value = '';
+            
+            try {
+                // 发送到 AI API
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你是一个专业的绘图助手，帮助用户创建和优化图形设计。请提供简洁有用的建议。'
+                            },
+                            ...chatMessages.slice(-5), // 只发送最近5条消息
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                const aiResponse = data.success ? data.data.content : '抱歉，我暂时无法回应。';
+                
+                addChatMessage('assistant', aiResponse);
+            } catch (error) {
+                addChatMessage('assistant', '抱歉，连接AI助手时出现错误。');
+            }
+        }
+        
+        function addChatMessage(role, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = \`message \${role}\`;
+            messageDiv.innerHTML = content.replace(/\\n/g, '<br>');
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // 保存到聊天历史
+            chatMessages.push({ role, content });
+            
+            // 限制聊天历史长度
+            if (chatMessages.length > 20) {
+                chatMessages.shift();
+            }
+        }
+        
+        // 更新状态
+        function updateStatus(message) {
+            document.getElementById('statusBar').textContent = message;
+        }
+        
+        // 响应式处理
+        function handleResize() {
+            const container = document.querySelector('.canvas-wrapper');
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            
+            canvas.setDimensions({
+                width: newWidth,
+                height: newHeight
             });
-            canvas.dispatchEvent(mouseEvent);
-        });
+            
+            canvas.renderAll();
+        }
         
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            canvas.dispatchEvent(mouseEvent);
-        });
-        
-        canvas.addEventListener('touchend', (e) => {
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎨 Jaaz Canvas 专业版已加载');
+            initializeCanvas();
+            
+            // 绑定窗口大小改变事件
+            window.addEventListener('resize', handleResize);
+            
+            // 绑定键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'z':
                             e.preventDefault();
-            const mouseEvent = new MouseEvent('mouseup', {});
-            canvas.dispatchEvent(mouseEvent);
+                            if (e.shiftKey) {
+                                redo();
+                            } else {
+                                undo();
+                            }
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            saveCanvas();
+                            break;
+                        case 'o':
+                            e.preventDefault();
+                            loadCanvas();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            exportCanvas();
+                            break;
+                    }
+                }
+            });
         });
-        
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
     </script>
 </body>
-</html>`;
+</html>`
 }
 
 export function generateMultiEngineCanvasPage(): string {
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎨 AI Canvas Multi - 智能画布编辑器</title>
+    <title>🎨 AI Canvas - 多引擎画布</title>
     <link rel="icon" href="/unicorn.png" type="image/png">
-    <meta name="description" content="AI驱动的智能画布编辑器，支持CoT思维链分析和FLUX图片生成">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
+    <meta name="description" content="集成多种AI引擎的智能画布，支持CoT推理和FLUX图像生成">
+
     <style>
         * {
             margin: 0;
@@ -990,723 +2294,235 @@ export function generateMultiEngineCanvasPage(): string {
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #fafafa;
-            color: #37352f;
-            line-height: 1.6;
-            height: 100vh;
-            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
         }
 
-        .canvas-container {
-            display: flex;
-            height: 100vh;
-            background: #fafafa;
-            gap: 1px;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
         }
 
-        /* 画布区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
         .canvas-area {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            background: white;
-            padding: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
         }
 
         .canvas-wrapper {
-            width: 100%;
-            height: 100%;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e5e5e5;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #main-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 12px;
-        }
-
-        /* AI聊天侧边栏 */
-        .ai-sidebar {
-            width: 400px;
-            border-left: 1px solid #e5e5e5;
-            background: white;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #e0e0e0;
-            background: #fafafa;
-        }
-
-        .sidebar-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 500px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #2e2e2e;
+            justify-content: center;
+            color: #333;
         }
 
-        .sidebar-subtitle {
-            font-size: 0.85rem;
-            color: #787774;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            max-height: calc(100vh - 200px);
-        }
-
-        .message {
-            margin-bottom: 16px;
-        }
-
-        .message.user {
-            text-align: right;
-        }
-
-        .message-content {
-            display: inline-block;
-            max-width: 80%;
-            padding: 12px 16px;
+        .ai-panel {
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .message.user .message-content {
-            background: #2e2e2e;
-            color: white;
-        }
-
-        .message.assistant .message-content {
-            background: #f7f7f7;
-            color: #37352f;
-            border: 1px solid #e0e0e0;
-        }
-
-        .message.analysis .message-content {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-left: 4px solid #2196f3;
-        }
-
-        .message.image .message-content {
-            background: #e8f5e8;
-            color: #2e7d32;
-            border-left: 4px solid #4caf50;
-        }
-
-        .chat-input-area {
-            padding: 20px;
-            border-top: 1px solid #e0e0e0;
-            background: #fafafa;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .chat-input {
-            flex: 1;
-            min-height: 40px;
-            max-height: 120px;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
-            outline: none;
-            resize: none;
-            font-family: inherit;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            background: white;
-            transition: border-color 0.2s ease;
-        }
-
-        .chat-input:focus {
-            border-color: #2e2e2e;
-            box-shadow: 0 0 0 2px rgba(46, 46, 46, 0.1);
-        }
-
-        .send-btn {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: #2e2e2e;
+            background: rgba(255, 255, 255, 0.1);
             color: white;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
             border-radius: 8px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .send-btn:hover:not(:disabled) {
-            background: #1a1a1a;
-            transform: translateY(-1px);
-        }
-
-        .send-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .loading-indicator {
-            display: none;
-            padding: 16px;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #e0e0e0;
-            border-top: 2px solid #2e2e2e;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .toolbar {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: white;
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e5e5;
-            z-index: 10;
-        }
-
-        .tool-btn {
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 2px;
-            transition: background 0.2s;
-        }
-
-        .tool-btn:hover {
-            background: #f0f0f0;
-        }
-
-        .tool-btn.active {
-            background: #2e2e2e;
-            color: white;
-            border-color: #2e2e2e;
-        }
-
-        .nav-header {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-        }
-
-        .nav-btn {
-            padding: 8px 16px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            text-decoration: none;
-            color: #37352f;
-            font-size: 0.85rem;
-            margin-left: 8px;
-            transition: all 0.2s ease;
             font-weight: 500;
+            transition: all 0.3s ease;
         }
 
-        .nav-btn:hover {
-            background: #f7f7f7;
-            color: #2e2e2e;
-            border-color: #d0d0d0;
-            transform: translateY(-1px);
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
 
-        .image-preview {
-            max-width: 200px;
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
-            margin-top: 8px;
-        }
-
-        .cot-analysis {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 8px 0;
-            font-size: 12px;
-        }
-
-        .cot-title {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 4px;
-        }
-
-        .prompt-display {
-            background: #e3f2fd;
-            border-radius: 6px;
-            padding: 8px;
-            margin-top: 4px;
             font-family: monospace;
-            font-size: 11px;
-            color: #1565c0;
         }
     </style>
 </head>
 <body>
-    <div class="canvas-container">
-        <!-- 画布区域 -->
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎨 AI Canvas</h1>
+            <p class="subtitle">多引擎智能画布 - CoT推理 + FLUX生成</p>
+        </div>
+
         <div class="canvas-area">
             <div class="canvas-wrapper">
-                <canvas id="main-canvas"></canvas>
-
-        <!-- 工具栏 -->
-        <div class="toolbar">
-                    <button class="tool-btn active" data-tool="select" title="选择">👆</button>
-                    <button class="tool-btn" data-tool="draw" title="画笔">✏️</button>
-                    <button class="tool-btn" data-tool="eraser" title="橡皮擦">🧽</button>
-                    <button class="tool-btn" onclick="clearCanvas()" title="清空">🗑️</button>
-            </div>
-
-                <!-- 导航按钮 -->
-                <div class="nav-header">
-                    <a href="/" class="nav-btn">🏠 首页</a>
-                    <a href="/canvas" class="nav-btn">🎨 基础画布</a>
-            </div>
+                <p>AI画布正在加载中...</p>
             </div>
         </div>
 
-        <!-- AI聊天侧边栏 -->
-        <div class="ai-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">
-                    🧠 AI 图片生成助手
-                    </div>
-                <div class="sidebar-subtitle">
-                    使用 CoT 思维链分析，智能生成高质量图片
-                    </div>
-                </div>
-                
-            <div class="chat-messages" id="chat-messages">
-                <div class="message assistant">
-                    <div class="message-content">
-                        👋 您好！我是AI图片生成助手。请描述您想要生成的图片，我会：<br><br>
-                        🔍 分析您的需求<br>
-                        🎨 优化提示词<br>
-                        ✨ 生成高质量图片<br><br>
-                        试试说："生成一个可爱的小猫咪"
-                </div>
-            </div>
-        </div>
-
-            <div class="loading-indicator" id="loading-indicator">
-                <div class="loading-spinner"></div>
-                正在处理您的请求...
-            </div>
-
-            <div class="chat-input-area">
-                <div class="input-container">
-                    <textarea 
-                        id="chat-input" 
-                        class="chat-input" 
-                        placeholder="描述您想要生成的图片，或与我对话..."
-                        rows="1"
-                    ></textarea>
-                    <button id="send-btn" class="send-btn">
-                        📤
-                    </button>
-                </div>
-            </div>
+        <div class="ai-panel">
+            <h3>🧠 AI助手</h3>
+            <input type="text" class="chat-input" placeholder="描述你想要生成的图像..." id="promptInput">
+            <button class="btn" onclick="generateImage()">🎨 生成图像</button>
+            <div class="status" id="status">准备就绪</div>
         </div>
     </div>
 
     <script>
-        // 全局变量
-        let canvas = null;
-        let ctx = null;
-        let currentTool = 'select';
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let messages = [];
-        let isGenerating = false;
+        async function generateImage() {
+            const prompt = document.getElementById('promptInput').value;
+            const status = document.getElementById('status');
+            const canvasWrapper = document.querySelector('.canvas-wrapper');
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeCanvas();
-            initializeChat();
-        });
-
-        // 初始化画布
-        function initializeCanvas() {
-            canvas = document.getElementById('main-canvas');
-            if (!canvas) return;
-
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = 2;
-            
-            // 事件监听
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-            
-            // 工具按钮
-            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-                btn.addEventListener('click', () => selectTool(btn.dataset.tool));
-            });
-            
-            window.addEventListener('resize', resizeCanvas);
-        }
-
-        function resizeCanvas() {
-            const wrapper = canvas.parentElement;
-            const rect = wrapper.getBoundingClientRect();
-            canvas.width = rect.width - 2;
-            canvas.height = rect.height - 2;
-        }
-
-        function selectTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tool === tool);
-            });
-        }
-
-        function startDrawing(e) {
-            if (currentTool !== 'draw' && currentTool !== 'eraser') return;
-            
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(currentX, currentY);
-            
-            if (currentTool === 'eraser') {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = 20;
-            } else {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.lineWidth = 2;
+            if (!prompt.trim()) {
+                status.textContent = '请输入图像描述';
+                return;
             }
-            
-            ctx.stroke();
-            
-            lastX = currentX;
-            lastY = currentY;
-        }
 
-        function stopDrawing() {
-                isDrawing = false;
-        }
-
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // 添加图片到画布
-        function addImageToCanvas(imageUrl) {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            // 使用图像代理API处理可能的跨域问题
-            const proxyUrl = '/api/ai/proxy-image?url=' + encodeURIComponent(imageUrl);
-            
-            img.onload = function() {
-                const maxWidth = canvas.width * 0.8;
-                const maxHeight = canvas.height * 0.8;
-                
-                let { width, height } = img;
-                
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
-                }
-                
-                if (height > maxHeight) {
-                    width = (width * maxHeight) / height;
-                    height = maxHeight;
-                }
-                
-                const x = (canvas.width - width) / 2;
-                const y = (canvas.height - height) / 2;
-                
-                ctx.drawImage(img, x, y, width, height);
-            };
-            
-            img.onerror = function() {
-                console.error('图片加载失败:', proxyUrl);
-                // 如果代理加载失败，尝试直接加载原始URL
-                if (img.src !== imageUrl) {
-                    console.log('尝试直接加载原始URL');
-                    img.src = imageUrl;
-                } else {
-                    addMessage('图片加载失败，请重试。', 'assistant');
-                }
-            };
-            
-            img.src = proxyUrl;
-        }
-
-        // 初始化聊天功能
-        function initializeChat() {
-            const chatInput = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('send-btn');
-            
-            // 自动调整输入框高度
-            chatInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            });
-            
-            // 发送消息
-            function sendMessage() {
-                const message = chatInput.value.trim();
-                if (!message || isGenerating) return;
-                
-                addMessage(message, 'user');
-                chatInput.value = '';
-                chatInput.style.height = 'auto';
-                
-                processMessage(message);
-            }
-            
-            sendBtn.addEventListener('click', sendMessage);
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-        }
-
-        // 添加消息到聊天记录
-        function addMessage(content, type, analysis = null, imageUrl = null) {
-            const messagesContainer = document.getElementById('chat-messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + type;
-            
-            let messageContent = '<div class="message-content">' + content;
-            
-            if (analysis) {
-                messageContent += '<div class="cot-analysis">' + 
-                    '<div class="cot-title">🧠 AI思维分析</div>' + 
-                    '<div>' + analysis.thinking + '</div>' + 
-                    '<div class="prompt-display">优化提示词: ' + analysis.imagePrompt + '</div>' + 
-                    '</div>';
-            }
-            
-            if (imageUrl) {
-                messageContent += '<br><img src="' + imageUrl + '" class="image-preview" alt="Generated Image">';
-            }
-            
-            messageContent += '</div>';
-            messageDiv.innerHTML = messageContent;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            messages.push({ content, type, analysis, imageUrl });
-        }
-
-        // 处理用户消息
-        async function processMessage(message) {
-            const isImageRequest = /生成|画|创建|制作|图片|图像|generate|create|draw/i.test(message);
-            
-            if (isImageRequest) {
-                await generateImage(message);
-            } else {
-                await chatWithAI(message);
-            }
-        }
-
-        // AI对话
-        async function chatWithAI(message) {
-            setLoading(true);
-            
             try {
-                const response = await fetch('/api/ai/chat-image', {
+                status.textContent = '🧠 正在使用CoT推理优化提示词...';
+
+                // 使用CoT增强提示词
+                const cotResponse = await fetch('/api/ai/cot/enhance-prompt', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        messages: messages.map(m => ({ content: m.content, role: m.type === 'user' ? 'user' : 'assistant' }))
+                        prompt: prompt,
+                        type: 'image'
                     })
                 });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    addMessage(data.data.content, 'assistant');
-                } else {
-                    addMessage('抱歉，我遇到了一个错误。请重试。', 'assistant');
-                }
-            } catch (error) {
-                console.error('Chat error:', error);
-                addMessage('抱歉，我遇到了一个错误。请重试。', 'assistant');
-            } finally {
-                setLoading(false);
-            }
-        }
 
-        // 生成图片
-        async function generateImage(prompt) {
-            setLoading(true);
-            
-            try {
-                const response = await fetch('/api/ai/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userPrompt: prompt,
-                        conversationHistory: messages.slice(-5)
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // 显示CoT分析
-                    addMessage('正在分析您的需求...', 'analysis', data.data.cotAnalysis);
-                    
-                    // 处理图片生成
-                    if (data.data.isSimulated || data.data.status === 'succeeded') {
-                        const imageUrl = Array.isArray(data.data.output) ? data.data.output[0] : data.data.output;
-                        
-                        setTimeout(() => {
-                            addMessage('图片生成完成！已添加到画布。', 'image', null, imageUrl);
-                            addImageToCanvas(imageUrl);
-                        }, 1000);
-                    } else {
-                        // 轮询状态
-                        pollImageStatus(data.data.predictionId);
-                    }
-                } else {
-                    addMessage('图片生成失败，请重试。', 'assistant');
-                }
-            } catch (error) {
-                console.error('Image generation error:', error);
-                addMessage('图片生成失败，请检查网络连接。', 'assistant');
-            } finally {
-                setLoading(false);
-            }
-        }
+                const cotResult = await cotResponse.json();
 
-        // 轮询图片生成状态
-        async function pollImageStatus(predictionId) {
-            const maxAttempts = 30;
-            let attempts = 0;
-            
-            const checkStatus = async () => {
-                try {
-                    const response = await fetch('/api/ai/image-status/' + predictionId);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        console.log('获取到图片状态:', data.data);
-                        
-                        if (data.data.status === 'succeeded' && data.data.output) {
-                            console.log('图片生成成功，output数据:', data.data.output);
-                            
-                            // 先尝试获取output数组中的第一个URL
-                            let imageUrl;
-                            if (Array.isArray(data.data.output) && data.data.output.length > 0) {
-                                imageUrl = data.data.output[0];
-                                console.log('使用数组中的第一个URL:', imageUrl);
-                            } else if (typeof data.data.output === 'string') {
-                                imageUrl = data.data.output;
-                                console.log('使用字符串URL:', imageUrl);
-                            } else {
-                                console.error('无法识别的output格式');
-                                addMessage('图片格式错误，请重试。', 'assistant');
-                                return;
-                            }
-                            
-                            // 添加消息和图像
-                            addMessage('图片生成完成！已添加到画布。', 'image', null, imageUrl);
-                            addImageToCanvas(imageUrl);
-                            return;
-                        } else if (data.data.status === 'failed') {
-                            console.error('图片生成API返回失败状态');
-                            addMessage('图片生成失败，请重试。', 'assistant');
-                            return;
+                if (cotResult.success) {
+                    status.textContent = \`✨ 提示词已优化: \${cotResult.data.enhancedPrompt.substring(0, 50)}...\`;
+
+                    setTimeout(async () => {
+                        status.textContent = '🎨 正在生成图像 (Vertex AI gemini-2.5-flash-image-preview)...';
+
+                        // 生成图像
+                        const imageResponse = await fetch('/api/ai/image/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                prompt: cotResult.data.enhancedPrompt,
+                                model: 'gemini-2.5-flash-image-preview',
+                                width: 512,
+                                height: 512
+                            })
+                        });
+
+                        const imageResult = await imageResponse.json();
+
+                        if (imageResult.success) {
+                            const imageData = imageResult.data;
+                            status.textContent = '🖼️ 图像生成完成！正在加载到画布...';
+
+                            // 在画布中显示生成的图像
+                            canvasWrapper.innerHTML = \`
+                                <div style="text-align: center;">
+                                    <img src="\${imageData.imageUrl}" alt="Generated Image" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                                    <div style="margin-top: 1rem; color: #333; font-size: 14px;">
+                                        <p><strong>原始提示:</strong> \${imageData.originalPrompt}</p>
+                                        <p><strong>模型:</strong> \${imageData.model}</p>
+                                        <p><strong>尺寸:</strong> \${imageData.dimensions.width}x\${imageData.dimensions.height}</p>
+                                    </div>
+                                </div>
+                            \`;
+
+                            status.textContent = \`✅ 生成完成！模型: \${imageData.model} | 时间: \${new Date(imageData.timestamp).toLocaleTimeString()}\`;
                         } else {
-                            console.log('图片仍在处理中，状态:', data.data.status);
+                            status.textContent = '❌ 图像生成失败: ' + imageResult.error;
                         }
-                    }
-                    
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        setTimeout(checkStatus, 2000);
-                    } else {
-                        addMessage('图片生成超时，请重试。', 'assistant');
-                    }
-                } catch (error) {
-                    console.error('Status check error:', error);
-                    addMessage('图片生成状态检查失败。', 'assistant');
+                    }, 1500);
+                } else {
+                    status.textContent = '❌ 提示词优化失败: ' + cotResult.error;
                 }
-            };
-            
-            setTimeout(checkStatus, 2000);
+            } catch (error) {
+                console.error('Generation error:', error);
+                status.textContent = '❌ 生成过程中出现错误，请检查网络连接';
+            }
         }
 
-        // 设置加载状态
-        function setLoading(loading) {
-            isGenerating = loading;
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const sendBtn = document.getElementById('send-btn');
-            
-            loadingIndicator.style.display = loading ? 'block' : 'none';
-            sendBtn.disabled = loading;
-        }
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const promptInput = document.getElementById('promptInput');
+
+            // 回车键提交
+            promptInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateImage();
+                }
+            });
+
+            // 添加一些示例提示词
+            const examples = [
+                '一只可爱的小猫在花园里玩耍',
+                '未来科技城市的夜景',
+                '梦幻般的森林中的小屋',
+                '宇宙中的星云和行星'
+            ];
+
+            let exampleIndex = 0;
+            promptInput.placeholder = examples[exampleIndex];
+
+            // 每5秒切换示例
+            setInterval(() => {
+                exampleIndex = (exampleIndex + 1) % examples.length;
+                if (!promptInput.value) {
+                    promptInput.placeholder = examples[exampleIndex];
+                }
+            }, 5000);
+        });
     </script>
- </body>
- </html>`;
- } 
+</body>
+</html>`
+}

@@ -410,7 +410,11 @@ export function generateImageEditorPage(): string {
             border-color: var(--accent-blue);
         }
 
+<<<<<<< HEAD
         #send-btn {
+=======
+        #send-btn, #generate-btn {
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
             background: var(--accent-blue);
             color: white;
             border: none;
@@ -418,12 +422,30 @@ export function generateImageEditorPage(): string {
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+<<<<<<< HEAD
         }
 
         #send-btn:hover {
             background: var(--accent-blue-hover);
         }
 
+=======
+            min-width: 40px;
+        }
+
+        #send-btn:hover, #generate-btn:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        #generate-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+        }
+
+        #generate-btn:hover {
+            background: linear-gradient(45deg, #ff5252, #ff9800);
+        }
+
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
         /* Responsive Design */
         @media (max-width: 1400px) {
             .ai-chat-panel {
@@ -655,8 +677,14 @@ export function generateImageEditorPage(): string {
                     <!-- Chat messages will be added here -->
                 </div>
                 <div class="chat-input-container">
+<<<<<<< HEAD
                     <input type="text" id="chat-input" placeholder="Ask AI for help...">
                     <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+=======
+                    <input type="text" id="chat-input" placeholder="描述你想生成的图像，或询问AI助手...">
+                    <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+                    <button id="generate-btn" title="AI图像生成"><i class="fas fa-magic"></i></button>
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
                 </div>
             </div>
         </div>
@@ -1068,6 +1096,84 @@ export function generateImageEditorPage(): string {
                     case 'circle':
                         this.addCircle();
                         break;
+<<<<<<< HEAD
+=======
+                    case 'ai-enhance':
+                        this.aiEnhanceImage();
+                        break;
+                }
+            }
+
+            // AI增强功能 - 连接后端API
+            async aiEnhanceImage() {
+                if (!this.currentEditingImage) {
+                    addMessage('ai', '请先选择一张图片进行AI增强');
+                    return;
+                }
+
+                try {
+                    addMessage('ai', '🤖 正在分析图像...');
+
+                    // 先分析图像
+                    const analysisResponse = await fetch('/api/ai/image/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            imageData: this.currentEditingImage.src
+                        })
+                    });
+
+                    const analysisResult = await analysisResponse.json();
+
+                    if (analysisResult.success) {
+                        const analysis = analysisResult.data.analysis;
+                        addMessage('ai', \`📊 图像分析完成：\${analysis.description}\`);
+
+                        // 显示建议
+                        analysis.suggestions.forEach((suggestion, index) => {
+                            setTimeout(() => {
+                                addMessage('ai', \`💡 建议 \${index + 1}: \${suggestion}\`);
+                            }, (index + 1) * 500);
+                        });
+
+                        // 执行AI增强
+                        setTimeout(async () => {
+                            addMessage('ai', '🎨 正在应用AI增强...');
+
+                            const editResponse = await fetch('/api/ai/image/edit', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    imageData: this.currentEditingImage.src,
+                                    instruction: 'Enhance image quality, improve colors and contrast, apply professional enhancements',
+                                    model: 'qwen-image-edit'
+                                })
+                            });
+
+                            const editResult = await editResponse.json();
+
+                            if (editResult.success) {
+                                addMessage('ai', '✨ AI增强完成！');
+                                editResult.data.changes.forEach((change, index) => {
+                                    setTimeout(() => {
+                                        addMessage('ai', \`✅ \${change}\`);
+                                    }, (index + 1) * 300);
+                                });
+                            } else {
+                                addMessage('ai', '❌ AI增强失败: ' + editResult.error);
+                            }
+                        }, 3000);
+                    } else {
+                        addMessage('ai', '❌ 图像分析失败: ' + analysisResult.error);
+                    }
+                } catch (error) {
+                    console.error('AI enhance error:', error);
+                    addMessage('ai', '❌ AI增强过程中出现错误');
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
                 }
             }
 
@@ -1246,11 +1352,24 @@ export function generateImageEditorPage(): string {
             aiEditor = new AIImageEditor();
             setupHeaderButtons();
             setupFloatingPanels();
+<<<<<<< HEAD
+=======
+            setupChatFunctionality();
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
 
             // Set default tool
             aiEditor.selectTool('select');
 
+<<<<<<< HEAD
             addMessage('ai', 'AI Image Editor ready! Upload images and use the editing tools to annotate them.');
+=======
+            addMessage('ai', '🎨 AI Image Editor 已就绪！');
+            addMessage('ai', '💡 你可以：');
+            addMessage('ai', '📤 上传图片进行编辑和标注');
+            addMessage('ai', '🎨 输入描述生成AI图像 (Shift+Enter)');
+            addMessage('ai', '💬 与AI助手对话 (Enter)');
+            addMessage('ai', '✨ 使用AI增强工具优化图片');
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
         });
 
         // Header button functionality
@@ -1371,7 +1490,174 @@ export function generateImageEditorPage(): string {
             });
         }
 
+<<<<<<< HEAD
         // Simple chat functionality
+=======
+        // AI聊天和图像生成功能
+        function setupChatFunctionality() {
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            const generateBtn = document.getElementById('generate-btn');
+
+            // 发送聊天消息
+            async function sendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                addMessage('user', message);
+                chatInput.value = '';
+
+                try {
+                    addMessage('ai', '🤔 正在思考...');
+
+                    const response = await fetch('/api/ai/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [
+                                { role: 'user', content: message }
+                            ]
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    // 移除"正在思考"消息
+                    const messages = document.querySelectorAll('.message.ai');
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage && lastMessage.textContent.includes('正在思考')) {
+                        lastMessage.remove();
+                    }
+
+                    if (result.success) {
+                        addMessage('ai', result.data.content);
+                    } else {
+                        addMessage('ai', '抱歉，我现在无法回应。请稍后再试。');
+                    }
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    addMessage('ai', '网络连接出现问题，请检查网络后重试。');
+                }
+            }
+
+            // AI图像生成
+            async function generateImage() {
+                const prompt = chatInput.value.trim();
+                if (!prompt) {
+                    addMessage('ai', '请输入图像描述来生成图片');
+                    return;
+                }
+
+                addMessage('user', \`🎨 生成图像: \${prompt}\`);
+                chatInput.value = '';
+
+                try {
+                    addMessage('ai', '🧠 正在使用CoT推理优化提示词...');
+
+                    // 先使用CoT增强提示词
+                    const cotResponse = await fetch('/api/ai/cot/enhance-prompt', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            type: 'image'
+                        })
+                    });
+
+                    const cotResult = await cotResponse.json();
+
+                    if (cotResult.success) {
+                        addMessage('ai', \`✨ 提示词已优化: \${cotResult.data.enhancedPrompt.substring(0, 100)}...\`);
+
+                        addMessage('ai', '🎨 正在生成图像...');
+
+                        // 生成图像
+                        const imageResponse = await fetch('/api/ai/image/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                prompt: cotResult.data.enhancedPrompt,
+                                model: 'gemini-2.5-flash-image-preview',
+                                width: 512,
+                                height: 512
+                            })
+                        });
+
+                        const imageResult = await imageResponse.json();
+
+                        if (imageResult.success) {
+                            const imageData = imageResult.data;
+                            addMessage('ai', '🖼️ 图像生成完成！');
+
+                            // 添加图像到画布
+                            if (aiEditor) {
+                                const generatedImage = {
+                                    id: Date.now() + Math.random(),
+                                    file: { name: \`ai-generated-\${Date.now()}.png\` },
+                                    src: imageData.imageUrl,
+                                    annotations: [],
+                                    selected: false,
+                                    aiGenerated: true,
+                                    prompt: prompt,
+                                    model: imageData.model
+                                };
+
+                                aiEditor.images.push(generatedImage);
+                                aiEditor.renderImage(generatedImage);
+
+                                // 移除占位符
+                                if (aiEditor.images.length === 1) {
+                                    const placeholder = aiEditor.canvasContainer.querySelector('.image-placeholder');
+                                    if (placeholder) {
+                                        placeholder.remove();
+                                    }
+                                }
+                            }
+
+                            addMessage('ai', \`📊 模型: \${imageData.model}\`);
+                            addMessage('ai', \`⏰ 生成时间: \${new Date(imageData.timestamp).toLocaleTimeString()}\`);
+                        } else {
+                            addMessage('ai', '❌ 图像生成失败: ' + imageResult.error);
+                        }
+                    } else {
+                        addMessage('ai', '❌ 提示词优化失败: ' + cotResult.error);
+                    }
+                } catch (error) {
+                    console.error('Image generation error:', error);
+                    addMessage('ai', '❌ 图像生成过程中出现错误');
+                }
+            }
+
+            // 事件监听
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendMessage);
+            }
+
+            if (generateBtn) {
+                generateBtn.addEventListener('click', generateImage);
+            }
+
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        if (e.shiftKey) {
+                            generateImage();
+                        } else {
+                            sendMessage();
+                        }
+                    }
+                });
+            }
+        }
+
+        // 聊天消息功能
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
         function addMessage(sender, message) {
             const chatMessages = document.getElementById('chat-messages');
             if (!chatMessages) return;
@@ -1390,5 +1676,11 @@ export function generateImageEditorPage(): string {
         console.log('AI Image Editor fully loaded');
     </script>
 </body>
+<<<<<<< HEAD
+=======
+</html>\`;
+}
+</body>
+>>>>>>> 318d472 (🚀 重大优化：集成AI服务和完整功能)
 </html>`;
 }
