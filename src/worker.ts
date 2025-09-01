@@ -45,6 +45,12 @@ app.route('/api', fileRoutes)
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 // Frontend Routes
+app.get('/', (c) => {
+  return new Response(generateIndexPage(undefined, c.env), {
+    headers: { 'Content-Type': 'text/html' }
+  })
+})
+
 app.get('/chat', (c) => {
   return new Response(generateChatPage(), {
     headers: { 'Content-Type': 'text/html' }
@@ -117,8 +123,8 @@ app.get('*', async (c) => {
   }
   
   // Fallback to index page for any other path (serves as a 404 handler)
-  const html = generateIndexPage()
-  
+  const html = generateIndexPage(undefined, c.env)
+
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html',

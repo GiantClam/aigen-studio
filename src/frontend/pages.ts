@@ -9,7 +9,7 @@ export interface PageData {
   }>
 }
 
-export function generateIndexPage(data?: PageData): string {
+export function generateIndexPage(data?: PageData, env?: any): string {
   const defaultData: PageData = {
     title: 'AI Gen Studio - 免费在线 AI 图像编辑器和生成工具',
     description: '强大的AI驱动创意工具，支持智能图像生成、专业编辑、实时协作。无需下载，浏览器直接使用。',
@@ -61,6 +61,14 @@ export function generateIndexPage(data?: PageData): string {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // 配置变量 - 从服务器端注入
+        window.APP_CONFIG = {
+            GOOGLE_CLIENT_ID: '${env?.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com'}',
+            API_BASE_URL: '${env?.API_BASE_URL || '/api'}',
+            APP_NAME: 'AI Gen Studio'
+        };
+    </script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -780,12 +788,20 @@ export function generateIndexPage(data?: PageData): string {
         
         // Google Auth 配置
         window.onload = function() {
-            google.accounts.id.initialize({
-                client_id: '${process.env.GOOGLE_CLIENT_ID || "your-google-client-id"}',
-                callback: handleCredentialResponse,
-                auto_select: false,
-                cancel_on_tap_outside: true
-            });
+            // 从配置中获取 Google Client ID
+            const config = window.APP_CONFIG || {};
+            const googleClientId = config.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com';
+
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: googleClientId,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+            } else {
+                console.warn('Google Sign-In API not loaded');
+            }
         };
 
         function handleCredentialResponse(response) {
