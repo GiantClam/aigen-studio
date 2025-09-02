@@ -11,38 +11,38 @@ export interface PageData {
 
 export function generateIndexPage(data?: PageData, env?: any): string {
   const defaultData: PageData = {
-    title: 'AI Gen Studio - 免费在线 AI 图像编辑器和生成工具',
-    description: '强大的AI驱动创意工具，支持智能图像生成、专业编辑、实时协作。无需下载，浏览器直接使用。',
+    title: 'AI Gen Studio - 最高效的 AI 图像编辑器和生成工具',
+    description: '无需精通提示词，使用我们的智能模板快速生成专业级图像。最有设计感的在线编辑器，让创意触手可及。',
     features: [
       {
-        icon: '🤖',
-        title: 'AI 图像生成器',
-        description: '使用最新的 Vertex AI 和 FLUX 模型，从文本描述生成高质量图像，支持多种风格和尺寸'
+        icon: '🎯',
+        title: '智能提示词模板',
+        description: '精选数百个专业提示词模板，涵盖摄影、插画、设计等风格，一键生成完美图像，无需学习复杂提示词'
       },
       {
-        icon: '✨',
-        title: 'AI 智能增强',
-        description: '一键智能优化图像质量，自动调整亮度、对比度、色彩饱和度，让照片更加专业'
+        icon: '⚡',
+        title: '极速 AI 生成',
+        description: '集成最新 FLUX 和 Vertex AI 模型，3秒生成高质量图像，支持4K分辨率，效率提升10倍'
       },
       {
         icon: '🎨',
-        title: '专业编辑工具',
-        description: '完整的图像编辑套件，包括画笔、文字、形状、滤镜等专业工具，支持图层操作'
+        title: '专业级编辑套件',
+        description: '媲美 Photoshop 的在线编辑器，智能抠图、一键美化、风格转换，让每张图片都成为艺术品'
       },
       {
         icon: '🧠',
-        title: 'CoT 智能推理',
-        description: '先进的思维链推理技术，自动优化用户提示词，提升AI生成效果和准确性'
+        title: 'CoT 智能优化',
+        description: '独创思维链推理技术，自动分析并优化您的创意想法，将简单描述转化为专业级提示词'
       },
       {
-        icon: '☁️',
-        title: '云端协作',
-        description: '基于 Cloudflare 全球网络，支持实时同步、多设备访问、安全存储和团队协作'
+        icon: '🚀',
+        title: '一站式创作流程',
+        description: '从灵感到成品，生成→编辑→优化→导出，完整创作流程无缝衔接，效率提升300%'
       },
       {
-        icon: '📱',
-        title: '跨平台支持',
-        description: '响应式设计，完美适配桌面、平板、手机，随时随地进行创意工作'
+        icon: '💎',
+        title: '设计师级品质',
+        description: '每个功能都经过精心设计，界面美观易用，让创作过程本身就是一种享受'
       }
     ]
   }
@@ -71,20 +71,29 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     </script>
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary-color: #64748b;
-            --accent-color: #f59e0b;
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
             --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
             --background: #ffffff;
-            --surface: #f8fafc;
+            --surface: #fafbfc;
             --surface-hover: #f1f5f9;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
+            --surface-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
             --text-muted: #94a3b8;
             --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            --gradient-secondary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --blur-backdrop: blur(20px);
         }
 
         * {
@@ -103,18 +112,23 @@ export function generateIndexPage(data?: PageData, env?: any): string {
 
         /* Navigation */
         .navbar {
-            background: var(--background);
-            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: var(--blur-backdrop);
+            border-bottom: 1px solid var(--border-light);
             padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: var(--shadow);
         }
 
         .nav-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 2rem;
             display: flex;
@@ -125,17 +139,33 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
+            gap: 0.75rem;
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .nav-menu {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 2.5rem;
             list-style: none;
         }
 
@@ -143,11 +173,29 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             color: var(--text-secondary);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.2s ease;
+            font-size: 0.95rem;
+            position: relative;
+            transition: all 0.2s ease;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
         }
 
         .nav-link:hover {
             color: var(--primary-color);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
         }
 
         .nav-actions {
@@ -159,48 +207,87 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
+            padding: 0.875rem 1.75rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             cursor: pointer;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: var(--primary-color);
+            background: var(--gradient-primary);
             color: white;
+            box-shadow: var(--shadow);
         }
 
         .btn-primary:hover {
-            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .btn-secondary {
+            background: var(--surface-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
             transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow);
         }
 
         .btn-outline {
             background: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--border);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
         }
 
         .btn-outline:hover {
-            background: var(--surface-hover);
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
         }
 
         .btn-google {
             background: white;
             color: var(--text-primary);
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-google:hover {
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow);
             transform: translateY(-1px);
+        }
+
+        .btn-large {
+            padding: 1.25rem 2.5rem;
+            font-size: 1.1rem;
+            border-radius: 1rem;
         }
 
         .container {
@@ -211,12 +298,15 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         
         /* Hero Section */
         .hero {
-            padding: 4rem 0 6rem 0;
+            padding: 6rem 0 8rem 0;
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-primary);
             color: white;
             position: relative;
             overflow: hidden;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
         }
 
         .hero::before {
@@ -226,66 +316,111 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
 
         .hero-content {
             position: relative;
             z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
         .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
             line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .hero-subtitle {
-            font-size: 1.25rem;
-            opacity: 0.9;
-            margin-bottom: 2.5rem;
-            max-width: 600px;
+            font-size: 1.375rem;
+            opacity: 0.95;
+            margin-bottom: 3rem;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
+            line-height: 1.6;
+            font-weight: 400;
         }
 
         .hero-actions {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             justify-content: center;
             flex-wrap: wrap;
-            margin-bottom: 3rem;
+            margin-bottom: 4rem;
         }
 
         .btn-hero {
-            padding: 1rem 2rem;
+            padding: 1.25rem 2.5rem;
             font-size: 1.1rem;
-            border-radius: 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
         }
 
         .btn-hero-primary {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: var(--blur-backdrop);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .btn-hero-primary:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
 
         .btn-hero-secondary {
             background: white;
             color: var(--primary-color);
             border: 1px solid white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .btn-hero-secondary:hover {
             background: var(--surface);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
         
         /* Features Section */
@@ -371,6 +506,33 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         .feature-description {
             color: var(--text-secondary);
             line-height: 1.6;
+        }
+
+        /* Template Cards */
+        .template-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .template-card:hover .template-image {
+            transform: scale(1.05);
+        }
+
+        .template-image {
+            transition: transform 0.3s ease;
+        }
+
+        .template-overlay {
+            backdrop-filter: var(--blur-backdrop);
+        }
+
+        .template-tags span {
+            transition: all 0.2s ease;
+        }
+
+        .template-card:hover .template-tags span {
+            background: var(--primary-color);
+            color: white;
         }
 
         /* Responsive Design */
@@ -615,32 +777,120 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">免费在线 AI 图像编辑器</h1>
+                <h1 class="hero-title">最高效的 AI 图像编辑器</h1>
                 <p class="hero-subtitle">
-                    强大的AI驱动创意工具，支持智能图像生成、专业编辑、实时协作。无需下载，浏览器直接使用。
+                    无需精通提示词，使用我们的智能模板快速生成专业级图像。最有设计感的在线编辑器，让创意触手可及。
                 </p>
 
                 <div class="hero-actions">
-                    <a href="/image-editor" class="btn btn-hero btn-hero-primary">
-                        <i class="fas fa-magic"></i>
-                        开始编辑
+                    <a href="/image-editor" class="btn btn-hero btn-hero-primary btn-large">
+                        <i class="fas fa-sparkles"></i>
+                        立即开始创作
                     </a>
-                    <a href="/canvas-multi" class="btn btn-hero btn-hero-secondary">
+                    <a href="/canvas-multi" class="btn btn-hero btn-hero-secondary btn-large">
                         <i class="fas fa-palette"></i>
-                        AI 画布
+                        浏览模板库
                     </a>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">500+</span>
+                        <span class="hero-stat-label">精选模板</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">3秒</span>
+                        <span class="hero-stat-label">极速生成</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">4K</span>
+                        <span class="hero-stat-label">超高清画质</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">100万+</span>
+                        <span class="hero-stat-label">用户信赖</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
         
+    <!-- Prompt Templates Section -->
+    <section class="templates-section" style="padding: 6rem 0; background: var(--surface);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">精选提示词模板</h2>
+                <p class="section-subtitle">
+                    无需学习复杂提示词，选择模板一键生成专业级图像
+                </p>
+            </div>
+
+            <div class="templates-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
+                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
+                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem;">📸</span>
+                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">摄影风格</div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">专业人像摄影</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">高质量人像照片，完美光影效果</p>
+                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">人像</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">专业</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">高清</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
+                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem;">🎨</span>
+                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">艺术插画</div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">数字艺术插画</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">创意插画设计，丰富色彩表现</p>
+                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">插画</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">创意</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">艺术</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
+                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem;">🏢</span>
+                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">商业设计</div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">商业产品展示</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">专业产品摄影，商业级品质</p>
+                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">商业</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">产品</span>
+                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">专业</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="/templates" class="btn btn-primary btn-large">
+                    <i class="fas fa-th-large"></i>
+                    查看全部 500+ 模板
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
     <section class="features-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">强大的 AI 创意工具</h2>
+                <h2 class="section-title">为什么选择 AI Gen Studio</h2>
                 <p class="section-subtitle">
-                    集成最新的人工智能技术，为您提供专业级的图像编辑和生成体验
+                    最高效、最有设计感的图像编辑平台，让每个人都能创作出专业级作品
                 </p>
             </div>
 
