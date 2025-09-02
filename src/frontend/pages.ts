@@ -766,7 +766,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                     </svg>
                     Sign in with Google
                 </button>
-                <a href="/chat" class="btn btn-primary">
+                <a href="/image-editor" class="btn btn-primary">
                     <i class="fas fa-rocket"></i>
                     Get Started
                 </a>
@@ -788,9 +788,9 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <i class="fas fa-magic"></i>
                         Start Creating
                     </a>
-                    <a href="/canvas-multi" class="btn btn-hero btn-hero-secondary btn-large">
-                        <i class="fas fa-play"></i>
-                        View Examples
+                    <a href="/image-editor" class="btn btn-hero btn-hero-secondary btn-large">
+                        <i class="fas fa-rocket"></i>
+                        Get Started
                     </a>
                 </div>
 
@@ -1062,7 +1062,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Google AI Studio access</li>
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Community support</li>
                     </ul>
-                    <a href="/image-editor" class="btn btn-outline" style="width: 100%;">Start Free</a>
+                    <a href="/image-editor" class="btn btn-outline" style="width: 100%;">Get Started</a>
                 </div>
 
                 <div class="pricing-card" style="background: white; border-radius: 1rem; padding: 2.5rem; text-align: center; box-shadow: var(--shadow-lg); border: 2px solid var(--primary-color); position: relative; transform: scale(1.05);">
@@ -1077,7 +1077,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>API access included</li>
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Priority support</li>
                     </ul>
-                    <a href="/chat" class="btn btn-primary" style="width: 100%;">Start Creating</a>
+                    <a href="/image-editor" class="btn btn-primary" style="width: 100%;">Start Creating</a>
                 </div>
             </div>
 
