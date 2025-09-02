@@ -11,38 +11,38 @@ export interface PageData {
 
 export function generateIndexPage(data?: PageData, env?: any): string {
   const defaultData: PageData = {
-    title: 'AI Gen Studio - 最高效的 AI 图像编辑器和生成工具',
-    description: '无需精通提示词，使用我们的智能模板快速生成专业级图像。最有设计感的在线编辑器，让创意触手可及。',
+    title: 'AI Gen Studio - Professional Image Editor Powered by Gemini 2.5 Flash',
+    description: 'Create, edit, and transform images with Google\'s state-of-the-art Gemini 2.5 Flash Image model. Professional results in seconds, no expertise required.',
     features: [
       {
-        icon: '🎯',
-        title: '智能提示词模板',
-        description: '精选数百个专业提示词模板，涵盖摄影、插画、设计等风格，一键生成完美图像，无需学习复杂提示词'
-      },
-      {
-        icon: '⚡',
-        title: '极速 AI 生成',
-        description: '集成最新 FLUX 和 Vertex AI 模型，3秒生成高质量图像，支持4K分辨率，效率提升10倍'
-      },
-      {
         icon: '🎨',
-        title: '专业级编辑套件',
-        description: '媲美 Photoshop 的在线编辑器，智能抠图、一键美化、风格转换，让每张图片都成为艺术品'
+        title: 'Text-to-Image Generation',
+        description: 'Generate high-quality images from simple or complex text descriptions using Gemini 2.5 Flash\'s advanced multimodal architecture'
       },
       {
-        icon: '🧠',
-        title: 'CoT 智能优化',
-        description: '独创思维链推理技术，自动分析并优化您的创意想法，将简单描述转化为专业级提示词'
+        icon: '✨',
+        title: 'Intelligent Image Editing',
+        description: 'Add, remove, or modify elements with natural language. Change styles, adjust colors, and make targeted transformations effortlessly'
       },
       {
-        icon: '🚀',
-        title: '一站式创作流程',
-        description: '从灵感到成品，生成→编辑→优化→导出，完整创作流程无缝衔接，效率提升300%'
+        icon: '🔄',
+        title: 'Multi-Image Composition',
+        description: 'Blend multiple images seamlessly, transfer styles, and create complex compositions with a single prompt'
       },
       {
-        icon: '💎',
-        title: '设计师级品质',
-        description: '每个功能都经过精心设计，界面美观易用，让创作过程本身就是一种享受'
+        icon: '👤',
+        title: 'Character Consistency',
+        description: 'Maintain the same character or object across multiple images for storytelling, branding, and creative projects'
+      },
+      {
+        icon: '📝',
+        title: 'Text Rendering',
+        description: 'Generate images with clear, well-placed text - perfect for logos, posters, diagrams, and marketing materials'
+      },
+      {
+        icon: '🌍',
+        title: 'World Knowledge Integration',
+        description: 'Leverage Gemini\'s deep understanding of the real world for accurate, contextually relevant image generation'
       }
     ]
   }
@@ -749,10 +749,11 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             </a>
 
             <ul class="nav-menu">
-                <li><a href="#features" class="nav-link">功能</a></li>
-                <li><a href="#tools" class="nav-link">工具</a></li>
-                <li><a href="#pricing" class="nav-link">定价</a></li>
-                <li><a href="#help" class="nav-link">帮助</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#examples" class="nav-link">Examples</a></li>
+                <li><a href="#templates" class="nav-link">Templates</a></li>
+                <li><a href="#pricing" class="nav-link">Pricing</a></li>
+                <li><a href="#docs" class="nav-link">Docs</a></li>
             </ul>
 
             <div class="nav-actions">
@@ -763,11 +764,11 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Google 登录
+                    Sign in with Google
                 </button>
                 <a href="/chat" class="btn btn-primary">
                     <i class="fas fa-rocket"></i>
-                    开始创作
+                    Get Started
                 </a>
             </div>
         </div>
@@ -777,108 +778,180 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">最高效的 AI 图像编辑器</h1>
+                <h1 class="hero-title">Professional Image Editor Powered by Gemini 2.5 Flash</h1>
                 <p class="hero-subtitle">
-                    无需精通提示词，使用我们的智能模板快速生成专业级图像。最有设计感的在线编辑器，让创意触手可及。
+                    Create, edit, and transform images with Google's state-of-the-art AI model. Generate photorealistic scenes, edit with natural language, and maintain character consistency across projects.
                 </p>
 
                 <div class="hero-actions">
                     <a href="/image-editor" class="btn btn-hero btn-hero-primary btn-large">
-                        <i class="fas fa-sparkles"></i>
-                        立即开始创作
+                        <i class="fas fa-magic"></i>
+                        Start Creating
                     </a>
                     <a href="/canvas-multi" class="btn btn-hero btn-hero-secondary btn-large">
-                        <i class="fas fa-palette"></i>
-                        浏览模板库
+                        <i class="fas fa-play"></i>
+                        View Examples
                     </a>
                 </div>
 
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <span class="hero-stat-number">500+</span>
-                        <span class="hero-stat-label">精选模板</span>
+                        <span class="hero-stat-number">Multimodal</span>
+                        <span class="hero-stat-label">Native Architecture</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-number">3秒</span>
-                        <span class="hero-stat-label">极速生成</span>
+                        <span class="hero-stat-number">$0.039</span>
+                        <span class="hero-stat-label">Per Image</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-number">4K</span>
-                        <span class="hero-stat-label">超高清画质</span>
+                        <span class="hero-stat-number">Real-time</span>
+                        <span class="hero-stat-label">Generation</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-number">100万+</span>
-                        <span class="hero-stat-label">用户信赖</span>
+                        <span class="hero-stat-number">Google AI</span>
+                        <span class="hero-stat-label">Powered</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
         
-    <!-- Prompt Templates Section -->
-    <section class="templates-section" style="padding: 6rem 0; background: var(--surface);">
+    <!-- Use Cases Section -->
+    <section class="use-cases-section" style="padding: 6rem 0; background: var(--surface);">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">精选提示词模板</h2>
+                <h2 class="section-title">Gemini 2.5 Flash Image Capabilities</h2>
                 <p class="section-subtitle">
-                    无需学习复杂提示词，选择模板一键生成专业级图像
+                    Explore the powerful features of Google's state-of-the-art multimodal image model
                 </p>
             </div>
 
-            <div class="templates-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
-                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
-                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem;">📸</span>
-                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">摄影风格</div>
+            <div class="use-cases-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 4rem;">
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">📸</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">Photorealistic</div>
                     </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">专业人像摄影</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">高质量人像照片，完美光影效果</p>
-                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">人像</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">专业</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">高清</span>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Photorealistic Scenes</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Generate stunning photorealistic images with precise camera angles, lighting, and fine details.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--primary-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"A photorealistic close-up portrait of an elderly Japanese ceramicist with deep wrinkles and a warm smile, inspecting a tea bowl in his sun-drenched workshop. Soft golden hour lighting, 85mm lens, bokeh background."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Portrait</span>
+                            <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Lighting</span>
+                            <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Professional</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
-                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); position: relative; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem;">🎨</span>
-                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">艺术插画</div>
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">✏️</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">Image Editing</div>
                     </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">数字艺术插画</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">创意插画设计，丰富色彩表现</p>
-                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">插画</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">创意</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">艺术</span>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Natural Language Editing</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Edit images with simple text commands. Add, remove, or modify elements naturally.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--secondary-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"Using the provided image of my cat, please add a small knitted wizard hat on its head. Make it look comfortable and match the soft lighting."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--secondary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Add Elements</span>
+                            <span style="background: var(--secondary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Remove Objects</span>
+                            <span style="background: var(--secondary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Style Transfer</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="template-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer;">
-                    <div class="template-image" style="height: 200px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); position: relative; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 3rem;">🏢</span>
-                        <div class="template-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">商业设计</div>
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">👤</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">Character Consistency</div>
                     </div>
-                    <div style="padding: 1.5rem;">
-                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">商业产品展示</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">专业产品摄影，商业级品质</p>
-                        <div class="template-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">商业</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">产品</span>
-                            <span style="background: var(--surface); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">专业</span>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Character Consistency</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Maintain the same character across multiple images for storytelling and branding.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--accent-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"Show the same character from the previous image now sitting in a cozy coffee shop, reading a book. Maintain the same facial features and clothing style."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--accent-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Storytelling</span>
+                            <span style="background: var(--accent-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Branding</span>
+                            <span style="background: var(--accent-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Consistency</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">🔄</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">Multi-Image</div>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Multi-Image Composition</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Blend multiple images seamlessly to create complex compositions and scenes.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--success-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"Take the blue dress from the first image and the woman from the second image. Create a professional fashion photo of the woman wearing the dress in an outdoor setting."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--success-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Composition</span>
+                            <span style="background: var(--success-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Product Mockup</span>
+                            <span style="background: var(--success-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Scene Fusion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">📝</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">Text Rendering</div>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Text Rendering</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Generate images with clear, well-placed text for logos, posters, and marketing materials.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--warning-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"Create a modern logo for 'The Daily Grind' coffee shop. Clean, bold sans-serif font with a stylized coffee bean icon. Black and white color scheme."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--warning-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Logos</span>
+                            <span style="background: var(--warning-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Posters</span>
+                            <span style="background: var(--warning-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Typography</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: var(--shadow); transition: all 0.3s ease;">
+                    <div class="use-case-image" style="height: 220px; background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); position: relative; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 4rem;">🌍</span>
+                        <div class="use-case-overlay" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem;">World Knowledge</div>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">World Knowledge Integration</h3>
+                        <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Leverage Gemini's deep understanding of the real world for accurate, contextually relevant images.</p>
+                        <div class="prompt-example" style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--error-color); margin-bottom: 1rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">Example Prompt:</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0 0; font-style: italic;">"Create an educational diagram showing the water cycle, with accurate labels and scientifically correct representations of evaporation, condensation, and precipitation."</p>
+                        </div>
+                        <div class="use-case-tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="background: var(--error-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Education</span>
+                            <span style="background: var(--error-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Diagrams</span>
+                            <span style="background: var(--error-color); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.8rem;">Accuracy</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 3rem;">
-                <a href="/templates" class="btn btn-primary btn-large">
-                    <i class="fas fa-th-large"></i>
-                    查看全部 500+ 模板
+            <div style="text-align: center; margin-top: 4rem;">
+                <a href="/examples" class="btn btn-primary btn-large">
+                    <i class="fas fa-play"></i>
+                    Try Interactive Examples
                 </a>
             </div>
         </div>
@@ -888,9 +961,9 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="features-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">为什么选择 AI Gen Studio</h2>
+                <h2 class="section-title">Why Choose AI Gen Studio</h2>
                 <p class="section-subtitle">
-                    最高效、最有设计感的图像编辑平台，让每个人都能创作出专业级作品
+                    Professional image editing powered by Google's most advanced multimodal AI model
                 </p>
             </div>
 
@@ -921,58 +994,107 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="tools-section" style="padding: 4rem 0; background: white;">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">选择您的创作工具</h2>
+                <h2 class="section-title">Choose Your Creative Tool</h2>
                 <p class="section-subtitle">
-                    从简单的快速编辑到专业的设计创作，我们为每种需求提供完美的工具
+                    From quick edits to professional design work, we have the perfect tool for every creative need
                 </p>
             </div>
 
             <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
                 <a href="/image-editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖼️</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 图像编辑器</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">专业的图像编辑工具，支持AI增强和智能修复</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI Image Editor</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Professional image editing with AI enhancement and smart repair tools</p>
                 </a>
 
                 <a href="/canvas-multi" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎨</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 多引擎画布</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">集成CoT推理和FLUX模型的智能画布</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Multi-Engine Canvas</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Smart canvas with integrated Gemini 2.5 Flash and advanced AI models</p>
                 </a>
 
                 <a href="/chat" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">💬</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI 智能对话</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">与AI助手对话，获取创意灵感和技术支持</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI Chat Assistant</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Conversational AI for creative inspiration and technical support</p>
                 </a>
 
                 <a href="/canvas-modern" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖌️</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">现代画布</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">现代化的绘图工具，支持专业创作</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Modern Canvas</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Modern drawing tools with professional-grade creative features</p>
                 </a>
 
                 <a href="/editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">📝</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">文档编辑器</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">强大的Markdown编辑器，支持实时预览</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Document Editor</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Powerful Markdown editor with real-time preview and collaboration</p>
                 </a>
 
                 <a href="/canvas" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎯</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">基础画布</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">简单易用的绘图工具，快速创作原型</p>
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Basic Canvas</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Simple and intuitive drawing tools for quick prototyping</p>
                 </a>
             </div>
         </div>
     </section>
-        
+
+    <!-- Pricing Section -->
+    <section class="pricing-section" style="padding: 6rem 0; background: var(--surface);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Simple, Transparent Pricing</h2>
+                <p class="section-subtitle">
+                    Pay only for what you use with Google's competitive pricing for Gemini 2.5 Flash Image
+                </p>
+            </div>
+
+            <div class="pricing-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 4rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <div class="pricing-card" style="background: white; border-radius: 1rem; padding: 2.5rem; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); position: relative;">
+                    <div style="background: var(--primary-color); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 1.5rem;">FREE TIER</div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Get Started</h3>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary-color); margin-bottom: 0.5rem;">$0</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Try Gemini 2.5 Flash Image for free</p>
+                    <ul style="text-align: left; margin-bottom: 2rem; padding-left: 0; list-style: none;">
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>100 free images per month</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>All core features included</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Google AI Studio access</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Community support</li>
+                    </ul>
+                    <a href="/image-editor" class="btn btn-outline" style="width: 100%;">Start Free</a>
+                </div>
+
+                <div class="pricing-card" style="background: white; border-radius: 1rem; padding: 2.5rem; text-align: center; box-shadow: var(--shadow-lg); border: 2px solid var(--primary-color); position: relative; transform: scale(1.05);">
+                    <div style="background: var(--gradient-primary); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 1.5rem;">PAY-AS-YOU-GO</div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Professional</h3>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary-color); margin-bottom: 0.5rem;">$0.039</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">per image generated</p>
+                    <ul style="text-align: left; margin-bottom: 2rem; padding-left: 0; list-style: none;">
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>$30 per 1M output tokens</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>1290 tokens per image</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Unlimited generations</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>API access included</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Priority support</li>
+                    </ul>
+                    <a href="/chat" class="btn btn-primary" style="width: 100%;">Start Creating</a>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: white; border-radius: 1rem; box-shadow: var(--shadow-sm);">
+                <h4 style="color: var(--text-primary); margin-bottom: 1rem;">Enterprise Solutions</h4>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Need custom solutions, dedicated support, or volume discounts? We offer enterprise packages tailored to your needs.</p>
+                <a href="mailto:enterprise@aigenstudio.com" class="btn btn-secondary">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
         <section class="status">
-            <h3>🚀 技术架构</h3>
-            <p><strong>后端：</strong> Cloudflare Workers + Hono 框架</p>
-            <p><strong>AI 服务：</strong> Cloudflare AI Gateway + Replicate FLUX</p>
-            <p><strong>数据存储：</strong> Cloudflare D1 + R2 + KV 存储</p>
-            <p><strong>画布引擎：</strong> Fabric.js + TLDraw 提供流畅创意体验</p>
+            <h3>🚀 Technical Architecture</h3>
+            <p><strong>Backend:</strong> Cloudflare Workers + Hono Framework</p>
+            <p><strong>AI Services:</strong> Google Gemini 2.5 Flash Image + Vertex AI</p>
+            <p><strong>Data Storage:</strong> Cloudflare D1 + R2 + KV Storage</p>
+            <p><strong>Canvas Engine:</strong> Fabric.js + TLDraw for smooth creative experience</p>
         </section>
     </div>
     
@@ -1074,7 +1196,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             updateUserUI(payload);
 
             // 显示欢迎消息
-            showNotification(\`欢迎，\${payload.name}！您已成功登录。\`, 'success');
+            showNotification(\`Welcome, \${payload.name}! You're now signed in.\`, 'success');
         }
 
         function signInWithGoogle() {
@@ -1098,7 +1220,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <span style="color: var(--text-primary); font-weight: 500;">\${user.name}</span>
                         <button class="btn btn-outline" onclick="signOut()">
                             <i class="fas fa-sign-out-alt"></i>
-                            退出
+                            Sign Out
                         </button>
                     </div>
                 \`;
@@ -1136,7 +1258,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
 
         // 工具卡片悬停效果
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎨 AI Gen Studio 应用已加载');
+            console.log('🎨 AI Gen Studio application loaded');
 
             // 检查用户登录状态
             const user = localStorage.getItem('user');
