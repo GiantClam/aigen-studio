@@ -11,7 +11,7 @@ export interface PageData {
 
 export function generateIndexPage(data?: PageData, env?: any): string {
   const defaultData: PageData = {
-    title: 'AI Gen Studio - Professional Image Editor Powered by Gemini 2.5 Flash',
+    title: 'AI image editor - Professional Image Editor Powered by Gemini 2.5 Flash',
     description: 'Create, edit, and transform images with Google\'s state-of-the-art Gemini 2.5 Flash Image model. Professional results in seconds, no expertise required.',
     features: [
       {
@@ -66,7 +66,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         window.APP_CONFIG = {
             GOOGLE_CLIENT_ID: '${env?.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com'}',
             API_BASE_URL: '${env?.API_BASE_URL || '/api'}',
-            APP_NAME: 'AI Gen Studio'
+            APP_NAME: 'AI image editor'
         };
     </script>
     <style>
@@ -745,7 +745,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         <div class="nav-container">
             <a href="/" class="logo">
                 <i class="fas fa-magic"></i>
-                AI Gen Studio
+                AI image editor
             </a>
 
             <ul class="nav-menu">
@@ -778,7 +778,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">Professional Image Editor Powered by Gemini 2.5 Flash</h1>
+                <h1 class="hero-title">AI image editor - Powered by Gemini 2.5 Flash</h1>
                 <p class="hero-subtitle">
                     Create, edit, and transform images with Google's state-of-the-art AI model. Generate photorealistic scenes, edit with natural language, and maintain character consistency across projects.
                 </p>
@@ -961,7 +961,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="features-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Why Choose AI Gen Studio</h2>
+                <h2 class="section-title">Why Choose AI image editor</h2>
                 <p class="section-subtitle">
                     Professional image editing powered by Google's most advanced multimodal AI model
                 </p>
@@ -1258,7 +1258,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
 
         // 工具卡片悬停效果
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎨 AI Gen Studio application loaded');
+            console.log('🎨 AI image editor application loaded');
 
             // 检查用户登录状态
             const user = localStorage.getItem('user');
@@ -1323,8 +1323,8 @@ export function generateIndexPage(data?: PageData, env?: any): string {
 
 export function generateChatPage(): string {
   return generateIndexPage({
-    title: '💬 AI Gen Studio Chat - AI 智能聊天',
-    description: '基于 Cloudflare AI 的智能聊天界面，支持CoT推理和图像生成'
+    title: '💬 AI image editor Chat - AI Smart Chat',
+    description: 'AI-powered chat interface with CoT reasoning and image generation capabilities'
   })
 }
 
@@ -1560,8 +1560,8 @@ export function generateEditorPage(): string {
 <body>
     <div class="container">
         <header class="header">
-            <h1 class="title">📝 AI Gen Studio Editor</h1>
-            <p>强大的 Markdown 编辑器，支持实时预览和多平台发布</p>
+            <h1 class="title">📝 AI image editor - Document Editor</h1>
+            <p>Powerful Markdown editor with real-time preview and multi-platform publishing</p>
         </header>
         
         <div class="editor-layout">
