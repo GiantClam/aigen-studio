@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "name": "aigen-studio",
+  "builds": [
+    {
+      "src": "src/worker.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "src/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/worker.ts"
+    },
+    {
+      "src": "/image-editor",
+      "dest": "/src/worker.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/src/worker.ts"
+    }
+  ],
+  "env": {
+    "GOOGLE_CLOUD_PROJECT": "@google_cloud_project",
+    "GOOGLE_CLOUD_LOCATION": "@google_cloud_location",
+    "GOOGLE_SERVICE_ACCOUNT_KEY": "@google_service_account_key",
+    "JWT_SECRET": "@jwt_secret",
+    "REPLICATE_API_TOKEN": "@replicate_api_token"
+  },
+  "functions": {
+    "src/worker.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
+}

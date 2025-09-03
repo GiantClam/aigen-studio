@@ -11,7 +11,17 @@
     "dev": "wrangler dev",
     "start": "wrangler dev"
   },
-  "keywords": ["ai", "image-generation", "cloudflare", "workers", "hono", "react", "typescript", "flux", "replicate"],
+  "keywords": [
+    "ai",
+    "image-generation",
+    "cloudflare",
+    "workers",
+    "hono",
+    "react",
+    "typescript",
+    "flux",
+    "replicate"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -21,6 +31,7 @@
     "wrangler": "^3.114.9"
   },
   "dependencies": {
+    "@google/genai": "^1.16.0",
     "hono": "^4.6.15"
   }
 }

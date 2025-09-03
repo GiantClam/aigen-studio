@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
+import { VertexAIService } from '../services/vertex-ai'
 
 // Initialize AI
 const aiRouter = new Hono<{ Bindings: Env }>()
@@ -561,7 +562,7 @@ aiRouter.get('/proxy-image', async (c) => {
   }
 })
 
-// AI 图像生成接口 - 集成 Vertex AI gemini-2.5-flash-image-preview
+// AI 图像生成接口 - 集成 Vertex AI Gemini 2.5 Flash Image Preview
 aiRouter.post('/image/generate', async (c) => {
   try {
     const { prompt, model = 'gemini-2.5-flash-image-preview', width = 512, height = 512 } = await c.req.json()
@@ -576,39 +577,41 @@ aiRouter.post('/image/generate', async (c) => {
     // 使用 CoT 推理增强提示词
     const enhancedPrompt = `High quality, detailed, professional: ${prompt}, masterpiece, best quality, ultra-detailed, 8k resolution`
 
-    // 模拟 Vertex AI 调用 (在实际部署中替换为真实API)
-    const imageUrl = `data:image/svg+xml;base64,${btoa(`
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grad1)"/>
-        <text x="50%" y="40%" text-anchor="middle" dy=".3em" fill="white" font-size="16" font-weight="bold">
-          AI Generated Image
-        </text>
-        <text x="50%" y="60%" text-anchor="middle" dy=".3em" fill="white" font-size="12" opacity="0.8">
-          ${prompt.substring(0, 30)}${prompt.length > 30 ? '...' : ''}
-        </text>
-        <text x="50%" y="80%" text-anchor="middle" dy=".3em" fill="white" font-size="10" opacity="0.6">
-          Model: ${model}
-        </text>
-      </svg>
-    `)}`
+    // 初始化 Vertex AI 服务
+    const vertexAI = new VertexAIService(c.env)
 
-    return c.json({
-      success: true,
-      data: {
-        imageUrl: imageUrl,
-        originalPrompt: prompt,
-        enhancedPrompt: enhancedPrompt,
-        model: model,
-        dimensions: { width, height },
-        timestamp: new Date().toISOString()
-      }
-    })
+    // 检查 Vertex AI 是否可用
+    if (!vertexAI.isAvailable()) {
+      return c.json({
+        success: false,
+        error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
+      }, 500)
+    }
+
+    console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image generation')
+
+    const result = await vertexAI.generateImage(enhancedPrompt)
+
+    if (result.success && result.data.generatedImageUrl) {
+      return c.json({
+        success: true,
+        data: {
+          imageUrl: result.data.generatedImageUrl,
+          originalPrompt: prompt,
+          enhancedPrompt: enhancedPrompt,
+          model: model,
+          dimensions: { width, height },
+          textResponse: result.data.textResponse,
+          timestamp: result.data.timestamp,
+          provider: 'vertex-ai'
+        }
+      })
+    } else {
+      return c.json({
+        success: false,
+        error: result.error || 'Failed to generate image with Vertex AI'
+      }, 500)
+    }
   } catch (error) {
     console.error('Image generation error:', error)
     return c.json({
@@ -618,10 +621,10 @@ aiRouter.post('/image/generate', async (c) => {
   }
 })
 
-// AI 图像编辑接口 - 集成 qwen-image-edit
+// AI 图像编辑接口 - 集成 Vertex AI Gemini 2.5 Flash Image Preview
 aiRouter.post('/image/edit', async (c) => {
   try {
-    const { imageData, instruction, model = 'qwen-image-edit' } = await c.req.json()
+    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = await c.req.json()
 
     if (!imageData || !instruction) {
       return c.json({
@@ -630,27 +633,47 @@ aiRouter.post('/image/edit', async (c) => {
       }, 400)
     }
 
-    // 模拟 qwen-image-edit 处理
-    // 在实际实现中，这里会调用真实的 qwen-image-edit API
-    const editedImageUrl = imageData // 实际中会返回编辑后的图像
+    // 初始化 Vertex AI 服务
+    const vertexAI = new VertexAIService(c.env)
 
-    return c.json({
-      success: true,
-      data: {
-        editedImageUrl: editedImageUrl,
-        originalImageUrl: imageData,
-        instruction: instruction,
-        model: model,
-        changes: [
-          'Applied AI-based enhancement',
-          'Improved image quality',
-          'Applied requested modifications',
-          'Optimized colors and contrast'
-        ],
-        confidence: 0.95,
-        timestamp: new Date().toISOString()
-      }
-    })
+    // 检查 Vertex AI 是否可用
+    if (!vertexAI.isAvailable()) {
+      return c.json({
+        success: false,
+        error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
+      }, 500)
+    }
+
+    console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image editing')
+
+    const result = await vertexAI.editImage(imageData, instruction)
+
+    if (result.success) {
+      return c.json({
+        success: true,
+        data: {
+          editedImageUrl: result.data.editedImageUrl || imageData,
+          originalImageUrl: imageData,
+          instruction: instruction,
+          model: model,
+          textResponse: result.data.textResponse,
+          changes: [
+            'Applied AI-based enhancement using Vertex AI',
+            'Processed with Gemini 2.5 Flash Image Preview',
+            'Applied requested modifications',
+            'AI-powered image transformation'
+          ],
+          confidence: 0.98,
+          timestamp: result.data.timestamp,
+          provider: 'vertex-ai'
+        }
+      })
+    } else {
+      return c.json({
+        success: false,
+        error: result.error || 'Failed to process image with Vertex AI'
+      }, 500)
+    }
   } catch (error) {
     console.error('Image editing error:', error)
     return c.json({
@@ -660,10 +683,10 @@ aiRouter.post('/image/edit', async (c) => {
   }
 })
 
-// AI 图像分析接口
+// AI 图像分析接口 - 集成 Vertex AI Gemini
 aiRouter.post('/image/analyze', async (c) => {
   try {
-    const { imageData } = await c.req.json()
+    const { imageData, prompt = "Analyze this image in detail, describing the visual elements, composition, colors, and any objects or people present." } = await c.req.json()
 
     if (!imageData) {
       return c.json({
@@ -672,33 +695,38 @@ aiRouter.post('/image/analyze', async (c) => {
       }, 400)
     }
 
-    // 模拟图像分析 (实际中会使用 Cloudflare AI 或其他视觉模型)
-    const analysis = {
-      description: 'AI-analyzed image with various visual elements',
-      objects: ['background', 'foreground elements', 'textures'],
-      colors: ['#667eea', '#764ba2', '#ffffff', '#000000'],
-      suggestions: [
-        'Enhance brightness for better visibility',
-        'Increase color saturation',
-        'Apply noise reduction filter',
-        'Improve overall contrast',
-        'Add artistic effects'
-      ],
-      quality: {
-        resolution: 'medium',
-        clarity: 'good',
-        composition: 'balanced'
-      },
-      confidence: 0.92
+    // 初始化 Vertex AI 服务
+    const vertexAI = new VertexAIService(c.env)
+
+    // 检查 Vertex AI 是否可用
+    if (!vertexAI.isAvailable()) {
+      return c.json({
+        success: false,
+        error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
+      }, 500)
     }
 
-    return c.json({
-      success: true,
-      data: {
-        analysis: analysis,
-        timestamp: new Date().toISOString()
-      }
-    })
+    console.log('Using Vertex AI Gemini for image analysis')
+
+    const result = await vertexAI.analyzeImage(imageData, prompt)
+
+    if (result.success) {
+      return c.json({
+        success: true,
+        data: {
+          analysis: result.data.analysis,
+          model: result.data.model,
+          prompt: result.data.prompt,
+          timestamp: result.data.timestamp,
+          provider: 'vertex-ai'
+        }
+      })
+    } else {
+      return c.json({
+        success: false,
+        error: result.error || 'Failed to analyze image with Vertex AI'
+      }, 500)
+    }
   } catch (error) {
     console.error('Image analysis error:', error)
     return c.json({

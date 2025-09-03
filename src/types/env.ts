@@ -26,5 +26,12 @@ export interface Env {
     delete: (key: string) => Promise<void>
   }
   JWT_SECRET: string
+  REPLICATE_API_TOKEN?: string
+  // Google Cloud / Vertex AI 配置
+  GOOGLE_CLOUD_PROJECT?: string
+  GOOGLE_CLOUD_LOCATION?: string
+  GOOGLE_APPLICATION_CREDENTIALS?: string
+  // 或者使用服务账号密钥 JSON
+  GOOGLE_SERVICE_ACCOUNT_KEY?: string
   [key: string]: any
-} 
+}

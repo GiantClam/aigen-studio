@@ -5,7 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "JWT_SECRET": "your-jwt-secret-key-here",
-    "REPLICATE_API_TOKEN": "your-replicate-api-token-here"
+    "REPLICATE_API_TOKEN": "your-replicate-api-token-here",
+    "GOOGLE_CLOUD_PROJECT": "zippy-aurora-444204-q2",
+    "GOOGLE_CLOUD_LOCATION": "global"
   },
   "d1_databases": [
     {
@@ -26,9 +28,7 @@
       "id": "your-kv-namespace-id-here"
     }
   ],
-  "ai": {
-    "binding": "AI"
-  },
+
 
   "build": {
     "command": "npm install && npm run build"
