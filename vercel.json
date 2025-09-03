@@ -1,42 +1,22 @@
 {
   "version": 2,
-  "name": "aigen-studio",
-  "builds": [
-    {
-      "src": "src/worker.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "src/**"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/src/worker.ts"
-    },
-    {
-      "src": "/image-editor",
-      "dest": "/src/worker.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/src/worker.ts"
-    }
-  ],
-  "env": {
-    "GOOGLE_CLOUD_PROJECT": "@google_cloud_project",
-    "GOOGLE_CLOUD_LOCATION": "@google_cloud_location",
-    "GOOGLE_SERVICE_ACCOUNT_KEY": "@google_service_account_key",
-    "JWT_SECRET": "@jwt_secret",
-    "REPLICATE_API_TOKEN": "@replicate_api_token"
-  },
+  "name": "ai-image-editor",
   "functions": {
-    "src/worker.ts": {
+    "api/**/*.ts": {
       "runtime": "nodejs18.x",
       "maxDuration": 30
     }
   },
+  "routes": [
+    {
+      "src": "/image-editor",
+      "dest": "/api/image-editor"
+    },
+    {
+      "src": "/",
+      "dest": "/api/index"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleAuth } from 'google-auth-library';
 import type { Env } from '../types/env';
 
 /**
@@ -6,8 +6,10 @@ import type { Env } from '../types/env';
  * 集成 Google Vertex AI 的 Gemini 2.5 Flash Image Preview 模型
  */
 export class VertexAIService {
-  private ai: GoogleGenAI | null = null;
+  private auth: GoogleAuth | null = null;
   private env: Env;
+  private projectId: string | null = null;
+  private location: string = 'global';
 
   constructor(env: Env) {
     this.env = env;
@@ -22,23 +24,37 @@ export class VertexAIService {
       // 检查必要的环境变量
       const project = this.env.GOOGLE_CLOUD_PROJECT;
       const location = this.env.GOOGLE_CLOUD_LOCATION || 'global';
+      const serviceAccountKey = this.env.GOOGLE_SERVICE_ACCOUNT_KEY;
 
-      if (!project) {
-        console.warn('GOOGLE_CLOUD_PROJECT not configured, Vertex AI will not be available');
+      if (!project || !serviceAccountKey) {
+        console.warn('GOOGLE_CLOUD_PROJECT or GOOGLE_SERVICE_ACCOUNT_KEY not configured, Vertex AI will not be available');
         return;
       }
 
-      // 初始化 Vertex AI 客户端
-      this.ai = new GoogleGenAI({
-        vertexai: true,
-        project: project,
-        location: location
+      this.projectId = project;
+      this.location = location;
+
+      // 解析服务账号密钥
+      let credentials;
+      try {
+        credentials = typeof serviceAccountKey === 'string'
+          ? JSON.parse(serviceAccountKey)
+          : serviceAccountKey;
+      } catch (error) {
+        console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', error);
+        return;
+      }
+
+      // 初始化 Google Auth 客户端
+      this.auth = new GoogleAuth({
+        credentials: credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
       });
 
       console.log(`Vertex AI initialized for project: ${project}, location: ${location}`);
     } catch (error) {
       console.error('Failed to initialize Vertex AI:', error);
-      this.ai = null;
+      this.auth = null;
     }
   }
 
@@ -46,7 +62,25 @@ export class VertexAIService {
    * 检查 Vertex AI 是否可用
    */
   isAvailable(): boolean {
-    return this.ai !== null;
+    return this.auth !== null && this.projectId !== null;
+  }
+
+  /**
+   * 获取访问令牌
+   */
+  private async getAccessToken(): Promise<string> {
+    if (!this.auth) {
+      throw new Error('Google Auth not initialized');
+    }
+
+    const client = await this.auth.getClient();
+    const accessToken = await client.getAccessToken();
+
+    if (!accessToken.token) {
+      throw new Error('Failed to get access token');
+    }
+
+    return accessToken.token;
   }
 
   /**
@@ -119,43 +153,59 @@ export class VertexAIService {
 
     try {
       const model = 'gemini-2.5-flash-image-preview';
-      
+      const accessToken = await this.getAccessToken();
+
       // 准备图像数据
       const image = this.base64ToVertexAIImage(imageData);
-      
-      // 准备文本指令
-      const text = { text: instruction };
 
-      // 构建请求
-      const req: any = {
-        model: model,
+      // 构建请求体
+      const requestBody = {
         contents: [
-          { role: 'user', parts: [image, text] }
+          {
+            role: 'user',
+            parts: [
+              image,
+              { text: instruction }
+            ]
+          }
         ],
-        config: this.getGenerationConfig(),
+        generationConfig: this.getGenerationConfig()
       };
 
       console.log('Sending request to Vertex AI Gemini 2.5 Flash Image Preview...');
 
-      // 调用 Vertex AI
-      const streamingResp = await this.ai!.models.generateContentStream(req);
+      // 调用 Vertex AI REST API
+      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json() as any;
 
       let textResponse = '';
       let imageResponse = null;
 
-      // 处理流式响应
-      for await (const chunk of streamingResp) {
-        if (chunk.text) {
-          textResponse += chunk.text;
-        } else if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
-          // 检查是否有图像响应
-          for (const part of chunk.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
-              imageResponse = {
-                mimeType: part.inlineData.mimeType,
-                data: part.inlineData.data
-              };
-            }
+      // 处理响应
+      if (result.candidates && result.candidates[0]?.content?.parts) {
+        for (const part of result.candidates[0].content.parts) {
+          if (part.text) {
+            textResponse += part.text;
+          } else if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+            imageResponse = {
+              mimeType: part.inlineData.mimeType,
+              data: part.inlineData.data
+            };
           }
         }
       }
@@ -226,15 +276,36 @@ export class VertexAIService {
 
       console.log('Analyzing image with Vertex AI Gemini...');
 
-      // 调用 Vertex AI
-      const streamingResp = await this.ai!.models.generateContentStream(req);
+      // 调用 Vertex AI REST API
+      const accessToken = await this.getAccessToken();
+      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
 
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: req.contents,
+          generationConfig: req.config
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json() as any;
       let textResponse = '';
 
-      // 处理流式响应
-      for await (const chunk of streamingResp) {
-        if (chunk.text) {
-          textResponse += chunk.text;
+      // 处理响应
+      if (result.candidates && result.candidates[0]?.content?.parts) {
+        for (const part of result.candidates[0].content.parts) {
+          if (part.text) {
+            textResponse += part.text;
+          }
         }
       }
 
@@ -289,25 +360,41 @@ export class VertexAIService {
 
       console.log('Generating image with Vertex AI Gemini...');
 
-      // 调用 Vertex AI
-      const streamingResp = await this.ai!.models.generateContentStream(req);
+      // 调用 Vertex AI REST API
+      const accessToken = await this.getAccessToken();
+      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
 
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: req.contents,
+          generationConfig: req.config
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json() as any;
       let textResponse = '';
       let imageResponse = null;
 
-      // 处理流式响应
-      for await (const chunk of streamingResp) {
-        if (chunk.text) {
-          textResponse += chunk.text;
-        } else if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
-          // 检查是否有图像响应
-          for (const part of chunk.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
-              imageResponse = {
-                mimeType: part.inlineData.mimeType,
-                data: part.inlineData.data
-              };
-            }
+      // 处理响应
+      if (result.candidates && result.candidates[0]?.content?.parts) {
+        for (const part of result.candidates[0].content.parts) {
+          if (part.text) {
+            textResponse += part.text;
+          } else if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+            imageResponse = {
+              mimeType: part.inlineData.mimeType,
+              data: part.inlineData.data
+            };
           }
         }
       }

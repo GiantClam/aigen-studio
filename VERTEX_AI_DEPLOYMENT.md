@@ -1,6 +1,6 @@
 # Vertex AI Gemini 2.5 Flash Image Preview 集成部署指南
 
-本文档说明如何将集成了 Vertex AI Gemini 2.5 Flash Image Preview 模型的图像编辑器部署到 Vercel 和 Cloudflare Workers。
+本文档说明如何将集成了 Vertex AI Gemini 2.5 Flash Image Preview 模型的图像编辑器部署到 Vercel。
 
 ## 🚀 功能特性
 
@@ -48,7 +48,7 @@ REPLICATE_API_TOKEN=your-replicate-api-token-here
 ### 1. 安装依赖
 
 ```bash
-npm install @google/genai
+npm install
 ```
 
 ### 2. 配置环境变量
@@ -59,12 +59,19 @@ npm install @google/genai
 GOOGLE_CLOUD_PROJECT=zippy-aurora-444204-q2
 GOOGLE_CLOUD_LOCATION=global
 GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account",...}'
+JWT_SECRET=your-jwt-secret-key
 ```
 
 ### 3. 启动开发服务器
 
 ```bash
 npm run dev
+```
+
+### 4. 访问应用
+
+```
+http://localhost:3000/image-editor
 ```
 
 ## 🌐 API 端点
@@ -137,11 +144,14 @@ git push
 ### 2. Vercel 部署
 
 ```bash
-# 安装 Vercel CLI
+# 安装 Vercel CLI（如果尚未安装）
 npm i -g vercel
 
-# 部署
-vercel --prod
+# 首次部署
+vercel
+
+# 生产部署
+npm run deploy
 ```
 
 ### 3. 配置环境变量

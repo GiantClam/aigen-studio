@@ -1,5 +1,7 @@
 // 测试 Vertex AI 集成的简单脚本
 // 运行: node test-vertex-ai.js
+// 注意: 需要先启动开发服务器 npm run dev
+// 现在使用 Vercel API Routes 而不是 Hono
 
 async function testVertexAI() {
   const testImageData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -8,7 +10,7 @@ async function testVertexAI() {
     console.log('🧪 Testing Vertex AI integration...');
     
     // 测试图像编辑接口
-    const editResponse = await fetch('http://localhost:8787/api/ai/image/edit', {
+    const editResponse = await fetch('http://localhost:3000/api/ai/image/edit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +36,7 @@ async function testVertexAI() {
     }
     
     // 测试图像分析接口
-    const analyzeResponse = await fetch('http://localhost:8787/api/ai/image/analyze', {
+    const analyzeResponse = await fetch('http://localhost:3000/api/ai/image/analyze', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +59,7 @@ async function testVertexAI() {
     }
     
     // 测试图像生成接口
-    const generateResponse = await fetch('http://localhost:8787/api/ai/image/generate', {
+    const generateResponse = await fetch('http://localhost:3000/api/ai/image/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

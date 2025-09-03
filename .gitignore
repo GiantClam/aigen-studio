@@ -22,8 +22,6 @@ user_data/
 .env.local
 .env.production
 .env.development
-wrangler.toml
-
 # Logs
 logs
 *.log
@@ -61,8 +59,8 @@ jspm_packages/
 # dotenv environment variables file
 .env.test
 
-# Cloudflare Workers
-.wrangler/
+# Vercel
+.vercel
 
 # IDE files
 .vscode/settings.json
