@@ -1,9 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { VertexAIService } from '../../../src/services/vertex-ai.js'
-import dotenv from 'dotenv'
-
-// 加载环境变量
-dotenv.config({ path: '.env.local' })
+import { NextRequest, NextResponse } from 'next/server'
+import { VertexAIService } from '@/services/vertex-ai'
 
 // 环境变量适配器
 const getEnv = () => ({
@@ -19,32 +15,15 @@ const getEnv = () => ({
   FILES: {} as any
 })
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 设置 CORS 头
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  // 处理 CORS 预检请求
-  if (req.method === 'OPTIONS') {
-    res.status(200).end()
-    return
-  }
-
-  // 只允许 POST 请求
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' })
-    return
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = req.body
+    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = await request.json()
 
     if (!imageData || !instruction) {
-      return res.status(400).json({
+      return NextResponse.json({
         success: false,
         error: 'imageData and instruction are required'
-      })
+      }, { status: 400 })
     }
 
     const env = getEnv()
@@ -53,10 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const vertexAI = new VertexAIService(env)
 
     if (!vertexAI.isAvailable()) {
-      return res.status(500).json({
+      return NextResponse.json({
         success: false,
         error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
-      })
+      }, { status: 500 })
     }
 
     console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image editing');
@@ -64,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await vertexAI.editImage(imageData, instruction)
     
     if (result.success) {
-      return res.status(200).json({
+      return NextResponse.json({
         success: true,
         data: {
           editedImageUrl: result.data.editedImageUrl || imageData,
@@ -84,16 +63,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       })
     } else {
-      return res.status(500).json({
+      return NextResponse.json({
         success: false,
         error: result.error || 'Failed to process image with Vertex AI'
-      })
+      }, { status: 500 })
     }
   } catch (error) {
     console.error('Image edit error:', error)
-    return res.status(500).json({
+    return NextResponse.json({
       success: false,
       error: 'Internal server error'
-    })
+    }, { status: 500 })
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
 }
