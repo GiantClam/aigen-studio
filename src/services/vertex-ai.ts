@@ -56,6 +56,28 @@ export class VertexAIService {
         scopes: ['https://www.googleapis.com/auth/cloud-platform']
       });
 
+      // 创建临时的认证文件路径（在内存中）
+      const tempCredentialsPath = '/tmp/google-credentials.json';
+
+      // 在服务器环境中写入认证文件
+      if (typeof window === 'undefined') {
+        const fs = require('fs');
+        const path = require('path');
+
+        // 确保目录存在
+        const dir = path.dirname(tempCredentialsPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // 写入认证文件
+        fs.writeFileSync(tempCredentialsPath, JSON.stringify(credentials));
+
+        // 设置环境变量
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = tempCredentialsPath;
+        process.env.GOOGLE_CLOUD_PROJECT = project;
+      }
+
       // 初始化 Google GenAI 客户端
       this.genAI = new GoogleGenAI({
         vertexai: true,
