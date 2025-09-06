@@ -19,7 +19,7 @@ export default function Home() {
             </div>
             
             <Link
-              href="/image-editor"
+              href="/standard-editor"
               className="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <span>开始编辑</span>
@@ -50,7 +50,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Link
-              href="/image-editor"
+              href="/standard-editor"
               className="flex items-center justify-center space-x-2 px-8 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl text-lg font-semibold"
             >
               <Wand2 className="w-5 h-5" />

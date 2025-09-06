@@ -1,5 +1,11 @@
 node_modules/
 venv/
+
+# Next.js build output
+.next/
+.next/**
+out/
+*.tsbuildinfo
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
