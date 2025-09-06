@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const {
       prompt,
       image,
-      model = 'gemini-2.5-flash-image-preview',
+      model = 'gemini-2.5-flash-002',
       width = 1024,
       height = 1024
     } = await request.json()
@@ -35,15 +35,18 @@ export async function POST(request: NextRequest) {
     // 增强提示词
     const enhancedPrompt = `Create a high-quality image: ${prompt}. Style: professional, detailed, vibrant colors, good composition.`
 
-    // 初始化 Vertex AI 服务
+    // 初始化 Vertex AI 服务 - 严格模式，不允许降级
     const vertexAI = new VertexAIService(getEnv())
 
-    // 检查 Vertex AI 是否可用
-    if (!vertexAI.isAvailable()) {
+    try {
+      // 严格检查 Vertex AI 可用性，如果不可用会抛出错误
+      vertexAI.isAvailable()
+    } catch (error) {
+      console.error('❌ Vertex AI not available:', error instanceof Error ? error.message : String(error))
       return NextResponse.json({
         success: false,
-        error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
-      }, { status: 500 })
+        error: error instanceof Error ? error.message : 'Vertex AI is not available'
+      }, { status: 503 }) // 503 Service Unavailable
     }
 
     console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image generation')

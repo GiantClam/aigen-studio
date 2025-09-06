@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage } from 'fabric'
+import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage, Path } from 'fabric'
+import * as fabric from 'fabric'
 import {
   MousePointer2,
   Square,
@@ -16,7 +17,8 @@ import {
   Send,
   Minimize2,
   Maximize2,
-  X
+  X,
+  ArrowUpRight
 } from 'lucide-react'
 
 // 消息接口
@@ -27,10 +29,28 @@ interface ChatMessage {
   timestamp: string
 }
 
+// 创建箭头路径的辅助函数
+function createArrowPath(x1: number, y1: number, x2: number, y2: number): string {
+  const headLength = 15 // 箭头头部长度
+  const headAngle = Math.PI / 6 // 箭头头部角度
+
+  // 计算箭头方向
+  const angle = Math.atan2(y2 - y1, x2 - x1)
+
+  // 箭头头部的两个点
+  const arrowHead1X = x2 - headLength * Math.cos(angle - headAngle)
+  const arrowHead1Y = y2 - headLength * Math.sin(angle - headAngle)
+  const arrowHead2X = x2 - headLength * Math.cos(angle + headAngle)
+  const arrowHead2Y = y2 - headLength * Math.sin(angle + headAngle)
+
+  // 构建SVG路径
+  return `M ${x1} ${y1} L ${x2} ${y2} M ${x2} ${y2} L ${arrowHead1X} ${arrowHead1Y} M ${x2} ${y2} L ${arrowHead2X} ${arrowHead2Y}`
+}
+
 export default function StandardEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvas, setCanvas] = useState<Canvas | null>(null)
-  const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text'>('select')
+  const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text' | 'arrow'>('select')
 
   // 浮窗状态
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
@@ -164,6 +184,7 @@ export default function StandardEditor() {
       case 'rectangle':
       case 'circle':
       case 'text':
+      case 'arrow':
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
@@ -209,6 +230,20 @@ export default function StandardEditor() {
           fill: '#000000'
         })
         break
+
+      case 'arrow':
+        // 创建箭头（使用路径）
+        const arrowPath = createArrowPath(pointer.x, pointer.y, pointer.x + 100, pointer.y - 50)
+        obj = new fabric.Path(arrowPath, {
+          left: pointer.x,
+          top: pointer.y - 50,
+          fill: 'transparent',
+          stroke: '#ef4444',
+          strokeWidth: 3,
+          selectable: true,
+          evented: true
+        })
+        break
     }
 
     if (obj) {
@@ -237,59 +272,61 @@ export default function StandardEditor() {
   }, [canvas, currentTool])
 
   // 获取选中对象的图片数据
-  const getSelectedObjectsImage = async (): Promise<string | null> => {
+  const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: any } | null> => {
     if (!canvas) return null
 
     const activeObjects = canvas.getActiveObjects()
     if (activeObjects.length === 0) return null
 
     try {
-      // 计算选中对象的边界框
-      const group = canvas.getActiveObject()
-      if (!group) return null
+      console.log('📸 Capturing selected objects...', { count: activeObjects.length })
 
-      const bounds = group.getBoundingRect()
+      // 计算所有选中对象的边界框
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
-      // 创建临时画布来导出选中对象
-      const tempCanvas = document.createElement('canvas')
-      const tempCtx = tempCanvas.getContext('2d')
-      if (!tempCtx) return null
+      activeObjects.forEach(obj => {
+        const bounds = obj.getBoundingRect()
+        minX = Math.min(minX, bounds.left)
+        minY = Math.min(minY, bounds.top)
+        maxX = Math.max(maxX, bounds.left + bounds.width)
+        maxY = Math.max(maxY, bounds.top + bounds.height)
+      })
 
-      // 设置临时画布尺寸（添加一些边距）
+      // 添加边距
       const padding = 20
-      tempCanvas.width = bounds.width + padding * 2
-      tempCanvas.height = bounds.height + padding * 2
+      const captureArea = {
+        left: minX - padding,
+        top: minY - padding,
+        width: (maxX - minX) + padding * 2,
+        height: (maxY - minY) + padding * 2
+      }
 
-      // 设置白色背景
-      tempCtx.fillStyle = '#ffffff'
-      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+      console.log('📸 Capture area:', captureArea)
 
-      // 保存原始画布状态
-      const originalViewport: [number, number, number, number, number, number] =
-        (canvas.viewportTransform?.slice() as [number, number, number, number, number, number]) || [1, 0, 0, 1, 0, 0]
-
-      // 临时调整视口以正确渲染选中对象
-      const newViewport: [number, number, number, number, number, number] = [1, 0, 0, 1, padding - bounds.left, padding - bounds.top]
-      canvas.setViewportTransform(newViewport)
-
-      // 将选中对象渲染到临时画布
-      const dataURL = canvas.toDataURL({
-        left: bounds.left - padding,
-        top: bounds.top - padding,
-        width: bounds.width + padding * 2,
-        height: bounds.height + padding * 2,
+      // 使用Fabric.js的toDataURL方法导出指定区域
+      const imageData = canvas.toDataURL({
+        left: captureArea.left,
+        top: captureArea.top,
+        width: captureArea.width,
+        height: captureArea.height,
         format: 'png',
         quality: 1,
         multiplier: 1
       })
 
-      // 恢复原始视口
-      canvas.setViewportTransform(originalViewport)
-      canvas.renderAll()
+      console.log('📸 Image captured successfully, size:', imageData.length)
 
-      return dataURL
+      return {
+        imageData,
+        bounds: {
+          left: minX,
+          top: minY,
+          width: maxX - minX,
+          height: maxY - minY
+        }
+      }
     } catch (error) {
-      console.error('Error generating selected objects image:', error)
+      console.error('❌ Error generating selected objects image:', error)
       return null
     }
   }
@@ -315,73 +352,86 @@ export default function StandardEditor() {
       const activeObjects = canvas.getActiveObjects()
       const hasSelectedObjects = activeObjects.length > 0
 
+      console.log('🔍 Checking selected objects:', {
+        hasSelectedObjects,
+        count: activeObjects.length,
+        message: currentMessage
+      })
+
       if (hasSelectedObjects) {
-        // 获取选中对象的图片
-        const selectedImage = await getSelectedObjectsImage()
+        // 场景1: 有选中对象 - 图像编辑
+        console.log('🎨 Scenario 1: Editing selected objects')
 
-        if (selectedImage) {
-          console.log('🎨 Processing selected objects with AI...')
-
-          // 发送到Vertex AI进行处理
-          const response = await fetch('/api/ai/image/edit', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              imageData: selectedImage,
-              instruction: currentMessage,
-              model: 'gemini-2.5-flash-image-preview'
-            })
-          })
-
-          const result = await response.json()
-
-          if (result.success && result.data?.editedImageUrl) {
-            // 计算选中对象的位置，用于放置新图片
-            const group = canvas.getActiveObject()
-            const bounds = group?.getBoundingRect()
-
-            // 将AI处理后的图片添加到画布右侧
-            const img = await FabricImage.fromURL(result.data.editedImageUrl)
-
-            if (bounds) {
-              img.set({
-                left: bounds.left + bounds.width + 50, // 在选中对象右侧50px处
-                top: bounds.top,
-                selectable: true,
-                evented: true
-              })
-
-              // 缩放图片以适合画布
-              const maxWidth = 300
-              const maxHeight = 300
-              if (img.width && img.height) {
-                const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1)
-                img.scale(scale)
-              }
-            }
-
-            canvas.add(img)
-            canvas.setActiveObject(img)
-            canvas.renderAll()
-
-            const aiResponse: ChatMessage = {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: `✅ 我已经根据你的要求"${currentMessage}"处理了选中的对象，并将结果放在了右侧。你可以继续编辑或调整位置。`,
-              timestamp: new Date().toLocaleTimeString()
-            }
-            setChatMessages(prev => [...prev, aiResponse])
-          } else {
-            throw new Error(result.error || 'AI处理失败')
-          }
-        } else {
+        const selectedData = await getSelectedObjectsImage()
+        if (!selectedData) {
           throw new Error('无法获取选中对象的图片')
         }
+
+        console.log('🎨 Processing selected objects with Gemini Flash Image...', {
+          instruction: currentMessage,
+          imageDataLength: selectedData.imageData.length,
+          bounds: selectedData.bounds
+        })
+
+        // 发送图片和文本到Gemini Flash Image模型
+        const response = await fetch('/api/ai/image/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageData: selectedData.imageData,
+            instruction: currentMessage,
+            model: 'gemini-2.5-flash-002'
+          })
+        })
+
+        console.log('📡 Edit API Response status:', response.status)
+        const result = await response.json()
+        console.log('📡 Edit API Response data:', result)
+
+        if (result.success && result.data?.editedImageUrl) {
+          // 在选中对象右侧添加生成的图片
+          const img = await FabricImage.fromURL(result.data.editedImageUrl)
+
+          // 计算放置位置：选中对象右侧50px
+          const rightX = selectedData.bounds.left + selectedData.bounds.width + 50
+
+          // 缩放图片
+          const maxWidth = 400
+          const maxHeight = 400
+          if (img.width && img.height) {
+            const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1)
+            img.scale(scale)
+          }
+
+          img.set({
+            left: rightX,
+            top: selectedData.bounds.top,
+            selectable: true,
+            evented: true
+          })
+
+          canvas.add(img)
+          canvas.setActiveObject(img)
+          canvas.renderAll()
+
+          console.log('✅ Image placed at:', { left: rightX, top: selectedData.bounds.top })
+
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `✅ 我已经根据你的要求"${currentMessage}"处理了选中的对象，并将AI生成的结果放在了右侧。你可以继续编辑或调整位置。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        } else {
+          throw new Error(result.error || 'AI图像处理失败')
+        }
       } else {
-        // 没有选中对象，尝试生成图像
-        console.log('🎨 Generating image from text...')
+        // 场景2: 没有选中对象 - 图像生成
+        console.log('🎨 Scenario 2: Generating image from text')
+        console.log('🎨 Generating image with Gemini Flash Image...', { prompt: currentMessage })
 
         const response = await fetch('/api/ai/image/generate', {
           method: 'POST',
@@ -390,23 +440,29 @@ export default function StandardEditor() {
           },
           body: JSON.stringify({
             prompt: currentMessage,
-            model: 'gemini-2.5-flash-image-preview'
+            model: 'gemini-2.5-flash-002'
           })
         })
 
+        console.log('📡 Generate API Response status:', response.status)
         const result = await response.json()
+        console.log('📡 Generate API Response data:', result)
 
         if (result.success && result.data?.imageUrl) {
           // 在画布中央添加生成的图像
           const img = await FabricImage.fromURL(result.data.imageUrl)
 
-          // 计算画布中央位置
-          const canvasCenter = {
-            x: canvas.getWidth() / 2,
-            y: canvas.getHeight() / 2
-          }
+          // 计算画布中央位置（考虑当前视口）
+          const viewport = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+          const zoom = viewport[0]
+          const panX = viewport[4]
+          const panY = viewport[5]
 
-          // 缩放图像以适合画布
+          // 计算视口中心在画布坐标系中的位置
+          const viewportCenterX = (canvas.getWidth() / 2 - panX) / zoom
+          const viewportCenterY = (canvas.getHeight() / 2 - panY) / zoom
+
+          // 缩放图像
           const maxWidth = 400
           const maxHeight = 400
           if (img.width && img.height) {
@@ -414,10 +470,10 @@ export default function StandardEditor() {
             img.scale(scale)
           }
 
-          // 设置图像位置在画布中央
+          // 设置图像位置在视口中央
           img.set({
-            left: canvasCenter.x - img.getScaledWidth() / 2,
-            top: canvasCenter.y - img.getScaledHeight() / 2,
+            left: viewportCenterX - img.getScaledWidth() / 2,
+            top: viewportCenterY - img.getScaledHeight() / 2,
             selectable: true,
             evented: true
           })
@@ -425,6 +481,11 @@ export default function StandardEditor() {
           canvas.add(img)
           canvas.setActiveObject(img)
           canvas.renderAll()
+
+          console.log('✅ Image placed at center:', {
+            left: viewportCenterX - img.getScaledWidth() / 2,
+            top: viewportCenterY - img.getScaledHeight() / 2
+          })
 
           const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -435,6 +496,8 @@ export default function StandardEditor() {
           setChatMessages(prev => [...prev, aiResponse])
         } else {
           // 如果图像生成失败，进行普通对话
+          console.log('⚠️ Image generation failed, falling back to chat')
+
           const chatResponse = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: {
@@ -451,20 +514,39 @@ export default function StandardEditor() {
           const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: chatResult.success ? chatResult.data.response : `我理解你想要${currentMessage}。你可以选择画布中的对象，然后告诉我如何处理它们，或者描述你想要生成的图像。`,
+            content: chatResult.success ? chatResult.data.response : `我理解你想要${currentMessage}。你可以选择画布中的对象，然后告诉我如何处理它们，或者描述你想要生成的图像。如果遇到问题，请检查网络连接或稍后再试。`,
             timestamp: new Date().toLocaleTimeString()
           }
           setChatMessages(prev => [...prev, aiResponse])
         }
       }
     } catch (error) {
-      console.error('AI response error:', error)
+      console.error('❌ AI processing error:', error)
+
+      let errorMessage = '未知错误'
+
+      if (error instanceof Error) {
+        errorMessage = error.message
+
+        // 特殊处理网络和配置错误
+        if (error.message.includes('Vertex AI is not')) {
+          errorMessage = '🚫 Vertex AI服务未正确配置。请检查环境变量配置或联系管理员。'
+        } else if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
+          errorMessage = '🚫 Vertex AI服务当前不可用。请检查网络连接或稍后再试。'
+        } else if (error.message.includes('ENOTFOUND') || error.message.includes('network')) {
+          errorMessage = '🌐 网络连接失败。请检查网络连接或VPN配置。'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '⏱️ 请求超时。请检查网络连接或稍后再试。'
+        }
+      }
+
       const errorResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `抱歉，处理过程中出现了错误：${error instanceof Error ? error.message : '未知错误'}。请稍后再试。`,
+        content: `❌ 处理请求时出现错误：${errorMessage}\n\n💡 提示：此应用需要真实的Vertex AI服务，不支持模拟模式。`,
         timestamp: new Date().toLocaleTimeString()
       }
+
       setChatMessages(prev => [...prev, errorResponse])
     } finally {
       setIsLoading(false)
@@ -616,6 +698,18 @@ export default function StandardEditor() {
                   <Type className="w-5 h-5" />
                 </button>
 
+                <button
+                  onClick={() => setCurrentTool('arrow')}
+                  className={`p-3 rounded-xl transition-all ${
+                    currentTool === 'arrow'
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                  title="箭头"
+                >
+                  <ArrowUpRight className="w-5 h-5" />
+                </button>
+
                 <div className="w-px h-8 bg-gray-200 mx-1" />
 
                 {/* 功能按钮 */}
@@ -749,7 +843,8 @@ export default function StandardEditor() {
               currentTool === 'draw' ? '画笔' :
               currentTool === 'rectangle' ? '矩形' :
               currentTool === 'circle' ? '圆形' :
-              currentTool === 'text' ? '文本' : currentTool
+              currentTool === 'text' ? '文本' :
+              currentTool === 'arrow' ? '箭头' : currentTool
             }</span></span>
             <div className="w-px h-4 bg-gray-300"></div>
             <span>滚轮缩放 | Alt+拖拽平移</span>

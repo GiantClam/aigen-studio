@@ -17,7 +17,7 @@ const getEnv = () => ({
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = await request.json()
+    const { imageData, instruction, model = 'gemini-2.5-flash-002' } = await request.json()
 
     if (!imageData || !instruction) {
       return NextResponse.json({
@@ -28,25 +28,29 @@ export async function POST(request: NextRequest) {
 
     const env = getEnv()
 
-    // 使用 Vertex AI 进行图像编辑
+    // 使用 Vertex AI 进行图像编辑 - 严格模式，不允许降级
     const vertexAI = new VertexAIService(env)
 
-    if (!vertexAI.isAvailable()) {
+    try {
+      // 严格检查 Vertex AI 可用性，如果不可用会抛出错误
+      vertexAI.isAvailable()
+    } catch (error) {
+      console.error('❌ Vertex AI not available:', error instanceof Error ? error.message : String(error))
       return NextResponse.json({
         success: false,
-        error: 'Vertex AI is not configured. Please set GOOGLE_CLOUD_PROJECT and GOOGLE_SERVICE_ACCOUNT_KEY environment variables.'
-      }, { status: 500 })
+        error: error instanceof Error ? error.message : 'Vertex AI is not available'
+      }, { status: 503 }) // 503 Service Unavailable
     }
 
     console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image editing');
 
-    const result = await vertexAI.editImage(imageData, instruction)
+    const result = await vertexAI.editImage(instruction, imageData)
     
     if (result.success) {
       return NextResponse.json({
         success: true,
         data: {
-          editedImageUrl: result.data.editedImageUrl || imageData,
+          editedImageUrl: result.data.generatedImageUrl || imageData,
           originalImageUrl: imageData,
           instruction: instruction,
           model: model,

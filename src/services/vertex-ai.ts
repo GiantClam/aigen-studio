@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library';
+import { GoogleGenAI } from '@google/genai';
 import type { Env } from '../types/env';
 
 /**
@@ -7,6 +8,7 @@ import type { Env } from '../types/env';
  */
 export class VertexAIService {
   private auth: GoogleAuth | null = null;
+  private genAI: GoogleGenAI | null = null;
   private env: Env;
   private projectId: string | null = null;
   private location: string = 'global';
@@ -54,6 +56,13 @@ export class VertexAIService {
         scopes: ['https://www.googleapis.com/auth/cloud-platform']
       });
 
+      // 初始化 Google GenAI 客户端
+      this.genAI = new GoogleGenAI({
+        vertexai: true,
+        project: project,
+        location: location
+      });
+
       console.log('Vertex AI initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Vertex AI:', error instanceof Error ? error.message : String(error));
@@ -63,10 +72,26 @@ export class VertexAIService {
 
   /**
    * 检查 Vertex AI 是否可用
+   * 严格模式：如果不可用则抛出错误，不允许降级或模拟
    */
   isAvailable(): boolean {
-    return this.auth !== null && this.projectId !== null;
+    const isConfigured = this.auth !== null && this.genAI !== null && this.projectId !== null;
+
+    if (!isConfigured) {
+      const missingVars = [];
+      if (!this.env.GOOGLE_CLOUD_PROJECT) missingVars.push('GOOGLE_CLOUD_PROJECT');
+      if (!this.env.GOOGLE_SERVICE_ACCOUNT_KEY) missingVars.push('GOOGLE_SERVICE_ACCOUNT_KEY');
+
+      throw new Error(
+        `Vertex AI is not properly configured. Missing environment variables: ${missingVars.join(', ')}. ` +
+        `This application requires real Vertex AI access and does not support simulation mode.`
+      );
+    }
+
+    return true;
   }
+
+
 
   /**
    * 获取访问令牌
@@ -95,10 +120,15 @@ export class VertexAIService {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`Attempt ${attempt}/${maxRetries} to call Vertex AI API...`);
+        console.log(`Target URL: ${url}`);
 
         // 创建 AbortController 用于超时控制
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
+        // 添加更详细的请求日志
+        console.log('Request headers:', JSON.stringify(options.headers, null, 2));
+        console.log('Request body length:', options.body?.length || 0);
 
         const response = await fetch(url, {
           ...options,
@@ -107,25 +137,37 @@ export class VertexAIService {
 
         clearTimeout(timeoutId);
 
+        console.log(`Response status: ${response.status} ${response.statusText}`);
+
         if (response.ok) {
-          console.log('Vertex AI API call successful');
+          console.log('✅ Vertex AI API call successful');
           return response;
         } else {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('❌ API Error Response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
         }
       } catch (error: any) {
         lastError = error;
-        console.warn(`Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error));
+        console.warn(`❌ Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error));
+
+        // 特殊处理网络连接错误
+        if (error.message.includes('fetch failed') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+          console.error('🌐 Network connectivity issue detected. Please check:');
+          console.error('   1. Internet connection');
+          console.error('   2. DNS resolution for googleapis.com');
+          console.error('   3. Network firewall settings');
+        }
 
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000; // 指数退避
-          console.log(`Waiting ${delay}ms before retry...`);
+          console.log(`⏳ Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    console.error(`All ${maxRetries} attempts failed`);
+    console.error(`❌ All ${maxRetries} attempts failed`);
     throw lastError || new Error('All retry attempts failed');
   }
 
@@ -291,59 +333,74 @@ export class VertexAIService {
 
     try {
       const model = 'gemini-2.5-flash-image-preview';
-      
-      // 准备生成提示
-      const text = { text: `Generate an image: ${prompt}` };
 
-      // 构建请求
-      const req: any = {
-        model: model,
-        contents: [
-          { role: 'user', parts: [text] }
+      console.log('🎨 Generating image with Google GenAI SDK...');
+      console.log('   Model:', model);
+      console.log('   Prompt:', prompt.substring(0, 100) + '...');
+
+      // 准备生成配置
+      const generationConfig = {
+        maxOutputTokens: 32768,
+        temperature: 1,
+        topP: 0.95,
+        responseModalities: ["TEXT", "IMAGE"],
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_HARASSMENT' as any,
+            threshold: 'OFF' as any,
+          }
         ],
-        config: this.getGenerationConfig(),
       };
 
-      console.log('Generating image with Vertex AI Gemini...');
+      // 构建请求
+      const req = {
+        model: model,
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `Generate an image: ${prompt}` }]
+          }
+        ],
+        config: generationConfig,
+      };
 
-      // 调用 Vertex AI REST API
-      const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
+      // 使用 Google GenAI SDK 调用
+      const streamingResp = await this.genAI!.models.generateContentStream(req);
 
-      const response = await this.fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: req.contents,
-          generationConfig: req.config
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const result = await response.json() as any;
       let textResponse = '';
       let imageResponse = null;
 
-      // 处理响应
-      if (result.candidates && result.candidates[0]?.content?.parts) {
-        for (const part of result.candidates[0].content.parts) {
-          if (part.text) {
-            textResponse += part.text;
-          } else if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
-            imageResponse = {
-              mimeType: part.inlineData.mimeType,
-              data: part.inlineData.data
-            };
+      // 处理流式响应
+      for await (const chunk of streamingResp) {
+        if (chunk.text) {
+          textResponse += chunk.text;
+        } else if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
+          for (const part of chunk.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+              imageResponse = {
+                mimeType: part.inlineData.mimeType,
+                data: part.inlineData.data
+              };
+            }
           }
         }
       }
+
+      console.log('✅ Image generation completed');
+      console.log('   Text response length:', textResponse.length);
+      console.log('   Has image:', !!imageResponse);
 
       // 构建响应数据
       const responseData: any = {
@@ -356,7 +413,10 @@ export class VertexAIService {
 
       // 如果有图像响应，转换为 data URL
       if (imageResponse) {
-        responseData.generatedImageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
+        responseData.imageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
+        console.log('✅ Generated image URL created');
+      } else {
+        console.log('⚠️ No image data in response');
       }
 
       return {
@@ -410,58 +470,71 @@ export class VertexAIService {
         }
       ];
 
+      console.log('🖼️ Editing image with Google GenAI SDK...');
+      console.log('   Model:', model);
+      console.log('   Prompt:', prompt.substring(0, 100) + '...');
+      console.log('   Image type:', mimeType);
+
+      // 准备生成配置
+      const generationConfig = {
+        maxOutputTokens: 32768,
+        temperature: 1,
+        topP: 0.95,
+        responseModalities: ["TEXT", "IMAGE"],
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
+            threshold: 'OFF' as any,
+          },
+          {
+            category: 'HARM_CATEGORY_HARASSMENT' as any,
+            threshold: 'OFF' as any,
+          }
+        ],
+      };
+
       // 构建请求
-      const req: any = {
+      const req = {
         model: model,
         contents: [
           { role: 'user', parts: parts }
         ],
-        config: {
-          ...this.getGenerationConfig(),
-          responseModalities: ['TEXT', 'IMAGE']
-        },
+        config: generationConfig,
       };
 
-      console.log('Editing image with Vertex AI Gemini...');
+      // 使用 Google GenAI SDK 调用
+      const streamingResp = await this.genAI!.models.generateContentStream(req);
 
-      // 调用 Vertex AI REST API
-      const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
-
-      const response = await this.fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: req.contents,
-          generationConfig: req.config
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const result = await response.json() as any;
       let textResponse = '';
       let imageResponse = null;
 
-      // 处理响应
-      if (result.candidates && result.candidates[0]?.content?.parts) {
-        for (const part of result.candidates[0].content.parts) {
-          if (part.text) {
-            textResponse += part.text;
-          } else if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
-            imageResponse = {
-              mimeType: part.inlineData.mimeType,
-              data: part.inlineData.data
-            };
+      // 处理流式响应
+      for await (const chunk of streamingResp) {
+        if (chunk.text) {
+          textResponse += chunk.text;
+        } else if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
+          for (const part of chunk.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+              imageResponse = {
+                mimeType: part.inlineData.mimeType,
+                data: part.inlineData.data
+              };
+            }
           }
         }
       }
+
+      console.log('✅ Image editing completed');
+      console.log('   Text response length:', textResponse.length);
+      console.log('   Has edited image:', !!imageResponse);
 
       // 构建响应数据
       const responseData: any = {
@@ -475,6 +548,9 @@ export class VertexAIService {
       // 如果有图像响应，转换为 data URL
       if (imageResponse) {
         responseData.generatedImageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
+        console.log('✅ Edited image URL created');
+      } else {
+        console.log('⚠️ No edited image data in response');
       }
 
       return {

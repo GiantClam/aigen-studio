@@ -26,6 +26,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.17.0",
+    "dotenv": "^17.2.2",
     "fabric": "^6.0.0",
     "google-auth-library": "^9.0.0",
     "lucide-react": "^0.400.0",
