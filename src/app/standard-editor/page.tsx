@@ -281,37 +281,95 @@ export default function StandardEditor() {
     try {
       console.log('📸 Capturing selected objects...', { count: activeObjects.length })
 
-      // 计算所有选中对象的边界框
+      // 获取当前的视口变换矩阵
+      const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+      const zoom = vpt[0]
+      const panX = vpt[4]
+      const panY = vpt[5]
+
+      console.log('📸 Viewport transform:', { zoom, panX, panY })
+
+      // 计算所有选中对象的边界框（在画布逻辑坐标系中）
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
       activeObjects.forEach(obj => {
+        // getBoundingRect()返回的是画布逻辑坐标系中的位置
         const bounds = obj.getBoundingRect()
+
+        console.log('📍 Object bounds (logical):', {
+          object: obj.type,
+          bounds: bounds
+        })
+
         minX = Math.min(minX, bounds.left)
         minY = Math.min(minY, bounds.top)
         maxX = Math.max(maxX, bounds.left + bounds.width)
         maxY = Math.max(maxY, bounds.top + bounds.height)
       })
 
-      // 添加边距
+      // 添加边距（在逻辑坐标系中）
       const padding = 20
-      const captureArea = {
+      const logicalBounds = {
         left: minX - padding,
         top: minY - padding,
         width: (maxX - minX) + padding * 2,
         height: (maxY - minY) + padding * 2
       }
 
-      console.log('📸 Capture area:', captureArea)
+      // 确保边界不超出画布逻辑大小
+      const canvasWidth = canvas.getWidth()
+      const canvasHeight = canvas.getHeight()
 
-      // 使用Fabric.js的toDataURL方法导出指定区域
+      logicalBounds.left = Math.max(0, logicalBounds.left)
+      logicalBounds.top = Math.max(0, logicalBounds.top)
+      logicalBounds.width = Math.min(logicalBounds.width, canvasWidth - logicalBounds.left)
+      logicalBounds.height = Math.min(logicalBounds.height, canvasHeight - logicalBounds.top)
+
+      console.log('📸 Logical bounds:', logicalBounds)
+      console.log('📸 Canvas size:', { width: canvasWidth, height: canvasHeight })
+
+      // 计算最佳的multiplier以保持高清晰度
+      // 检查选中对象中是否有图像，如果有，使用其原始分辨率
+      let bestMultiplier = 2 // 默认2倍分辨率
+
+      activeObjects.forEach(obj => {
+        if (obj.type === 'image') {
+          const imgObj = obj as any
+          if (imgObj._originalElement) {
+            const originalWidth = imgObj._originalElement.naturalWidth || imgObj._originalElement.width
+            const originalHeight = imgObj._originalElement.naturalHeight || imgObj._originalElement.height
+            const currentWidth = imgObj.getScaledWidth()
+            const currentHeight = imgObj.getScaledHeight()
+
+            // 计算原始图像与当前显示尺寸的比例
+            const widthRatio = originalWidth / currentWidth
+            const heightRatio = originalHeight / currentHeight
+            const imageMultiplier = Math.max(widthRatio, heightRatio)
+
+            // 使用最高的分辨率需求，但限制在合理范围内
+            bestMultiplier = Math.max(bestMultiplier, Math.min(imageMultiplier, 4))
+
+            console.log('📸 Image resolution analysis:', {
+              original: { width: originalWidth, height: originalHeight },
+              current: { width: currentWidth, height: currentHeight },
+              ratio: { width: widthRatio, height: heightRatio },
+              suggestedMultiplier: imageMultiplier
+            })
+          }
+        }
+      })
+
+      console.log('📸 Using multiplier:', bestMultiplier)
+
+      // toDataURL使用的是画布逻辑坐标系，不需要考虑视口变换
       const imageData = canvas.toDataURL({
-        left: captureArea.left,
-        top: captureArea.top,
-        width: captureArea.width,
-        height: captureArea.height,
+        left: logicalBounds.left,
+        top: logicalBounds.top,
+        width: logicalBounds.width,
+        height: logicalBounds.height,
         format: 'png',
         quality: 1,
-        multiplier: 1
+        multiplier: bestMultiplier // 使用计算出的最佳分辨率
       })
 
       console.log('📸 Image captured successfully, size:', imageData.length)
@@ -319,10 +377,13 @@ export default function StandardEditor() {
       return {
         imageData,
         bounds: {
-          left: minX,
-          top: minY,
-          width: maxX - minX,
-          height: maxY - minY
+          left: logicalBounds.left,
+          top: logicalBounds.top,
+          width: logicalBounds.width,
+          height: logicalBounds.height,
+          originalBounds: {
+            minX, minY, maxX, maxY
+          }
         }
       }
     } catch (error) {
@@ -562,8 +623,49 @@ export default function StandardEditor() {
       const imgUrl = e.target?.result as string
       if (imgUrl) {
         const img = await FabricImage.fromURL(imgUrl)
-        img.scaleToWidth(200)
+
+        // 保存原始尺寸信息用于后续高清导出
+        const originalWidth = img.width || 0
+        const originalHeight = img.height || 0
+
+        console.log('📸 Uploaded image info:', {
+          original: { width: originalWidth, height: originalHeight },
+          file: { name: file.name, size: file.size }
+        })
+
+        // 智能缩放：保持宽高比，适应画布大小
+        const canvasWidth = canvas.getWidth()
+        const canvasHeight = canvas.getHeight()
+        const maxDisplayWidth = Math.min(400, canvasWidth * 0.4)
+        const maxDisplayHeight = Math.min(400, canvasHeight * 0.4)
+
+        if (originalWidth > 0 && originalHeight > 0) {
+          const scale = Math.min(
+            maxDisplayWidth / originalWidth,
+            maxDisplayHeight / originalHeight,
+            1 // 不放大，只缩小
+          )
+          img.scale(scale)
+
+          console.log('📸 Image scaled:', {
+            scale: scale,
+            display: {
+              width: originalWidth * scale,
+              height: originalHeight * scale
+            }
+          })
+        }
+
+        // 设置图像位置在画布中央
+        img.set({
+          left: (canvasWidth - img.getScaledWidth()) / 2,
+          top: (canvasHeight - img.getScaledHeight()) / 2,
+          selectable: true,
+          evented: true
+        })
+
         canvas.add(img)
+        canvas.setActiveObject(img)
         canvas.renderAll()
       }
     }
@@ -582,13 +684,32 @@ export default function StandardEditor() {
 
   const downloadImage = () => {
     if (!canvas) return
+
+    // 计算最佳下载分辨率
+    let downloadMultiplier = 2 // 默认2倍分辨率
+
+    // 检查画布中的所有图像对象，使用最高分辨率需求
+    canvas.getObjects().forEach(obj => {
+      if (obj.type === 'image') {
+        const imgObj = obj as any
+        if (imgObj._originalElement) {
+          const originalWidth = imgObj._originalElement.naturalWidth || imgObj._originalElement.width
+          const currentWidth = imgObj.getScaledWidth()
+          const imageMultiplier = originalWidth / currentWidth
+          downloadMultiplier = Math.max(downloadMultiplier, Math.min(imageMultiplier, 4))
+        }
+      }
+    })
+
+    console.log('📥 Downloading with multiplier:', downloadMultiplier)
+
     const dataURL = canvas.toDataURL({
       format: 'png',
       quality: 1,
-      multiplier: 1
+      multiplier: downloadMultiplier // 使用高分辨率
     })
     const link = document.createElement('a')
-    link.download = 'canvas-image.png'
+    link.download = `canvas-image-${Date.now()}.png`
     link.href = dataURL
     link.click()
   }
