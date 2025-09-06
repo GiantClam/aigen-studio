@@ -56,7 +56,7 @@ export class VertexAIService {
 
       console.log('Vertex AI initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Vertex AI:', error.message);
+      console.error('Failed to initialize Vertex AI:', error instanceof Error ? error.message : String(error));
       this.auth = null;
     }
   }
@@ -115,7 +115,7 @@ export class VertexAIService {
         }
       } catch (error: any) {
         lastError = error;
-        console.warn(`Attempt ${attempt} failed:`, error.message);
+        console.warn(`Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error));
 
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000; // 指数退避
@@ -182,107 +182,7 @@ export class VertexAIService {
     };
   }
 
-  /**
-   * 使用 Gemini 2.5 Flash Image Preview 进行图像编辑
-   */
-  async editImage(imageData: string, instruction: string): Promise<{
-    success: boolean;
-    data?: any;
-    error?: string;
-  }> {
-    if (!this.isAvailable()) {
-      return {
-        success: false,
-        error: 'Vertex AI is not available. Please check your configuration.'
-      };
-    }
 
-    try {
-      const model = 'gemini-2.5-flash-image-preview';
-      const accessToken = await this.getAccessToken();
-
-      // 准备图像数据
-      const image = this.base64ToVertexAIImage(imageData);
-
-      // 构建请求体
-      const requestBody = {
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              image,
-              { text: instruction }
-            ]
-          }
-        ],
-        generationConfig: this.getGenerationConfig()
-      };
-
-      console.log('Sending request to Vertex AI Gemini 2.5 Flash Image Preview...');
-
-      // 调用 Vertex AI REST API
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
-
-      const response = await this.fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Vertex AI API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const result = await response.json() as any;
-
-      let textResponse = '';
-      let imageResponse = null;
-
-      // 处理响应
-      if (result.candidates && result.candidates[0]?.content?.parts) {
-        for (const part of result.candidates[0].content.parts) {
-          if (part.text) {
-            textResponse += part.text;
-          } else if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
-            imageResponse = {
-              mimeType: part.inlineData.mimeType,
-              data: part.inlineData.data
-            };
-          }
-        }
-      }
-
-      // 构建响应数据
-      const responseData: any = {
-        textResponse: textResponse,
-        imageResponse: imageResponse,
-        model: model,
-        instruction: instruction,
-        timestamp: new Date().toISOString()
-      };
-
-      // 如果有图像响应，转换为 data URL
-      if (imageResponse) {
-        responseData.editedImageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
-      }
-
-      return {
-        success: true,
-        data: responseData
-      };
-
-    } catch (error) {
-      console.error('Vertex AI image editing error:', error);
-      return {
-        success: false,
-        error: `Failed to edit image with Vertex AI: ${error.message || 'Unknown error'}`
-      };
-    }
-  }
 
   /**
    * 使用 Gemini 进行图像分析
@@ -369,7 +269,7 @@ export class VertexAIService {
       console.error('Vertex AI image analysis error:', error);
       return {
         success: false,
-        error: `Failed to analyze image with Vertex AI: ${error.message || 'Unknown error'}`
+        error: `Failed to analyze image with Vertex AI: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -468,7 +368,7 @@ export class VertexAIService {
       console.error('Vertex AI image generation error:', error);
       return {
         success: false,
-        error: `Failed to generate image with Vertex AI: ${error.message || 'Unknown error'}`
+        error: `Failed to generate image with Vertex AI: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -586,7 +486,7 @@ export class VertexAIService {
       console.error('Vertex AI image editing error:', error);
       return {
         success: false,
-        error: `Failed to edit image with Vertex AI: ${error.message || 'Unknown error'}`
+        error: `Failed to edit image with Vertex AI: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }

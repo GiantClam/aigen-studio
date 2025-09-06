@@ -2,12 +2,12 @@
   "name": "ai-image-editor",
   "version": "1.0.0",
   "description": "AI Image Editor - AI 驱动的智能图像编辑器",
-  "main": "api/index.js",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "build": "tsc -b",
-    "dev": "node dev-server.js",
-    "start": "node dist/api/index.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
     "deploy": "npx vercel --prod",
     "preview": "npx vercel"
   },
@@ -25,16 +25,25 @@
   ],
   "author": "",
   "license": "MIT",
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250903.0",
-    "@types/node": "^22.10.1",
-    "@vercel/node": "^5.3.19",
-    "express": "^5.1.0",
-    "typescript": "^5.7.2",
-    "vercel": "^37.0.0"
-  },
   "dependencies": {
-    "dotenv": "^17.2.2",
-    "google-auth-library": "^9.0.0"
+    "fabric": "^6.0.0",
+    "google-auth-library": "^9.0.0",
+    "lucide-react": "^0.400.0",
+    "next": "^15.0.0",
+    "next-auth": "^4.24.11",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.7.2"
   }
 }

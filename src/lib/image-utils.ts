@@ -65,7 +65,9 @@ export class ImageProcessor {
       // 缓存结果（限制缓存大小）
       if (this.cache.size > 100) {
         const firstKey = this.cache.keys().next().value
-        this.cache.delete(firstKey)
+        if (firstKey) {
+          this.cache.delete(firstKey)
+        }
       }
       this.cache.set(cacheKey, optimizedBase64)
 
