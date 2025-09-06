@@ -10,6 +10,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/standard-editor/page.js"
+    ],
+    "/api/ai/image/edit/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/ai/image/edit/route.js"
     ]
   }
 }

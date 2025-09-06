@@ -1,3 +1,4 @@
 {
+  "/api/ai/image/edit/route": "app/api/ai/image/edit/route.js",
   "/standard-editor/page": "app/standard-editor/page.js"
 }

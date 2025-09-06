@@ -77,6 +77,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies AppPageConfig<"/test-canvas">
 }
 
+// Validate ../../src/app/api/ai/chat/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/ai/chat/route.js")
+  handler satisfies RouteHandlerConfig<"/api/ai/chat">
+}
+
 // Validate ../../src/app/api/ai/image/analyze/route.ts
 {
   const handler = {} as typeof import("../../src/app/api/ai/image/analyze/route.js")

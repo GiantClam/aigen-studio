@@ -236,9 +236,67 @@ export default function StandardEditor() {
     }
   }, [canvas, currentTool])
 
+  // 获取选中对象的图片数据
+  const getSelectedObjectsImage = async (): Promise<string | null> => {
+    if (!canvas) return null
+
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return null
+
+    try {
+      // 计算选中对象的边界框
+      const group = canvas.getActiveObject()
+      if (!group) return null
+
+      const bounds = group.getBoundingRect()
+
+      // 创建临时画布来导出选中对象
+      const tempCanvas = document.createElement('canvas')
+      const tempCtx = tempCanvas.getContext('2d')
+      if (!tempCtx) return null
+
+      // 设置临时画布尺寸（添加一些边距）
+      const padding = 20
+      tempCanvas.width = bounds.width + padding * 2
+      tempCanvas.height = bounds.height + padding * 2
+
+      // 设置白色背景
+      tempCtx.fillStyle = '#ffffff'
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+
+      // 保存原始画布状态
+      const originalViewport: [number, number, number, number, number, number] =
+        (canvas.viewportTransform?.slice() as [number, number, number, number, number, number]) || [1, 0, 0, 1, 0, 0]
+
+      // 临时调整视口以正确渲染选中对象
+      const newViewport: [number, number, number, number, number, number] = [1, 0, 0, 1, padding - bounds.left, padding - bounds.top]
+      canvas.setViewportTransform(newViewport)
+
+      // 将选中对象渲染到临时画布
+      const dataURL = canvas.toDataURL({
+        left: bounds.left - padding,
+        top: bounds.top - padding,
+        width: bounds.width + padding * 2,
+        height: bounds.height + padding * 2,
+        format: 'png',
+        quality: 1,
+        multiplier: 1
+      })
+
+      // 恢复原始视口
+      canvas.setViewportTransform(originalViewport)
+      canvas.renderAll()
+
+      return dataURL
+    } catch (error) {
+      console.error('Error generating selected objects image:', error)
+      return null
+    }
+  }
+
   // AI聊天功能
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
+    if (!inputMessage.trim() || isLoading || !canvas) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -248,23 +306,167 @@ export default function StandardEditor() {
     }
 
     setChatMessages(prev => [...prev, userMessage])
+    const currentMessage = inputMessage
     setInputMessage('')
     setIsLoading(true)
 
     try {
-      // 模拟AI响应
-      setTimeout(() => {
-        const aiResponse: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `我理解你想要${inputMessage}。让我来帮你实现这个功能！你可以尝试使用左侧的工具栏来编辑图像，或者上传一张图片开始编辑。`,
-          timestamp: new Date().toLocaleTimeString()
+      // 检查是否有选中的对象
+      const activeObjects = canvas.getActiveObjects()
+      const hasSelectedObjects = activeObjects.length > 0
+
+      if (hasSelectedObjects) {
+        // 获取选中对象的图片
+        const selectedImage = await getSelectedObjectsImage()
+
+        if (selectedImage) {
+          console.log('🎨 Processing selected objects with AI...')
+
+          // 发送到Vertex AI进行处理
+          const response = await fetch('/api/ai/image/edit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: selectedImage,
+              instruction: currentMessage,
+              model: 'gemini-2.5-flash-image-preview'
+            })
+          })
+
+          const result = await response.json()
+
+          if (result.success && result.data?.editedImageUrl) {
+            // 计算选中对象的位置，用于放置新图片
+            const group = canvas.getActiveObject()
+            const bounds = group?.getBoundingRect()
+
+            // 将AI处理后的图片添加到画布右侧
+            const img = await FabricImage.fromURL(result.data.editedImageUrl)
+
+            if (bounds) {
+              img.set({
+                left: bounds.left + bounds.width + 50, // 在选中对象右侧50px处
+                top: bounds.top,
+                selectable: true,
+                evented: true
+              })
+
+              // 缩放图片以适合画布
+              const maxWidth = 300
+              const maxHeight = 300
+              if (img.width && img.height) {
+                const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1)
+                img.scale(scale)
+              }
+            }
+
+            canvas.add(img)
+            canvas.setActiveObject(img)
+            canvas.renderAll()
+
+            const aiResponse: ChatMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: `✅ 我已经根据你的要求"${currentMessage}"处理了选中的对象，并将结果放在了右侧。你可以继续编辑或调整位置。`,
+              timestamp: new Date().toLocaleTimeString()
+            }
+            setChatMessages(prev => [...prev, aiResponse])
+          } else {
+            throw new Error(result.error || 'AI处理失败')
+          }
+        } else {
+          throw new Error('无法获取选中对象的图片')
         }
-        setChatMessages(prev => [...prev, aiResponse])
-        setIsLoading(false)
-      }, 1000)
+      } else {
+        // 没有选中对象，尝试生成图像
+        console.log('🎨 Generating image from text...')
+
+        const response = await fetch('/api/ai/image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: currentMessage,
+            model: 'gemini-2.5-flash-image-preview'
+          })
+        })
+
+        const result = await response.json()
+
+        if (result.success && result.data?.imageUrl) {
+          // 在画布中央添加生成的图像
+          const img = await FabricImage.fromURL(result.data.imageUrl)
+
+          // 计算画布中央位置
+          const canvasCenter = {
+            x: canvas.getWidth() / 2,
+            y: canvas.getHeight() / 2
+          }
+
+          // 缩放图像以适合画布
+          const maxWidth = 400
+          const maxHeight = 400
+          if (img.width && img.height) {
+            const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1)
+            img.scale(scale)
+          }
+
+          // 设置图像位置在画布中央
+          img.set({
+            left: canvasCenter.x - img.getScaledWidth() / 2,
+            top: canvasCenter.y - img.getScaledHeight() / 2,
+            selectable: true,
+            evented: true
+          })
+
+          canvas.add(img)
+          canvas.setActiveObject(img)
+          canvas.renderAll()
+
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `🎨 我已经根据你的描述"${currentMessage}"生成了一张新图片，并放在了画布中央。你可以选择它进行进一步编辑！`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        } else {
+          // 如果图像生成失败，进行普通对话
+          const chatResponse = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: currentMessage,
+              context: 'image-editor'
+            })
+          })
+
+          const chatResult = await chatResponse.json()
+
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: chatResult.success ? chatResult.data.response : `我理解你想要${currentMessage}。你可以选择画布中的对象，然后告诉我如何处理它们，或者描述你想要生成的图像。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        }
+      }
     } catch (error) {
       console.error('AI response error:', error)
+      const errorResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `抱歉，处理过程中出现了错误：${error instanceof Error ? error.message : '未知错误'}。请稍后再试。`,
+        timestamp: new Date().toLocaleTimeString()
+      }
+      setChatMessages(prev => [...prev, errorResponse])
+    } finally {
       setIsLoading(false)
     }
   }
