@@ -17,7 +17,7 @@ const getEnv = () => ({
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageData, instruction, model = 'gemini-2.5-flash-002' } = await request.json()
+    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = await request.json()
 
     if (!imageData || !instruction) {
       return NextResponse.json({

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const {
       prompt,
       image,
-      model = 'gemini-2.5-flash-002',
+      model = 'gemini-2.5-flash-image-preview',
       width = 1024,
       height = 1024
     } = await request.json()
@@ -56,21 +56,35 @@ export async function POST(request: NextRequest) {
       ? await vertexAI.editImage(enhancedPrompt, image)
       : await vertexAI.generateImage(enhancedPrompt)
     
-    if (result.success && result.data.generatedImageUrl) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          imageUrl: result.data.generatedImageUrl,
-          originalPrompt: prompt,
-          enhancedPrompt: enhancedPrompt,
-          model: model,
-          dimensions: { width, height },
-          textResponse: result.data.textResponse,
-          timestamp: result.data.timestamp,
-          provider: 'vertex-ai'
-        }
-      })
+    console.log('Vertex AI result:', result)
+
+    if (result.success && result.data) {
+      // 检查不同的可能字段名
+      const imageUrl = result.data.imageUrl || result.data.generatedImageUrl
+
+      if (imageUrl) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            imageUrl: imageUrl,
+            originalPrompt: prompt,
+            enhancedPrompt: enhancedPrompt,
+            model: model,
+            dimensions: { width, height },
+            textResponse: result.data.textResponse,
+            timestamp: result.data.timestamp,
+            provider: 'vertex-ai'
+          }
+        })
+      } else {
+        console.error('No image URL found in result:', result.data)
+        return NextResponse.json({
+          success: false,
+          error: 'No image generated - missing image URL in response'
+        }, { status: 500 })
+      }
     } else {
+      console.error('Vertex AI generation failed:', result)
       return NextResponse.json({
         success: false,
         error: result.error || 'Failed to generate image with Vertex AI'

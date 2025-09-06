@@ -443,7 +443,7 @@ export default function StandardEditor() {
           body: JSON.stringify({
             imageData: selectedData.imageData,
             instruction: currentMessage,
-            model: 'gemini-2.5-flash-002'
+            model: 'gemini-2.5-flash-image-preview'
           })
         })
 
@@ -501,7 +501,7 @@ export default function StandardEditor() {
           },
           body: JSON.stringify({
             prompt: currentMessage,
-            model: 'gemini-2.5-flash-002'
+            model: 'gemini-2.5-flash-image-preview'
           })
         })
 
@@ -556,29 +556,9 @@ export default function StandardEditor() {
           }
           setChatMessages(prev => [...prev, aiResponse])
         } else {
-          // 如果图像生成失败，进行普通对话
-          console.log('⚠️ Image generation failed, falling back to chat')
-
-          const chatResponse = await fetch('/api/ai/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: currentMessage,
-              context: 'image-editor'
-            })
-          })
-
-          const chatResult = await chatResponse.json()
-
-          const aiResponse: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: chatResult.success ? chatResult.data.response : `我理解你想要${currentMessage}。你可以选择画布中的对象，然后告诉我如何处理它们，或者描述你想要生成的图像。如果遇到问题，请检查网络连接或稍后再试。`,
-            timestamp: new Date().toLocaleTimeString()
-          }
-          setChatMessages(prev => [...prev, aiResponse])
+          // 图像生成失败，显示具体错误信息
+          console.error('❌ Image generation failed:', result.error)
+          throw new Error(result.error || '图像生成失败，请稍后重试')
         }
       }
     } catch (error) {
@@ -935,7 +915,12 @@ export default function StandardEditor() {
                     type="text"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
                     placeholder="询问AI助手..."
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     disabled={isLoading}
