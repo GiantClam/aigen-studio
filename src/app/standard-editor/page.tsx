@@ -21,7 +21,7 @@ import {
   ArrowUpRight
 } from 'lucide-react'
 
-// 消息接口
+// Message interface
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -29,7 +29,7 @@ interface ChatMessage {
   timestamp: string
 }
 
-// 创建箭头路径的辅助函数
+// Helper function to create arrow path
 function createArrowPath(x1: number, y1: number, x2: number, y2: number): string {
   const headLength = 15 // 箭头头部长度
   const headAngle = Math.PI / 6 // 箭头头部角度
@@ -43,7 +43,7 @@ function createArrowPath(x1: number, y1: number, x2: number, y2: number): string
   const arrowHead2X = x2 - headLength * Math.cos(angle + headAngle)
   const arrowHead2Y = y2 - headLength * Math.sin(angle + headAngle)
 
-  // 构建SVG路径
+  // Build SVG path
   return `M ${x1} ${y1} L ${x2} ${y2} M ${x2} ${y2} L ${arrowHead1X} ${arrowHead1Y} M ${x2} ${y2} L ${arrowHead2X} ${arrowHead2Y}`
 }
 
@@ -52,23 +52,23 @@ export default function StandardEditor() {
   const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text' | 'arrow'>('select')
 
-  // 浮窗状态
+  // Floating window states
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
 
-  // AI聊天状态
+  // AI chat states
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       role: 'assistant',
-      content: '👋 你好！我是你的AI图像编辑助手。我可以帮你编辑图片、生成图像，或者回答任何关于图像处理的问题。',
+      content: '👋 Hello! I&apos;m your AI image editing assistant. I can help you edit images, generate pictures, or answer any questions about image processing.',
       timestamp: new Date().toLocaleTimeString()
     }
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // 无限画布初始化
+  // Infinite canvas initialization
   useEffect(() => {
     if (!canvasRef.current) return
 
@@ -87,7 +87,7 @@ export default function StandardEditor() {
       allowTouchScrolling: false
     })
 
-    // 启用画布缩放
+    // Enable canvas zooming
     fabricCanvas.on('mouse:wheel', (opt) => {
       const delta = opt.e.deltaY
       let zoom = fabricCanvas.getZoom()
@@ -100,7 +100,7 @@ export default function StandardEditor() {
       opt.e.stopPropagation()
     })
 
-    // 画布拖拽平移
+    // Canvas drag panning
     let isDragging = false
     let lastPosX = 0
     let lastPosY = 0
@@ -223,7 +223,7 @@ export default function StandardEditor() {
         break
 
       case 'text':
-        obj = new IText('输入文本', {
+        obj = new IText('Enter text', {
           left: pointer.x,
           top: pointer.y,
           fontSize: 20,
@@ -281,24 +281,34 @@ export default function StandardEditor() {
     try {
       console.log('📸 Capturing selected objects...', { count: activeObjects.length })
 
+      // 强制重新渲染画布以确保所有对象位置正确
+      canvas.renderAll()
+
       // 获取当前的视口变换矩阵
       const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
       const zoom = vpt[0]
       const panX = vpt[4]
       const panY = vpt[5]
 
-      console.log('📸 Viewport transform:', { zoom, panX, panY })
+      console.log('📸 Current viewport transform:', { zoom, panX, panY })
 
-      // 计算所有选中对象的边界框（在画布逻辑坐标系中）
+      // 计算所有选中对象的精确边界框
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
-      activeObjects.forEach(obj => {
-        // getBoundingRect()返回的是画布逻辑坐标系中的位置
+      activeObjects.forEach((obj, index) => {
+        // 强制更新对象坐标
+        obj.setCoords()
+
+        // 获取对象的边界框（包含变换）
         const bounds = obj.getBoundingRect()
 
-        console.log('📍 Object bounds (logical):', {
-          object: obj.type,
-          bounds: bounds
+        console.log(`📍 Object ${index} (${obj.type}) bounds:`, {
+          left: bounds.left,
+          top: bounds.top,
+          width: bounds.width,
+          height: bounds.height,
+          right: bounds.left + bounds.width,
+          bottom: bounds.top + bounds.height
         })
 
         minX = Math.min(minX, bounds.left)
@@ -307,26 +317,45 @@ export default function StandardEditor() {
         maxY = Math.max(maxY, bounds.top + bounds.height)
       })
 
-      // 添加边距（在逻辑坐标系中）
-      const padding = 20
-      const logicalBounds = {
-        left: minX - padding,
-        top: minY - padding,
-        width: (maxX - minX) + padding * 2,
-        height: (maxY - minY) + padding * 2
+      // 计算实际内容区域（不添加过多padding）
+      const contentWidth = maxX - minX
+      const contentHeight = maxY - minY
+
+      // 动态计算padding，避免过大的白边
+      const paddingRatio = 0.05 // 5%的边距
+      const minPadding = 10
+      const maxPadding = 50
+
+      const dynamicPadding = Math.max(
+        minPadding,
+        Math.min(
+          maxPadding,
+          Math.max(contentWidth * paddingRatio, contentHeight * paddingRatio)
+        )
+      )
+
+      const captureArea = {
+        left: minX - dynamicPadding,
+        top: minY - dynamicPadding,
+        width: contentWidth + dynamicPadding * 2,
+        height: contentHeight + dynamicPadding * 2
       }
 
-      // 确保边界不超出画布逻辑大小
+      // 确保捕获区域在画布范围内
       const canvasWidth = canvas.getWidth()
       const canvasHeight = canvas.getHeight()
 
-      logicalBounds.left = Math.max(0, logicalBounds.left)
-      logicalBounds.top = Math.max(0, logicalBounds.top)
-      logicalBounds.width = Math.min(logicalBounds.width, canvasWidth - logicalBounds.left)
-      logicalBounds.height = Math.min(logicalBounds.height, canvasHeight - logicalBounds.top)
+      captureArea.left = Math.max(0, captureArea.left)
+      captureArea.top = Math.max(0, captureArea.top)
+      captureArea.width = Math.min(captureArea.width, canvasWidth - captureArea.left)
+      captureArea.height = Math.min(captureArea.height, canvasHeight - captureArea.top)
 
-      console.log('📸 Logical bounds:', logicalBounds)
-      console.log('📸 Canvas size:', { width: canvasWidth, height: canvasHeight })
+      console.log('📸 Capture area calculation:', {
+        content: { width: contentWidth, height: contentHeight },
+        padding: dynamicPadding,
+        finalArea: captureArea,
+        canvas: { width: canvasWidth, height: canvasHeight }
+      })
 
       // 计算最佳的multiplier以保持高清晰度
       // 检查选中对象中是否有图像，如果有，使用其原始分辨率
@@ -361,28 +390,33 @@ export default function StandardEditor() {
 
       console.log('📸 Using multiplier:', bestMultiplier)
 
-      // toDataURL使用的是画布逻辑坐标系，不需要考虑视口变换
+      // 使用精确的捕获区域进行图像导出
       const imageData = canvas.toDataURL({
-        left: logicalBounds.left,
-        top: logicalBounds.top,
-        width: logicalBounds.width,
-        height: logicalBounds.height,
+        left: captureArea.left,
+        top: captureArea.top,
+        width: captureArea.width,
+        height: captureArea.height,
         format: 'png',
         quality: 1,
         multiplier: bestMultiplier // 使用计算出的最佳分辨率
       })
 
-      console.log('📸 Image captured successfully, size:', imageData.length)
+      console.log('📸 Image captured successfully:', {
+        dataSize: imageData.length,
+        captureArea: captureArea,
+        multiplier: bestMultiplier
+      })
 
       return {
         imageData,
         bounds: {
-          left: logicalBounds.left,
-          top: logicalBounds.top,
-          width: logicalBounds.width,
-          height: logicalBounds.height,
+          left: captureArea.left,
+          top: captureArea.top,
+          width: captureArea.width,
+          height: captureArea.height,
           originalBounds: {
-            minX, minY, maxX, maxY
+            minX, minY, maxX, maxY,
+            contentWidth, contentHeight
           }
         }
       }
@@ -425,7 +459,7 @@ export default function StandardEditor() {
 
         const selectedData = await getSelectedObjectsImage()
         if (!selectedData) {
-          throw new Error('无法获取选中对象的图片')
+          throw new Error('Unable to capture selected objects image')
         }
 
         console.log('🎨 Processing selected objects with Gemini Flash Image...', {
@@ -482,12 +516,12 @@ export default function StandardEditor() {
           const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: `✅ 我已经根据你的要求"${currentMessage}"处理了选中的对象，并将AI生成的结果放在了右侧。你可以继续编辑或调整位置。`,
+            content: `✅ I have processed the selected objects according to your request "${currentMessage}" and placed the AI-generated result on the right. You can continue editing or adjust the position.`,
             timestamp: new Date().toLocaleTimeString()
           }
           setChatMessages(prev => [...prev, aiResponse])
         } else {
-          throw new Error(result.error || 'AI图像处理失败')
+          throw new Error(result.error || 'AI image processing failed')
         }
       } else {
         // 场景2: 没有选中对象 - 图像生成
@@ -551,40 +585,40 @@ export default function StandardEditor() {
           const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: `🎨 我已经根据你的描述"${currentMessage}"生成了一张新图片，并放在了画布中央。你可以选择它进行进一步编辑！`,
+            content: `🎨 I have generated a new image based on your description "${currentMessage}" and placed it in the center of the canvas. You can select it for further editing!`,
             timestamp: new Date().toLocaleTimeString()
           }
           setChatMessages(prev => [...prev, aiResponse])
         } else {
           // 图像生成失败，显示具体错误信息
           console.error('❌ Image generation failed:', result.error)
-          throw new Error(result.error || '图像生成失败，请稍后重试')
+          throw new Error(result.error || 'Image generation failed, please try again later')
         }
       }
     } catch (error) {
       console.error('❌ AI processing error:', error)
 
-      let errorMessage = '未知错误'
+      let errorMessage = 'Unknown error'
 
       if (error instanceof Error) {
         errorMessage = error.message
 
-        // 特殊处理网络和配置错误
+        // Special handling for network and configuration errors
         if (error.message.includes('Vertex AI is not')) {
-          errorMessage = '🚫 Vertex AI服务未正确配置。请检查环境变量配置或联系管理员。'
+          errorMessage = '🚫 Vertex AI service is not properly configured. Please check environment variables or contact administrator.'
         } else if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
-          errorMessage = '🚫 Vertex AI服务当前不可用。请检查网络连接或稍后再试。'
+          errorMessage = '🚫 Vertex AI service is currently unavailable. Please check network connection or try again later.'
         } else if (error.message.includes('ENOTFOUND') || error.message.includes('network')) {
-          errorMessage = '🌐 网络连接失败。请检查网络连接或VPN配置。'
+          errorMessage = '🌐 Network connection failed. Please check network connection or VPN configuration.'
         } else if (error.message.includes('timeout')) {
-          errorMessage = '⏱️ 请求超时。请检查网络连接或稍后再试。'
+          errorMessage = '⏱️ Request timeout. Please check network connection or try again later.'
         }
       }
 
       const errorResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `❌ 处理请求时出现错误：${errorMessage}\n\n💡 提示：此应用需要真实的Vertex AI服务，不支持模拟模式。`,
+        content: `❌ Error occurred while processing request: ${errorMessage}\n\n💡 Note: This application requires real Vertex AI service and does not support simulation mode.`,
         timestamp: new Date().toLocaleTimeString()
       }
 
@@ -712,7 +746,7 @@ export default function StandardEditor() {
             <button
               onClick={() => setIsToolbarExpanded(!isToolbarExpanded)}
               className="p-3 rounded-xl hover:bg-gray-100 transition-colors"
-              title={isToolbarExpanded ? '收起工具栏' : '展开工具栏'}
+              title={isToolbarExpanded ? 'Collapse Toolbar' : 'Expand Toolbar'}
             >
               {isToolbarExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
@@ -727,7 +761,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="选择工具"
+                  title="Selection Tool"
                 >
                   <MousePointer2 className="w-5 h-5" />
                 </button>
@@ -740,7 +774,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="移动画布"
+                  title="Move Canvas"
                 >
                   <Move className="w-5 h-5" />
                 </button>
@@ -755,7 +789,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="画笔"
+                  title="Brush"
                 >
                   <Brush className="w-5 h-5" />
                 </button>
@@ -770,7 +804,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="矩形"
+                  title="Rectangle"
                 >
                   <Square className="w-5 h-5" />
                 </button>
@@ -782,7 +816,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="圆形"
+                  title="Circle"
                 >
                   <Circle className="w-5 h-5" />
                 </button>
@@ -794,7 +828,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="文本"
+                  title="Text"
                 >
                   <Type className="w-5 h-5" />
                 </button>
@@ -806,7 +840,7 @@ export default function StandardEditor() {
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="箭头"
+                  title="Arrow"
                 >
                   <ArrowUpRight className="w-5 h-5" />
                 </button>
@@ -817,7 +851,7 @@ export default function StandardEditor() {
                 <button
                   onClick={deleteSelected}
                   className="p-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
-                  title="删除选中"
+                  title="Delete Selected"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -834,7 +868,7 @@ export default function StandardEditor() {
                     input.click()
                   }}
                   className="p-3 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors shadow-lg"
-                  title="上传图片"
+                  title="Upload Image"
                 >
                   <Upload className="w-5 h-5" />
                 </button>
@@ -842,7 +876,7 @@ export default function StandardEditor() {
                 <button
                   onClick={downloadImage}
                   className="p-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg"
-                  title="下载图片"
+                  title="Download Image"
                 >
                   <Download className="w-5 h-5" />
                 </button>
@@ -859,12 +893,12 @@ export default function StandardEditor() {
           <div className="flex items-center justify-between p-4 border-b border-gray-200/50">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="font-semibold text-gray-800">AI助手</span>
+              <span className="font-semibold text-gray-800">AI Assistant</span>
             </div>
             <button
               onClick={() => setIsChatExpanded(!isChatExpanded)}
               className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-              title={isChatExpanded ? '收起聊天' : '展开聊天'}
+              title={isChatExpanded ? 'Collapse Chat' : 'Expand Chat'}
             >
               {isChatExpanded ? <Minimize2 className="w-4 h-4" /> : <MessageCircle className="w-4 h-4" />}
             </button>
@@ -921,7 +955,7 @@ export default function StandardEditor() {
                         sendMessage()
                       }
                     }}
-                    placeholder="询问AI助手..."
+                    placeholder="Ask AI Assistant..."
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     disabled={isLoading}
                   />
@@ -943,17 +977,17 @@ export default function StandardEditor() {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40">
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 px-4 py-2">
           <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <span>当前工具: <span className="font-semibold text-gray-800">{
-              currentTool === 'select' ? '选择' :
-              currentTool === 'move' ? '移动' :
-              currentTool === 'draw' ? '画笔' :
-              currentTool === 'rectangle' ? '矩形' :
-              currentTool === 'circle' ? '圆形' :
-              currentTool === 'text' ? '文本' :
-              currentTool === 'arrow' ? '箭头' : currentTool
+            <span>Current Tool: <span className="font-semibold text-gray-800">{
+              currentTool === 'select' ? 'Select' :
+              currentTool === 'move' ? 'Move' :
+              currentTool === 'draw' ? 'Brush' :
+              currentTool === 'rectangle' ? 'Rectangle' :
+              currentTool === 'circle' ? 'Circle' :
+              currentTool === 'text' ? 'Text' :
+              currentTool === 'arrow' ? 'Arrow' : currentTool
             }</span></span>
             <div className="w-px h-4 bg-gray-300"></div>
-            <span>滚轮缩放 | Alt+拖拽平移</span>
+            <span>Scroll to Zoom | Alt+Drag to Pan</span>
           </div>
         </div>
       </div>
