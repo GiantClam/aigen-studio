@@ -479,9 +479,6 @@ export class VertexAIService {
         ? inputImage.split(';')[0].replace('data:', '')
         : 'image/png';
 
-      // 构建简洁但明确的编辑指令
-      const editPrompt = `Edit this image: ${prompt}`;
-
       // 准备请求内容
       const parts = [
         {
@@ -491,7 +488,7 @@ export class VertexAIService {
           }
         },
         {
-          text: editPrompt
+          text: prompt
         }
       ];
 
@@ -503,7 +500,7 @@ export class VertexAIService {
       // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
       const generationConfig = {
         maxOutputTokens: 8192,
-        temperature: 0.1,  // 非常低的温度确保一致的编辑结果
+        temperature: 0.4,  // 适中的温度，既保证一致性又允许创造性
         topP: 0.95,
         responseModalities: ["IMAGE", "TEXT"],  // 必须包含TEXT，纯IMAGE不支持
         safetySettings: [
@@ -594,6 +591,14 @@ export class VertexAIService {
       if (imageResponse) {
         responseData.generatedImageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
         console.log('✅ Edited image URL created');
+        console.log('   Image size (bytes):', imageResponse.data?.length || 0);
+        console.log('   MIME type:', imageResponse.mimeType);
+
+        // 检查是否是空白图像（通过数据大小判断）
+        const imageSize = imageResponse.data?.length || 0;
+        if (imageSize < 1000) {
+          console.log('⚠️ Warning: Generated image is very small, might be blank');
+        }
       } else {
         console.log('⚠️ No edited image data in response');
       }
