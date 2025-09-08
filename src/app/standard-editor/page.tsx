@@ -319,39 +319,32 @@ export default function StandardEditor() {
         // Force update object coordinates for all object types
         obj.setCoords()
 
-        // CRITICAL FIX: The issue is coordinate transformation.
-        // getBoundingRect() returns viewport coordinates, but toDataURL() needs canvas coordinates.
+        // CRITICAL FIX: getBoundingRect() already returns CANVAS coordinates!
+        // The previous assumption was wrong - no coordinate transformation needed.
+        // toDataURL() expects canvas coordinates, which is exactly what getBoundingRect() provides.
 
-        // Get the viewport bounding box
-        const viewportBounds = obj.getBoundingRect()
+        const bounds = obj.getBoundingRect()
 
-        // Manual coordinate transformation from viewport to canvas space
-        // viewport coordinates = (canvas coordinates * zoom) + pan
-        // So: canvas coordinates = (viewport coordinates - pan) / zoom
-        const canvasBounds = {
-          left: (viewportBounds.left - panX) / zoom,
-          top: (viewportBounds.top - panY) / zoom,
-          width: viewportBounds.width / zoom,
-          height: viewportBounds.height / zoom
-        }
-
-        console.log(`🔍 Object ${index} (${obj.type}) coordinate transform:`, {
-          viewport: { zoom, panX, panY },
-          viewportBounds: viewportBounds,
-          canvasBounds: canvasBounds,
-          calculation: {
-            leftCalc: `(${viewportBounds.left} - ${panX}) / ${zoom} = ${canvasBounds.left}`,
-            topCalc: `(${viewportBounds.top} - ${panY}) / ${zoom} = ${canvasBounds.top}`,
-            widthCalc: `${viewportBounds.width} / ${zoom} = ${canvasBounds.width}`,
-            heightCalc: `${viewportBounds.height} / ${zoom} = ${canvasBounds.height}`
-          }
+        console.log(`🔍 Object ${index} (${obj.type}) bounds (canvas coordinates):`, {
+          left: bounds.left,
+          top: bounds.top,
+          width: bounds.width,
+          height: bounds.height,
+          right: bounds.left + bounds.width,
+          bottom: bounds.top + bounds.height,
+          area: bounds.width * bounds.height
         })
 
-        // Use canvas coordinates for capture area calculation
-        minX = Math.min(minX, canvasBounds.left)
-        minY = Math.min(minY, canvasBounds.top)
-        maxX = Math.max(maxX, canvasBounds.left + canvasBounds.width)
-        maxY = Math.max(maxY, canvasBounds.top + canvasBounds.height)
+        console.log(`📍 Viewport info for reference:`, {
+          zoom, panX, panY,
+          note: "getBoundingRect() returns canvas coordinates regardless of viewport transform"
+        })
+
+        // Use the bounds directly - they are already in canvas coordinate system
+        minX = Math.min(minX, bounds.left)
+        minY = Math.min(minY, bounds.top)
+        maxX = Math.max(maxX, bounds.left + bounds.width)
+        maxY = Math.max(maxY, bounds.top + bounds.height)
       })
 
       // 计算实际内容区域（不添加过多padding）
