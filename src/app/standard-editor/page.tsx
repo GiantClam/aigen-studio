@@ -578,11 +578,46 @@ export default function StandardEditor() {
         console.log('📡 Edit API Response data:', result)
 
         if (result.success && result.data?.editedImageUrl) {
-          // 在选中对象右侧添加生成的图片
+          // Add generated image to the right of selected objects
           const img = await FabricImage.fromURL(result.data.editedImageUrl)
 
-          // 计算放置位置：选中对象右侧50px
-          const rightX = selectedData.bounds.left + selectedData.bounds.width + 50
+          // Get current viewport transform for accurate positioning
+          const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+          const zoom = vpt[0]
+          const panX = vpt[4]
+          const panY = vpt[5]
+
+          // Calculate placement position considering viewport transform
+          // Place image to the right of the capture area, but ensure it's visible in current viewport
+          const spacing = 50
+          const baseRightX = selectedData.bounds.left + selectedData.bounds.width + spacing
+
+          // Calculate the center of current viewport in canvas coordinates
+          const viewportCenterX = (canvas.getWidth() / 2 - panX) / zoom
+          const viewportCenterY = (canvas.getHeight() / 2 - panY) / zoom
+
+          // Choose placement strategy based on available space
+          let rightX = baseRightX
+          let topY = selectedData.bounds.top
+
+          // If the calculated right position would be outside the visible viewport,
+          // place it in a more visible location
+          const canvasWidth = canvas.getWidth()
+          const estimatedImgWidth = 200 // Estimated width after scaling
+
+          if (baseRightX + estimatedImgWidth > viewportCenterX + canvasWidth / (2 * zoom)) {
+            // Place image in the center-right of the viewport instead
+            rightX = viewportCenterX + 100
+            topY = Math.max(selectedData.bounds.top, viewportCenterY - 100)
+          }
+
+          console.log('📍 Placement calculation:', {
+            viewport: { zoom, panX, panY, centerX: viewportCenterX, centerY: viewportCenterY },
+            selectedBounds: selectedData.bounds,
+            baseRightX,
+            finalPosition: { rightX, topY },
+            canvasSize: { width: canvasWidth, height: canvas.getHeight() }
+          })
 
           // 缩放图片
           const maxWidth = 400
@@ -594,7 +629,7 @@ export default function StandardEditor() {
 
           img.set({
             left: rightX,
-            top: selectedData.bounds.top,
+            top: topY,
             selectable: true,
             evented: true
           })
@@ -603,7 +638,12 @@ export default function StandardEditor() {
           canvas.setActiveObject(img)
           canvas.renderAll()
 
-          console.log('✅ Image placed at:', { left: rightX, top: selectedData.bounds.top })
+          console.log('✅ Image placed at:', {
+            left: rightX,
+            top: topY,
+            viewportAware: true,
+            originalBounds: selectedData.bounds
+          })
 
           const aiResponse: ChatMessage = {
             id: (Date.now() + 1).toString(),

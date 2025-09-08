@@ -35,7 +35,7 @@ interface ChatMessage {
   timestamp: string
 }
 
-export default function SimpleImageEditor() {
+export default function ImageEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'rectangle' | 'circle' | 'text' | 'brush' | 'eraser'>('select')
@@ -380,10 +380,11 @@ export default function SimpleImageEditor() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
 
+    const currentMessage = inputMessage.trim()
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputMessage,
+      content: currentMessage,
       timestamp: new Date().toLocaleTimeString()
     }
 
@@ -392,19 +393,132 @@ export default function SimpleImageEditor() {
     setIsLoading(true)
 
     try {
-      // 模拟AI响应
-      setTimeout(() => {
-        const aiResponse: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `我理解你想要${inputMessage}。让我来帮你实现这个功能！你可以尝试使用左侧的工具栏来编辑图像，或者上传一张图片开始编辑。`,
-          timestamp: new Date().toLocaleTimeString()
+      console.log('🤖 Processing AI request:', currentMessage)
+
+      // 检查是否有选中的对象
+      const selectedObjects = canvas?.getActiveObjects() || []
+      const hasSelectedObjects = selectedObjects.length > 0
+
+      console.log('Checking selected objects:', {
+        hasSelectedObjects,
+        count: selectedObjects.length,
+        message: currentMessage
+      })
+
+      if (hasSelectedObjects) {
+        // 场景1：编辑选中的对象
+        console.log('🎨 Scenario 1: Editing selected objects')
+        console.log('🖼️ Editing image with Gemini Flash Image...', {
+          prompt: currentMessage,
+          objectCount: selectedObjects.length
+        })
+
+        // 获取画布数据
+        const canvasDataURL = canvas!.toDataURL({
+          format: 'png',
+          quality: 1.0,
+          multiplier: 1
+        })
+
+        const response = await fetch('/api/ai/image/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageData: canvasDataURL,
+            instruction: currentMessage,
+            model: 'gemini-2.5-flash-002'
+          })
+        })
+
+        console.log('📡 Edit API Response status:', response.status)
+        const result = await response.json()
+        console.log('📡 Edit API Response data:', result)
+
+        if (result.success && result.data?.generatedImageUrl) {
+          // 创建新的图像对象并添加到画布
+          const editedImg = await FabricImage.fromURL(result.data.generatedImageUrl)
+          editedImg.set({
+            left: 50,
+            top: 50,
+            scaleX: 0.5,
+            scaleY: 0.5
+          })
+          canvas!.add(editedImg)
+          canvas!.renderAll()
+
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `✅ 已根据你的要求"${currentMessage}"编辑了图像！编辑后的图像已添加到画布上。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        } else {
+          throw new Error(result.error || 'Failed to edit image')
         }
-        setChatMessages(prev => [...prev, aiResponse])
-        setIsLoading(false)
-      }, 1000)
+      } else {
+        // 场景2：生成新图像
+        console.log('🎨 Scenario 2: Generating image from text')
+        console.log('🎨 Generating image with Gemini Flash Image...', { prompt: currentMessage })
+
+        const response = await fetch('/api/ai/image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: currentMessage,
+            model: 'gemini-2.5-flash-002'
+          })
+        })
+
+        console.log('📡 Generate API Response status:', response.status)
+        const result = await response.json()
+        console.log('📡 Generate API Response data:', result)
+
+        if (result.success && result.data?.imageUrl) {
+          // 创建新的图像对象并添加到画布
+          const generatedImg = await FabricImage.fromURL(result.data.imageUrl)
+          generatedImg.set({
+            left: 100,
+            top: 100,
+            scaleX: 0.8,
+            scaleY: 0.8
+          })
+          canvas!.add(generatedImg)
+          canvas!.renderAll()
+
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `🎨 已为你生成了"${currentMessage}"的图像！图像已添加到画布上，你可以移动、缩放或进一步编辑它。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        } else {
+          console.log('⚠️ Image generation failed, falling back to chat')
+          // 如果图像生成失败，回退到普通聊天
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `抱歉，图像生成遇到了问题：${result.error || '未知错误'}。请尝试重新描述你想要的图像，或者检查网络连接。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, aiResponse])
+        }
+      }
     } catch (error) {
-      console.error('AI response error:', error)
+      console.error('❌ AI processing error:', error)
+      const aiResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `❌ AI处理出错: ${error instanceof Error ? error.message : '未知错误'}`,
+        timestamp: new Date().toLocaleTimeString()
+      }
+      setChatMessages(prev => [...prev, aiResponse])
+    } finally {
       setIsLoading(false)
     }
   }
@@ -692,7 +806,12 @@ export default function SimpleImageEditor() {
                     type="text"
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
                     placeholder="询问AI助手..."
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     disabled={isLoading}
