@@ -319,41 +319,39 @@ export default function StandardEditor() {
         // Force update object coordinates for all object types
         obj.setCoords()
 
-        // Get object's current position and transform info
-        const objLeft = obj.left || 0
-        const objTop = obj.top || 0
-        const objScaleX = obj.scaleX || 1
-        const objScaleY = obj.scaleY || 1
-        const objAngle = obj.angle || 0
+        // CRITICAL FIX: The issue is coordinate transformation.
+        // getBoundingRect() returns viewport coordinates, but toDataURL() needs canvas coordinates.
 
-        console.log(`🔍 Object ${index} (${obj.type}) properties:`, {
-          left: objLeft,
-          top: objTop,
-          scaleX: objScaleX,
-          scaleY: objScaleY,
-          angle: objAngle
+        // Get the viewport bounding box
+        const viewportBounds = obj.getBoundingRect()
+
+        // Manual coordinate transformation from viewport to canvas space
+        // viewport coordinates = (canvas coordinates * zoom) + pan
+        // So: canvas coordinates = (viewport coordinates - pan) / zoom
+        const canvasBounds = {
+          left: (viewportBounds.left - panX) / zoom,
+          top: (viewportBounds.top - panY) / zoom,
+          width: viewportBounds.width / zoom,
+          height: viewportBounds.height / zoom
+        }
+
+        console.log(`🔍 Object ${index} (${obj.type}) coordinate transform:`, {
+          viewport: { zoom, panX, panY },
+          viewportBounds: viewportBounds,
+          canvasBounds: canvasBounds,
+          calculation: {
+            leftCalc: `(${viewportBounds.left} - ${panX}) / ${zoom} = ${canvasBounds.left}`,
+            topCalc: `(${viewportBounds.top} - ${panY}) / ${zoom} = ${canvasBounds.top}`,
+            widthCalc: `${viewportBounds.width} / ${zoom} = ${canvasBounds.width}`,
+            heightCalc: `${viewportBounds.height} / ${zoom} = ${canvasBounds.height}`
+          }
         })
 
-        // Get object's bounding box in canvas coordinate system
-        // This works for all object types: images, rectangles, circles, text, etc.
-        const bounds = obj.getBoundingRect()
-
-        console.log(`📍 Object ${index} (${obj.type}) canvas bounds:`, {
-          left: bounds.left,
-          top: bounds.top,
-          width: bounds.width,
-          height: bounds.height,
-          right: bounds.left + bounds.width,
-          bottom: bounds.top + bounds.height,
-          area: bounds.width * bounds.height
-        })
-
-        // These coordinates are already in canvas coordinate system
-        // which is exactly what toDataURL() expects for all object types
-        minX = Math.min(minX, bounds.left)
-        minY = Math.min(minY, bounds.top)
-        maxX = Math.max(maxX, bounds.left + bounds.width)
-        maxY = Math.max(maxY, bounds.top + bounds.height)
+        // Use canvas coordinates for capture area calculation
+        minX = Math.min(minX, canvasBounds.left)
+        minY = Math.min(minY, canvasBounds.top)
+        maxX = Math.max(maxX, canvasBounds.left + canvasBounds.width)
+        maxY = Math.max(maxY, canvasBounds.top + canvasBounds.height)
       })
 
       // 计算实际内容区域（不添加过多padding）
