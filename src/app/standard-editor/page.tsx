@@ -375,10 +375,78 @@ export default function StandardEditor() {
       const canvasWidth = canvas.getWidth()
       const canvasHeight = canvas.getHeight()
 
-      captureArea.left = Math.max(0, captureArea.left)
-      captureArea.top = Math.max(0, captureArea.top)
-      captureArea.width = Math.min(captureArea.width, canvasWidth - captureArea.left)
-      captureArea.height = Math.min(captureArea.height, canvasHeight - captureArea.top)
+      console.log('🔧 Before boundary fix:', {
+        captureArea: { ...captureArea },
+        canvas: { width: canvasWidth, height: canvasHeight },
+        objectBounds: { minX, minY, maxX, maxY }
+      })
+
+      // 🧪 边界情况分析
+      const boundaryAnalysis = {
+        leftOverflow: captureArea.left < 0,
+        rightOverflow: captureArea.left + captureArea.width > canvasWidth,
+        topOverflow: captureArea.top < 0,
+        bottomOverflow: captureArea.top + captureArea.height > canvasHeight,
+        completelyOutside:
+          captureArea.left >= canvasWidth ||
+          captureArea.top >= canvasHeight ||
+          captureArea.left + captureArea.width <= 0 ||
+          captureArea.top + captureArea.height <= 0
+      }
+
+      console.log('🔍 Boundary analysis:', boundaryAnalysis)
+
+      // CRITICAL FIX: 正确处理无限画布的边界裁剪
+      // 无限画布意味着对象可能在任意方向超出画布边界
+
+      // 保存原始捕获区域用于计算
+      const originalLeft = captureArea.left
+      const originalTop = captureArea.top
+      const originalRight = captureArea.left + captureArea.width
+      const originalBottom = captureArea.top + captureArea.height
+
+      // 计算与画布的交集区域
+      const clampedLeft = Math.max(0, originalLeft)
+      const clampedTop = Math.max(0, originalTop)
+      const clampedRight = Math.min(canvasWidth, originalRight)
+      const clampedBottom = Math.min(canvasHeight, originalBottom)
+
+      // 检查是否有有效的交集
+      const hasValidIntersection = clampedLeft < clampedRight && clampedTop < clampedBottom
+
+      if (hasValidIntersection) {
+        // 有有效交集，使用交集区域
+        captureArea.left = clampedLeft
+        captureArea.top = clampedTop
+        captureArea.width = clampedRight - clampedLeft
+        captureArea.height = clampedBottom - clampedTop
+      } else {
+        // 没有交集（对象完全在画布外），创建最小有效区域
+        console.warn('⚠️ Object completely outside canvas, creating minimal capture area')
+        captureArea.left = Math.max(0, Math.min(canvasWidth - 1, originalLeft))
+        captureArea.top = Math.max(0, Math.min(canvasHeight - 1, originalTop))
+        captureArea.width = 1
+        captureArea.height = 1
+      }
+
+      console.log('🔧 After boundary fix:', {
+        captureArea: { ...captureArea },
+        originalBounds: {
+          left: originalLeft,
+          top: originalTop,
+          right: originalRight,
+          bottom: originalBottom
+        },
+        clampedBounds: {
+          left: clampedLeft,
+          top: clampedTop,
+          right: clampedRight,
+          bottom: clampedBottom
+        },
+        hasValidIntersection,
+        intersectionArea: hasValidIntersection ?
+          (clampedRight - clampedLeft) * (clampedBottom - clampedTop) : 0
+      })
 
       console.log('� Bounding box calculation:', {
         objectBounds: { minX, minY, maxX, maxY },
