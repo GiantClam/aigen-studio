@@ -56,6 +56,17 @@ export default function StandardEditor() {
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
 
+  // Debug logging helper - only logs in development
+  const debugLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      if (data) {
+        console.log(message, data)
+      } else {
+        console.log(message)
+      }
+    }
+  }
+
   // AI chat states
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -279,38 +290,66 @@ export default function StandardEditor() {
     if (activeObjects.length === 0) return null
 
     try {
-      console.log('📸 Capturing selected objects...', { count: activeObjects.length })
+      console.log('� === STARTING OBJECT CAPTURE ===')
+      console.log('�📸 Capturing selected objects...', {
+        count: activeObjects.length,
+        objectTypes: activeObjects.map(obj => obj.type)
+      })
 
-      // 强制重新渲染画布以确保所有对象位置正确
+      // Force re-render canvas to ensure all object positions are correct
       canvas.renderAll()
 
-      // 获取当前的视口变换矩阵
+      // Get current viewport transform matrix
       const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
       const zoom = vpt[0]
       const panX = vpt[4]
       const panY = vpt[5]
 
-      console.log('📸 Current viewport transform:', { zoom, panX, panY })
+      console.log('� Current viewport transform:', {
+        zoom,
+        panX,
+        panY,
+        fullTransform: vpt
+      })
 
-      // 计算所有选中对象的精确边界框
+      // Calculate all selected objects' precise bounding box in canvas coordinates
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
       activeObjects.forEach((obj, index) => {
-        // 强制更新对象坐标
+        // Force update object coordinates for all object types
         obj.setCoords()
 
-        // 获取对象的边界框（包含变换）
+        // Get object's current position and transform info
+        const objLeft = obj.left || 0
+        const objTop = obj.top || 0
+        const objScaleX = obj.scaleX || 1
+        const objScaleY = obj.scaleY || 1
+        const objAngle = obj.angle || 0
+
+        console.log(`🔍 Object ${index} (${obj.type}) properties:`, {
+          left: objLeft,
+          top: objTop,
+          scaleX: objScaleX,
+          scaleY: objScaleY,
+          angle: objAngle
+        })
+
+        // Get object's bounding box in canvas coordinate system
+        // This works for all object types: images, rectangles, circles, text, etc.
         const bounds = obj.getBoundingRect()
 
-        console.log(`📍 Object ${index} (${obj.type}) bounds:`, {
+        console.log(`📍 Object ${index} (${obj.type}) canvas bounds:`, {
           left: bounds.left,
           top: bounds.top,
           width: bounds.width,
           height: bounds.height,
           right: bounds.left + bounds.width,
-          bottom: bounds.top + bounds.height
+          bottom: bounds.top + bounds.height,
+          area: bounds.width * bounds.height
         })
 
+        // These coordinates are already in canvas coordinate system
+        // which is exactly what toDataURL() expects for all object types
         minX = Math.min(minX, bounds.left)
         minY = Math.min(minY, bounds.top)
         maxX = Math.max(maxX, bounds.left + bounds.width)
@@ -350,9 +389,22 @@ export default function StandardEditor() {
       captureArea.width = Math.min(captureArea.width, canvasWidth - captureArea.left)
       captureArea.height = Math.min(captureArea.height, canvasHeight - captureArea.top)
 
-      console.log('📸 Capture area calculation:', {
+      console.log('� Bounding box calculation:', {
+        objectBounds: { minX, minY, maxX, maxY },
+        contentSize: { width: contentWidth, height: contentHeight },
+        dynamicPadding: dynamicPadding
+      })
+
+      console.log('�📸 Capture area calculation:', {
+        viewport: { zoom, panX, panY },
         content: { width: contentWidth, height: contentHeight },
         padding: dynamicPadding,
+        beforeClamp: {
+          left: minX - dynamicPadding,
+          top: minY - dynamicPadding,
+          width: contentWidth + dynamicPadding * 2,
+          height: contentHeight + dynamicPadding * 2
+        },
         finalArea: captureArea,
         canvas: { width: canvasWidth, height: canvasHeight }
       })
@@ -390,7 +442,20 @@ export default function StandardEditor() {
 
       console.log('📸 Using multiplier:', bestMultiplier)
 
-      // 使用精确的捕获区域进行图像导出
+      // Validate capture area before export
+      if (captureArea.left < 0 || captureArea.top < 0 ||
+          captureArea.left + captureArea.width > canvasWidth ||
+          captureArea.top + captureArea.height > canvasHeight) {
+        console.warn('⚠️ Capture area extends beyond canvas bounds, adjusting...')
+        captureArea.left = Math.max(0, captureArea.left)
+        captureArea.top = Math.max(0, captureArea.top)
+        captureArea.width = Math.min(captureArea.width, canvasWidth - captureArea.left)
+        captureArea.height = Math.min(captureArea.height, canvasHeight - captureArea.top)
+      }
+
+      console.log('📸 Final validated capture area:', captureArea)
+
+      // Use precise capture area for image export
       const imageData = canvas.toDataURL({
         left: captureArea.left,
         top: captureArea.top,
@@ -398,13 +463,40 @@ export default function StandardEditor() {
         height: captureArea.height,
         format: 'png',
         quality: 1,
-        multiplier: bestMultiplier // 使用计算出的最佳分辨率
+        multiplier: bestMultiplier // Use calculated optimal resolution
       })
 
+      // Validate that all objects are within capture area
+      const validationResults = activeObjects.map((obj, index) => {
+        const bounds = obj.getBoundingRect()
+        const inBounds = bounds.left >= captureArea.left &&
+                        bounds.top >= captureArea.top &&
+                        bounds.left + bounds.width <= captureArea.left + captureArea.width &&
+                        bounds.top + bounds.height <= captureArea.top + captureArea.height
+
+        console.log(`✅ Object ${index} (${obj.type}) validation:`, {
+          bounds: bounds,
+          captureArea: captureArea,
+          inBounds: inBounds,
+          overlap: {
+            left: Math.max(bounds.left, captureArea.left),
+            top: Math.max(bounds.top, captureArea.top),
+            right: Math.min(bounds.left + bounds.width, captureArea.left + captureArea.width),
+            bottom: Math.min(bounds.top + bounds.height, captureArea.top + captureArea.height)
+          }
+        })
+
+        return { index, type: obj.type, inBounds }
+      })
+
+      console.log('🎯 === CAPTURE COMPLETE ===')
       console.log('📸 Image captured successfully:', {
         dataSize: imageData.length,
         captureArea: captureArea,
-        multiplier: bestMultiplier
+        multiplier: bestMultiplier,
+        viewportTransform: vpt,
+        allObjectsInBounds: validationResults.every(r => r.inBounds),
+        validationResults: validationResults
       })
 
       return {
@@ -696,6 +788,84 @@ export default function StandardEditor() {
     }
   }
 
+  // Debug functions - only available in development
+  const testCoordinateTransform = process.env.NODE_ENV === 'development' ? () => {
+    if (!canvas) return
+
+    console.log('🧪 === COORDINATE TRANSFORM TEST ===')
+    const activeObjects = canvas.getActiveObjects()
+    const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+
+    if (activeObjects.length > 0) {
+      const obj = activeObjects[0]
+      const bounds = obj.getBoundingRect()
+
+      // Test if our coordinate understanding is correct
+      console.log('Testing coordinate transform for first object:')
+      console.log('Canvas bounds (what toDataURL uses):', bounds)
+      console.log('Viewport transform:', vpt)
+
+      // Simulate what happens during image capture
+      const captureArea = {
+        left: bounds.left - 10,
+        top: bounds.top - 10,
+        width: bounds.width + 20,
+        height: bounds.height + 20
+      }
+
+      console.log('Simulated capture area:', captureArea)
+      console.log('This should contain the object regardless of viewport pan/zoom')
+    }
+  } : () => {}
+
+  const debugCoordinates = process.env.NODE_ENV === 'development' ? () => {
+    if (!canvas) return
+
+    console.log('🐛 === DEBUG COORDINATE SYSTEM ===')
+    const activeObjects = canvas.getActiveObjects()
+    const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+
+    console.log('Canvas info:', {
+      width: canvas.getWidth(),
+      height: canvas.getHeight(),
+      viewportTransform: vpt,
+      zoom: vpt[0],
+      panX: vpt[4],
+      panY: vpt[5],
+      // Additional transform info
+      scaleX: vpt[0],
+      scaleY: vpt[3],
+      translateX: vpt[4],
+      translateY: vpt[5]
+    })
+
+    console.log('Selected objects:', activeObjects.length)
+    activeObjects.forEach((obj, index) => {
+      const bounds = obj.getBoundingRect()
+
+      // Calculate what the viewport coordinates would be
+      const viewportX = bounds.left * vpt[0] + vpt[4]
+      const viewportY = bounds.top * vpt[3] + vpt[5]
+
+      console.log(`Object ${index} (${obj.type}):`, {
+        logicalPosition: { left: obj.left, top: obj.top },
+        scale: { x: obj.scaleX, y: obj.scaleY },
+        canvasBounds: bounds,
+        viewportPosition: { x: viewportX, y: viewportY },
+        center: {
+          canvas: {
+            x: bounds.left + bounds.width / 2,
+            y: bounds.top + bounds.height / 2
+          },
+          viewport: {
+            x: viewportX + bounds.width / 2,
+            y: viewportY + bounds.height / 2
+          }
+        }
+      })
+    })
+  } : () => {}
+
   const downloadImage = () => {
     if (!canvas) return
 
@@ -880,6 +1050,26 @@ export default function StandardEditor() {
                 >
                   <Download className="w-5 h-5" />
                 </button>
+
+                {/* Debug buttons - only show in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <>
+                    <button
+                      onClick={debugCoordinates}
+                      className="p-3 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-lg"
+                      title="Debug Coordinates"
+                    >
+                      🐛
+                    </button>
+                    <button
+                      onClick={testCoordinateTransform}
+                      className="p-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg"
+                      title="Test Coordinate Transform"
+                    >
+                      🧪
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -988,6 +1178,13 @@ export default function StandardEditor() {
             }</span></span>
             <div className="w-px h-4 bg-gray-300"></div>
             <span>Scroll to Zoom | Alt+Drag to Pan</span>
+            {/* Environment indicator - only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <span className="text-yellow-600 font-semibold">DEV MODE</span>
+              </>
+            )}
           </div>
         </div>
       </div>
