@@ -479,7 +479,10 @@ export class VertexAIService {
         ? inputImage.split(';')[0].replace('data:', '')
         : 'image/png';
 
-      // 准备请求内容 - 直接使用用户的原始指令
+      // 构建简洁但明确的编辑指令
+      const editPrompt = `Edit this image: ${prompt}`;
+
+      // 准备请求内容
       const parts = [
         {
           inlineData: {
@@ -488,7 +491,7 @@ export class VertexAIService {
           }
         },
         {
-          text: prompt
+          text: editPrompt
         }
       ];
 
@@ -497,28 +500,28 @@ export class VertexAIService {
       console.log('   Prompt:', prompt.substring(0, 100) + '...');
       console.log('   Image type:', mimeType);
 
-      // 准备生成配置 - 优化用于图像编辑
+      // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
       const generationConfig = {
         maxOutputTokens: 8192,
-        temperature: 0.4,  // 降低温度以获得更一致的编辑结果
-        topP: 0.8,
-        responseModalities: ["IMAGE"],  // 只要求图像输出，不需要文本
+        temperature: 0.1,  // 非常低的温度确保一致的编辑结果
+        topP: 0.95,
+        responseModalities: ["IMAGE", "TEXT"],  // 必须包含TEXT，纯IMAGE不支持
         safetySettings: [
           {
             category: 'HARM_CATEGORY_HATE_SPEECH' as any,
-            threshold: 'OFF' as any,
+            threshold: 'BLOCK_NONE' as any,
           },
           {
             category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
-            threshold: 'OFF' as any,
+            threshold: 'BLOCK_NONE' as any,
           },
           {
             category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
-            threshold: 'OFF' as any,
+            threshold: 'BLOCK_NONE' as any,
           },
           {
             category: 'HARM_CATEGORY_HARASSMENT' as any,
-            threshold: 'OFF' as any,
+            threshold: 'BLOCK_NONE' as any,
           }
         ],
       };
