@@ -479,6 +479,20 @@ export class VertexAIService {
         ? inputImage.split(';')[0].replace('data:', '')
         : 'image/png';
 
+      // 构建更明确的图像编辑提示词
+      const editingPrompt = `Please edit this image according to the following instruction: "${prompt}".
+
+Important: You must return an edited version of the image. Do not just provide text explanations. Apply the requested changes directly to the image and return the modified image.
+
+If the instruction is:
+- "清除背景" or "remove background": Remove the background and make it transparent or white
+- "换背景" or "change background": Change the background to a different scene
+- "修改颜色" or "change color": Modify the colors as requested
+- "添加效果" or "add effects": Apply visual effects to the image
+- Any other editing request: Apply the changes directly to the image
+
+Please process the image and return the edited result.`;
+
       // 准备请求内容
       const parts = [
         {
@@ -488,7 +502,7 @@ export class VertexAIService {
           }
         },
         {
-          text: prompt
+          text: editingPrompt
         }
       ];
 
