@@ -479,21 +479,7 @@ export class VertexAIService {
         ? inputImage.split(';')[0].replace('data:', '')
         : 'image/png';
 
-      // 构建更明确的图像编辑提示词
-      const editingPrompt = `Please edit this image according to the following instruction: "${prompt}".
-
-Important: You must return an edited version of the image. Do not just provide text explanations. Apply the requested changes directly to the image and return the modified image.
-
-If the instruction is:
-- "清除背景" or "remove background": Remove the background and make it transparent or white
-- "换背景" or "change background": Change the background to a different scene
-- "修改颜色" or "change color": Modify the colors as requested
-- "添加效果" or "add effects": Apply visual effects to the image
-- Any other editing request: Apply the changes directly to the image
-
-Please process the image and return the edited result.`;
-
-      // 准备请求内容
+      // 准备请求内容 - 直接使用用户的原始指令
       const parts = [
         {
           inlineData: {
@@ -502,7 +488,7 @@ Please process the image and return the edited result.`;
           }
         },
         {
-          text: editingPrompt
+          text: prompt
         }
       ];
 
@@ -511,12 +497,12 @@ Please process the image and return the edited result.`;
       console.log('   Prompt:', prompt.substring(0, 100) + '...');
       console.log('   Image type:', mimeType);
 
-      // 准备生成配置
+      // 准备生成配置 - 优化用于图像编辑
       const generationConfig = {
-        maxOutputTokens: 32768,
-        temperature: 1,
-        topP: 0.95,
-        responseModalities: ["TEXT", "IMAGE"],
+        maxOutputTokens: 8192,
+        temperature: 0.4,  // 降低温度以获得更一致的编辑结果
+        topP: 0.8,
+        responseModalities: ["IMAGE"],  // 只要求图像输出，不需要文本
         safetySettings: [
           {
             category: 'HARM_CATEGORY_HATE_SPEECH' as any,
@@ -553,12 +539,32 @@ Please process the image and return the edited result.`;
       let imageResponse = null;
 
       // 处理流式响应
+      let chunkCount = 0;
       for await (const chunk of streamingResp) {
+        chunkCount++;
+        console.log(`📦 Processing chunk ${chunkCount}:`, {
+          hasText: !!chunk.text,
+          hasCandidates: !!chunk.candidates,
+          candidatesCount: chunk.candidates?.length || 0
+        });
+
         if (chunk.text) {
           textResponse += chunk.text;
-        } else if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
-          for (const part of chunk.candidates[0].content.parts) {
+        }
+
+        if (chunk.candidates && chunk.candidates[0]?.content?.parts) {
+          const parts = chunk.candidates[0].content.parts;
+          console.log(`🔍 Examining ${parts.length} parts in chunk ${chunkCount}`);
+
+          for (const part of parts) {
+            if (part.text) {
+              textResponse += part.text;
+            }
             if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+              console.log('🖼️ Found image data:', {
+                mimeType: part.inlineData.mimeType,
+                dataLength: part.inlineData.data?.length || 0
+              });
               imageResponse = {
                 mimeType: part.inlineData.mimeType,
                 data: part.inlineData.data
