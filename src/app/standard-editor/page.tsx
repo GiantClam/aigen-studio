@@ -406,6 +406,65 @@ export default function StandardEditor() {
     }
   }, [canvas])
 
+  // 键盘删除功能 - 基于 Fabric.js 社区最佳实践
+  const handleKeyboardDelete = useCallback((event: KeyboardEvent) => {
+    // 检查是否按下了 Delete 键或 Backspace 键
+    if (event.key !== 'Delete' && event.key !== 'Backspace') {
+      return
+    }
+
+    // 检查是否在输入框中，如果是则不处理
+    const target = event.target as HTMLElement
+    if (target && (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.contentEditable === 'true' ||
+      target.closest('.js-ai-dialog') // 在AI对话框中时不处理
+    )) {
+      return
+    }
+
+    // 通过 ref 获取当前画布实例，避免闭包问题
+    const currentCanvas = canvasRef.current ?
+      (window as any).fabricCanvasInstance || canvas : null
+
+    if (!currentCanvas) {
+      console.warn('⚠️ Canvas not available for keyboard delete')
+      return
+    }
+
+    // 获取当前选中的对象
+    const activeObjects = currentCanvas.getActiveObjects()
+
+    if (activeObjects.length === 0) {
+      console.log('ℹ️ No objects selected for deletion')
+      return
+    }
+
+    console.log(`🗑️ Deleting ${activeObjects.length} selected objects via keyboard`)
+
+    // 阻止默认行为（如浏览器的后退）
+    event.preventDefault()
+    event.stopPropagation()
+
+    try {
+      // 删除所有选中的对象
+      activeObjects.forEach(obj => {
+        currentCanvas.remove(obj)
+      })
+
+      // 清除选择状态
+      currentCanvas.discardActiveObject()
+
+      // 重新渲染画布
+      currentCanvas.renderAll()
+
+      console.log(`✅ Successfully deleted ${activeObjects.length} objects`)
+    } catch (error) {
+      console.error('❌ Failed to delete objects:', error)
+    }
+  }, [canvas])
+
 
 
   // AI chat states
@@ -558,6 +617,13 @@ export default function StandardEditor() {
 
     fabricCanvas.upperCanvasEl.addEventListener('contextmenu', contextMenuHandler)
 
+    // 绑定键盘删除事件 - 基于 Fabric.js 社区最佳实践
+    console.log('⌨️ Binding keyboard delete events...')
+    document.addEventListener('keydown', handleKeyboardDelete)
+
+    // 存储画布实例到全局变量，供键盘事件使用
+    ;(window as any).fabricCanvasInstance = fabricCanvas
+
     setCanvas(fabricCanvas)
 
     console.log('✅ Canvas initialized successfully')
@@ -565,6 +631,9 @@ export default function StandardEditor() {
     return () => {
       window.removeEventListener('resize', handleResize)
       fabricCanvas.upperCanvasEl.removeEventListener('contextmenu', contextMenuHandler)
+      document.removeEventListener('keydown', handleKeyboardDelete)
+      // 清除全局画布实例
+      ;(window as any).fabricCanvasInstance = null
       fabricCanvas.dispose()
     }
   }, []) // 只在组件挂载时初始化画布
