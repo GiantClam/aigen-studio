@@ -56,6 +56,42 @@ export default function StandardEditor() {
   // Floating window states
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  // 拖拽绘制状态
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null)
+  const [currentShape, setCurrentShape] = useState<any>(null)
+
+  // 右键菜单状态
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    selectedObjects: any[]
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    selectedObjects: []
+  })
+
+  // AI对话框状态
+  const [aiDialog, setAiDialog] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    message: string
+    isLoading: boolean
+    textareaHeight: number
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    message: '',
+    isLoading: false,
+    textareaHeight: 72 // 默认3行高度 (24px * 3)
+  })
 
   // Debug logging helper - only logs in development
   const debugLog = (message: string, data?: any) => {
@@ -67,6 +103,161 @@ export default function StandardEditor() {
       }
     }
   }
+
+  // 拖放处理函数
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+
+    if (imageFiles.length > 0) {
+      // 处理第一个图片文件
+      handleImageUpload(imageFiles[0])
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 右键菜单处理函数
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+
+    if (!canvas) return
+
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) {
+      setContextMenu({ visible: false, x: 0, y: 0, selectedObjects: [] })
+      return
+    }
+
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      selectedObjects: activeObjects
+    })
+  }, [canvas])
+
+  // 隐藏右键菜单
+  const hideContextMenu = useCallback(() => {
+    setContextMenu({ visible: false, x: 0, y: 0, selectedObjects: [] })
+  }, [])
+
+  // 显示AI对话框
+  const showAiDialog = useCallback((x: number, y: number) => {
+    setAiDialog({
+      visible: true,
+      x,
+      y,
+      message: '',
+      isLoading: false,
+      textareaHeight: 72 // 重置为默认高度
+    })
+    hideContextMenu()
+  }, [hideContextMenu])
+
+  // 隐藏AI对话框
+  const hideAiDialog = useCallback(() => {
+    setAiDialog({
+      visible: false,
+      x: 0,
+      y: 0,
+      message: '',
+      isLoading: false,
+      textareaHeight: 72 // 重置为默认高度
+    })
+  }, [])
+
+  // 导出选中对象
+  const exportSelectedObjects = useCallback(async () => {
+    if (!canvas) return
+
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return
+
+    try {
+      const result = await exportSelectedObjectsSmart(canvas, {
+        format: 'png',
+        quality: 1,
+        multiplier: calculateOptimalMultiplier(activeObjects),
+        tightBounds: true,
+        padding: 0,
+        backgroundColor: 'transparent'
+      })
+
+      if (result) {
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.download = `selected-objects-${Date.now()}.png`
+        link.href = result.imageData
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+    }
+
+    hideContextMenu()
+  }, [canvas, hideContextMenu])
+
+  // 自动调整textarea高度
+  const adjustTextareaHeight = useCallback((value: string) => {
+    // 计算文本行数，考虑换行符和自动换行
+    const lines = value.split('\n')
+    let totalLines = 0
+
+    // 估算每行字符数（基于textarea宽度，约40-50个字符）
+    const charsPerLine = 45
+
+    lines.forEach(line => {
+      if (line.length === 0) {
+        totalLines += 1 // 空行
+      } else {
+        // 计算自动换行产生的行数
+        totalLines += Math.ceil(line.length / charsPerLine)
+      }
+    })
+
+    // 最少3行，最多10行
+    const minLines = 3
+    const maxLines = 10
+    const actualLines = Math.max(minLines, Math.min(totalLines, maxLines))
+
+    // 每行高度约24px (line-height + padding)
+    const lineHeight = 24
+    const newHeight = actualLines * lineHeight
+
+    setAiDialog(prev => ({
+      ...prev,
+      message: value,
+      textareaHeight: newHeight
+    }))
+  }, [])
+
+  // 重置textarea高度到默认值
+  const resetTextareaHeight = useCallback(() => {
+    setAiDialog(prev => ({
+      ...prev,
+      message: '',
+      textareaHeight: 72 // 3行默认高度
+    }))
+  }, [])
+
+
 
   // AI chat states
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -265,7 +456,7 @@ export default function StandardEditor() {
     }
   }, [canvas, currentTool])
 
-  // 简单的画布点击处理
+  // 拖拽绘制图形处理
   useEffect(() => {
     if (!canvas) return
 
@@ -273,15 +464,148 @@ export default function StandardEditor() {
       if (currentTool === 'select' || currentTool === 'draw' || currentTool === 'move') return
 
       const pointer = canvas.getPointer(e.e)
-      createObject(pointer)
+      setIsDrawing(true)
+      setStartPoint(pointer)
+
+      // 创建临时形状
+      let shape: any = null
+      switch (currentTool) {
+        case 'rectangle':
+          shape = new Rect({
+            left: pointer.x,
+            top: pointer.y,
+            width: 0,
+            height: 0,
+            fill: 'rgba(59, 130, 246, 0.3)',
+            stroke: '#3b82f6',
+            strokeWidth: 2,
+            selectable: false
+          })
+          break
+        case 'circle':
+          shape = new FabricCircle({
+            left: pointer.x,
+            top: pointer.y,
+            radius: 0,
+            fill: 'rgba(16, 185, 129, 0.3)',
+            stroke: '#10b981',
+            strokeWidth: 2,
+            selectable: false
+          })
+          break
+        case 'text':
+          // 文本工具保持点击创建
+          shape = new IText('Enter text', {
+            left: pointer.x,
+            top: pointer.y,
+            fontSize: 20,
+            fill: '#000000'
+          })
+          canvas.add(shape)
+          canvas.setActiveObject(shape)
+          canvas.renderAll()
+          return
+        case 'arrow':
+          // 箭头保持点击创建
+          const arrowPath = createArrowPath(pointer.x, pointer.y, pointer.x + 100, pointer.y - 50)
+          shape = new fabric.Path(arrowPath, {
+            left: pointer.x,
+            top: pointer.y - 50,
+            fill: 'transparent',
+            stroke: '#ef4444',
+            strokeWidth: 3,
+            selectable: false
+          })
+          break
+      }
+
+      if (shape) {
+        canvas.add(shape)
+        setCurrentShape(shape)
+        canvas.renderAll()
+      }
+    }
+
+    const handleMouseMove = (e: any) => {
+      if (!isDrawing || !startPoint || !currentShape) return
+
+      const pointer = canvas.getPointer(e.e)
+
+      switch (currentTool) {
+        case 'rectangle':
+          const width = Math.abs(pointer.x - startPoint.x)
+          const height = Math.abs(pointer.y - startPoint.y)
+          const left = Math.min(pointer.x, startPoint.x)
+          const top = Math.min(pointer.y, startPoint.y)
+
+          currentShape.set({
+            left,
+            top,
+            width,
+            height
+          })
+          break
+        case 'circle':
+          const radius = Math.sqrt(
+            Math.pow(pointer.x - startPoint.x, 2) + Math.pow(pointer.y - startPoint.y, 2)
+          ) / 2
+
+          currentShape.set({
+            left: startPoint.x - radius,
+            top: startPoint.y - radius,
+            radius
+          })
+          break
+        case 'arrow':
+          // 更新箭头路径
+          const newArrowPath = createArrowPath(startPoint.x, startPoint.y, pointer.x, pointer.y)
+          currentShape.set({
+            path: newArrowPath
+          })
+          break
+      }
+
+      canvas.renderAll()
+    }
+
+    const handleMouseUp = () => {
+      if (!isDrawing || !currentShape) return
+
+      setIsDrawing(false)
+      setStartPoint(null)
+
+      // 使形状可选择
+      currentShape.set({ selectable: true })
+      canvas.setActiveObject(currentShape)
+      setCurrentShape(null)
+      canvas.renderAll()
     }
 
     canvas.on('mouse:down', handleMouseDown)
+    canvas.on('mouse:move', handleMouseMove)
+    canvas.on('mouse:up', handleMouseUp)
 
     return () => {
       canvas.off('mouse:down', handleMouseDown)
+      canvas.off('mouse:move', handleMouseMove)
+      canvas.off('mouse:up', handleMouseUp)
     }
-  }, [canvas, currentTool, createObject])
+  }, [canvas, currentTool, isDrawing, startPoint, currentShape])
+
+  // 全局点击事件处理
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      // 如果点击的不是右键菜单或AI对话框，则隐藏它们
+      const target = e.target as Element
+      if (!target.closest('[data-context-menu]') && !target.closest('[data-ai-dialog]')) {
+        hideContextMenu()
+        hideAiDialog()
+      }
+    }
+
+    document.addEventListener('click', handleGlobalClick)
+    return () => document.removeEventListener('click', handleGlobalClick)
+  }, [hideContextMenu, hideAiDialog])
 
   // 获取选中对象的图片数据 - 使用 Fabric.js 成熟解决方案
 const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: any } | null> => {
@@ -716,59 +1040,136 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
     })
   } : () => {}
 
-  const downloadImage = () => {
+  const downloadImage = async () => {
     if (!canvas) return
 
-    // 计算最佳下载分辨率
-    let downloadMultiplier = 2 // 默认2倍分辨率
+    const activeObjects = canvas.getActiveObjects()
 
-    // 检查画布中的所有图像对象，使用最高分辨率需求
-    canvas.getObjects().forEach(obj => {
-      if (obj.type === 'image') {
-        const imgObj = obj as any
-        if (imgObj._originalElement) {
-          const originalWidth = imgObj._originalElement.naturalWidth || imgObj._originalElement.width
-          const currentWidth = imgObj.getScaledWidth()
-          const imageMultiplier = originalWidth / currentWidth
-          downloadMultiplier = Math.max(downloadMultiplier, Math.min(imageMultiplier, 4))
+    if (activeObjects.length > 0) {
+      // 如果有选中对象，下载选中对象
+      await exportSelectedObjects()
+    } else {
+      // 如果没有选中对象，下载整个画布
+      // 计算最佳下载分辨率
+      let downloadMultiplier = 2 // 默认2倍分辨率
+
+      // 检查画布中的所有图像对象，使用最高分辨率需求
+      canvas.getObjects().forEach(obj => {
+        if (obj.type === 'image') {
+          const imgObj = obj as any
+          if (imgObj._originalElement) {
+            const originalWidth = imgObj._originalElement.naturalWidth || imgObj._originalElement.width
+            const currentWidth = imgObj.getScaledWidth()
+            const imageMultiplier = originalWidth / currentWidth
+            downloadMultiplier = Math.max(downloadMultiplier, Math.min(imageMultiplier, 4))
+          }
         }
-      }
-    })
+      })
 
-    console.log('📥 Downloading with multiplier:', downloadMultiplier)
+      console.log('📥 Downloading entire canvas with multiplier:', downloadMultiplier)
 
-    const dataURL = canvas.toDataURL({
-      format: 'png',
-      quality: 1,
-      multiplier: downloadMultiplier // 使用高分辨率
-    })
-    const link = document.createElement('a')
-    link.download = `canvas-image-${Date.now()}.png`
-    link.href = dataURL
-    link.click()
+      const dataURL = canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: downloadMultiplier // 使用高分辨率
+      })
+      const link = document.createElement('a')
+      link.download = `canvas-image-${Date.now()}.png`
+      link.href = dataURL
+      link.click()
+    }
   }
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       {/* 无限画布 */}
-      <div className="absolute inset-0 w-full h-full">
+      <div
+        className="absolute inset-0 w-full h-full"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <canvas
           ref={canvasRef}
           className="w-full h-full cursor-crosshair"
+          onContextMenu={handleContextMenu}
         />
+
+        {/* 拖放提示覆盖层 */}
+        {isDragOver && (
+          <div className="absolute inset-0 bg-blue-500/20 border-4 border-dashed border-blue-500 flex items-center justify-center z-50">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-200 p-8">
+              <div className="text-center">
+                <Upload className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Drop Image Here</h3>
+                <p className="text-gray-600">Release to upload image to canvas</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 悬浮工具栏 */}
-      <div className="absolute top-6 left-6 z-40">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-2">
-          <div className="flex items-center space-x-1">
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={hideContextMenu}
+          />
+          <div
+            className="fixed z-50 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200/50 py-2 min-w-48"
+            data-context-menu
+            style={{
+              left: contextMenu.x,
+              top: contextMenu.y,
+              transform: 'translate(-50%, -10px)'
+            }}
+          >
+            <button
+              onClick={() => showAiDialog(contextMenu.x, contextMenu.y)}
+              className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center space-x-2 text-sm"
+            >
+              <span className="text-blue-500">🤖</span>
+              <span>AI Generate</span>
+            </button>
+            <button
+              onClick={exportSelectedObjects}
+              className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center space-x-2 text-sm"
+            >
+              <Download className="w-4 h-4 text-green-500" />
+              <span>Download PNG</span>
+            </button>
+            <div className="border-t border-gray-200 my-1" />
+            <button
+              onClick={() => {
+                if (canvas) {
+                  const activeObjects = canvas.getActiveObjects()
+                  activeObjects.forEach(obj => canvas.remove(obj))
+                  canvas.discardActiveObject()
+                  canvas.renderAll()
+                }
+                hideContextMenu()
+              }}
+              className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center space-x-2 text-sm text-red-600"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* 竖屏工具栏 - 减少30%宽度 */}
+      <div className="absolute top-6 left-4 z-40">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-2 w-14">
+          <div className="flex flex-col items-center space-y-1">
             {/* 工具栏展开/收起按钮 */}
             <button
               onClick={() => setIsToolbarExpanded(!isToolbarExpanded)}
-              className="p-3 rounded-xl hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-xl hover:bg-gray-100 transition-colors w-10 h-10 flex items-center justify-center"
               title={isToolbarExpanded ? 'Collapse Toolbar' : 'Expand Toolbar'}
             >
-              {isToolbarExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isToolbarExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
             {isToolbarExpanded && (
@@ -776,104 +1177,104 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                 {/* 选择工具 */}
                 <button
                   onClick={() => setCurrentTool('select')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'select'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Selection Tool"
                 >
-                  <MousePointer2 className="w-5 h-5" />
+                  <MousePointer2 className="w-4 h-4" />
                 </button>
 
                 {/* 移动工具 */}
                 <button
                   onClick={() => setCurrentTool('move')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'move'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Move Canvas"
                 >
-                  <Move className="w-5 h-5" />
+                  <Move className="w-4 h-4" />
                 </button>
 
-                <div className="w-px h-8 bg-gray-200 mx-1" />
+                <div className="h-px w-8 bg-gray-200 my-1" />
 
                 {/* 画笔工具 */}
                 <button
                   onClick={() => setCurrentTool('draw')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'draw'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Brush"
                 >
-                  <Brush className="w-5 h-5" />
+                  <Brush className="w-4 h-4" />
                 </button>
 
-                <div className="w-px h-8 bg-gray-200 mx-1" />
+                <div className="h-px w-8 bg-gray-200 my-1" />
 
                 {/* 形状工具 */}
                 <button
                   onClick={() => setCurrentTool('rectangle')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'rectangle'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Rectangle"
                 >
-                  <Square className="w-5 h-5" />
+                  <Square className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setCurrentTool('circle')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'circle'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Circle"
                 >
-                  <Circle className="w-5 h-5" />
+                  <Circle className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setCurrentTool('text')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'text'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Text"
                 >
-                  <Type className="w-5 h-5" />
+                  <Type className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={() => setCurrentTool('arrow')}
-                  className={`p-3 rounded-xl transition-all ${
+                  className={`p-2 rounded-xl transition-all w-10 h-10 flex items-center justify-center ${
                     currentTool === 'arrow'
                       ? 'bg-blue-500 text-white shadow-lg'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                   title="Arrow"
                 >
-                  <ArrowUpRight className="w-5 h-5" />
+                  <ArrowUpRight className="w-4 h-4" />
                 </button>
 
-                <div className="w-px h-8 bg-gray-200 mx-1" />
+                <div className="h-px w-8 bg-gray-200 my-1" />
 
                 {/* 功能按钮 */}
                 <button
                   onClick={deleteSelected}
-                  className="p-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
+                  className="p-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
                   title="Delete Selected"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
 
                 <button
@@ -887,18 +1288,18 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                     }
                     input.click()
                   }}
-                  className="p-3 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors shadow-lg"
+                  className="p-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
                   title="Upload Image"
                 >
-                  <Upload className="w-5 h-5" />
+                  <Upload className="w-4 h-4" />
                 </button>
 
                 <button
                   onClick={downloadImage}
-                  className="p-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg"
+                  className="p-2 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
                   title="Download Image"
                 >
-                  <Download className="w-5 h-5" />
+                  <Download className="w-4 h-4" />
                 </button>
 
                 {/* Debug buttons - only show in development */}
@@ -906,14 +1307,14 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                   <>
                     <button
                       onClick={debugCoordinates}
-                      className="p-3 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-lg"
+                      className="p-2 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center text-xs"
                       title="Debug Coordinates"
                     >
                       🐛
                     </button>
                     <button
                       onClick={testCoordinateTransform}
-                      className="p-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg"
+                      className="p-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center text-xs"
                       title="Test Coordinate Transform"
                     >
                       🧪
@@ -1012,6 +1413,78 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
           )}
         </div>
       </div>
+
+      {/* AI对话框 */}
+      {aiDialog.visible && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={hideAiDialog}
+          />
+          <div
+            className="fixed z-50 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-4 w-80"
+            data-ai-dialog
+            style={{
+              left: aiDialog.x,
+              top: aiDialog.y,
+              transform: 'translate(-50%, 20px)'
+            }}
+          >
+            <div className="flex items-center space-x-2 mb-3">
+              <span className="text-blue-500">🤖</span>
+              <h3 className="font-semibold text-gray-800">AI Assistant</h3>
+            </div>
+            <div className="space-y-3">
+              <textarea
+                value={aiDialog.message}
+                onChange={(e) => adjustTextareaHeight(e.target.value)}
+                placeholder="Describe what you want to do with the selected objects..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all duration-200"
+                style={{
+                  height: `${aiDialog.textareaHeight}px`,
+                  minHeight: '72px', // 最小3行
+                  maxHeight: '240px' // 最大10行
+                }}
+                disabled={aiDialog.isLoading}
+              />
+              <div className="flex space-x-2">
+                <button
+                  onClick={async () => {
+                    if (!aiDialog.message.trim() || !canvas) return
+
+                    setAiDialog(prev => ({ ...prev, isLoading: true }))
+
+                    try {
+                      // 这里调用现有的AI处理逻辑
+                      const result = await getSelectedObjectsImage()
+                      if (result) {
+                        // 发送AI请求的逻辑...
+                        console.log('AI request with message:', aiDialog.message)
+                      }
+                    } catch (error) {
+                      console.error('AI request failed:', error)
+                    } finally {
+                      setAiDialog(prev => ({ ...prev, isLoading: false }))
+                      resetTextareaHeight() // 重置textarea高度
+                      hideAiDialog()
+                    }
+                  }}
+                  disabled={!aiDialog.message.trim() || aiDialog.isLoading}
+                  className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                >
+                  {aiDialog.isLoading ? 'Processing...' : 'Generate'}
+                </button>
+                <button
+                  onClick={hideAiDialog}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 底部状态栏 */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40">
