@@ -122,27 +122,40 @@ export default function StandardEditor() {
     e.stopPropagation()
     setIsDragOver(false)
 
+    console.log('🎯 Drop event triggered')
+
     const files = Array.from(e.dataTransfer.files)
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
+    console.log('📁 Files dropped:', files.length, 'Images:', imageFiles.length)
+
     if (imageFiles.length > 0) {
       // 处理第一个图片文件
+      console.log('📸 Processing image:', imageFiles[0].name)
       handleImageUpload(imageFiles[0])
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 右键菜单处理函数
+  // 右键菜单处理函数 - 基于 Fabric.js 社区最佳实践
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
 
-    if (!canvas) return
+    if (!canvas) {
+      console.warn('⚠️ Canvas not available for context menu')
+      return
+    }
 
     const activeObjects = canvas.getActiveObjects()
+    console.log('🖱️ Right click detected. Active objects:', activeObjects.length)
+
     if (activeObjects.length === 0) {
+      console.log('ℹ️ No objects selected, hiding context menu')
       setContextMenu({ visible: false, x: 0, y: 0, selectedObjects: [] })
       return
     }
 
+    console.log('✅ Showing context menu for', activeObjects.length, 'selected objects')
     setContextMenu({
       visible: true,
       x: e.clientX,
@@ -271,9 +284,31 @@ export default function StandardEditor() {
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Infinite canvas initialization
+  // 画布初始化 - 只在组件挂载时执行一次
   useEffect(() => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current || canvas) return // 防止重复创建
+
+    console.log('🎨 Initializing new canvas instance')
+
+    // 由于我们添加了 canvas 检查，这个逻辑不再需要
+    if (false) {
+      try {
+        const objectsCount = canvas.getObjects().length
+        console.log('🔄 Saving canvas state before recreation')
+        console.log('📊 Objects count before save:', objectsCount)
+
+        if (objectsCount > 0) {
+          canvasState = JSON.stringify(canvas.toJSON())
+          console.log('� Canvas state saved successfully')
+        } else {
+          console.log('ℹ️ No objects to save')
+        }
+      } catch (error) {
+        console.warn('❌ Failed to save canvas state:', error)
+      }
+    } else {
+      console.log('ℹ️ No existing canvas to save (first initialization)')
+    }
 
     const container = canvasRef.current.parentElement
     const containerWidth = container?.clientWidth || window.innerWidth
@@ -290,17 +325,24 @@ export default function StandardEditor() {
       allowTouchScrolling: false
     })
 
-    // Enable canvas zooming
+    // Enable canvas zooming - 使用 Fabric.js 标准方式，避免性能警告
     fabricCanvas.on('mouse:wheel', (opt) => {
-      const delta = opt.e.deltaY
-      let zoom = fabricCanvas.getZoom()
-      zoom *= 0.999 ** delta
-      if (zoom > 20) zoom = 20
-      if (zoom < 0.01) zoom = 0.01
-      const pointer = fabricCanvas.getPointer(opt.e)
-      fabricCanvas.zoomToPoint(pointer, zoom)
-      opt.e.preventDefault()
-      opt.e.stopPropagation()
+      // 使用 requestAnimationFrame 来优化性能，避免阻塞主线程
+      requestAnimationFrame(() => {
+        const delta = opt.e.deltaY
+        let zoom = fabricCanvas.getZoom()
+        zoom *= 0.999 ** delta
+        if (zoom > 20) zoom = 20
+        if (zoom < 0.01) zoom = 0.01
+        const pointer = fabricCanvas.getPointer(opt.e)
+        fabricCanvas.zoomToPoint(pointer, zoom)
+      })
+
+      // 只在必要时阻止默认行为，减少性能影响
+      if (Math.abs(opt.e.deltaY) > 0) {
+        opt.e.preventDefault()
+        opt.e.stopPropagation()
+      }
     })
 
     // Canvas drag panning
@@ -348,13 +390,38 @@ export default function StandardEditor() {
 
     window.addEventListener('resize', handleResize)
 
+    // 初始化画笔 - 基于 Fabric.js 社区最佳实践
+    console.log('🖌️ Initializing free drawing brush...')
+    try {
+      // 确保画笔对象存在
+      if (!fabricCanvas.freeDrawingBrush) {
+        // 手动创建画笔对象
+        fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas)
+        console.log('🖌️ Created new PencilBrush')
+      }
+
+      // 设置画笔属性
+      fabricCanvas.freeDrawingBrush.width = 5
+      fabricCanvas.freeDrawingBrush.color = '#000000'
+
+      console.log('✅ Free drawing brush initialized successfully:', {
+        width: fabricCanvas.freeDrawingBrush.width,
+        color: fabricCanvas.freeDrawingBrush.color,
+        type: fabricCanvas.freeDrawingBrush.constructor.name
+      })
+    } catch (error) {
+      console.error('❌ Failed to initialize free drawing brush:', error)
+    }
+
     setCanvas(fabricCanvas)
+
+    console.log('✅ Canvas initialized successfully')
 
     return () => {
       window.removeEventListener('resize', handleResize)
       fabricCanvas.dispose()
     }
-  }, [currentTool])
+  }, []) // 只在组件挂载时初始化画布，不依赖 currentTool
 
   // 工具切换 - 使用Fabric.js标准方式
   useEffect(() => {
@@ -376,12 +443,33 @@ export default function StandardEditor() {
         break
 
       case 'draw':
+        console.log('🖌️ Enabling brush drawing mode')
         canvas.isDrawingMode = true
         canvas.selection = false
-        if (canvas.freeDrawingBrush) {
-          canvas.freeDrawingBrush.width = 5
-          canvas.freeDrawingBrush.color = '#000000'
+        canvas.defaultCursor = 'crosshair'
+
+        // 确保画笔设置正确 - 基于 Fabric.js 社区最佳实践
+        if (!canvas.freeDrawingBrush) {
+          console.log('🖌️ Creating missing freeDrawingBrush...')
+          try {
+            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
+            console.log('✅ Created new PencilBrush on demand')
+          } catch (error) {
+            console.error('❌ Failed to create PencilBrush:', error)
+            break
+          }
         }
+
+        // 配置画笔属性
+        canvas.freeDrawingBrush.width = 5
+        canvas.freeDrawingBrush.color = '#000000'
+
+        console.log('✅ Brush drawing mode enabled:', {
+          isDrawingMode: canvas.isDrawingMode,
+          brushWidth: canvas.freeDrawingBrush.width,
+          brushColor: canvas.freeDrawingBrush.color,
+          brushType: canvas.freeDrawingBrush.constructor.name
+        })
         break
 
       case 'rectangle':
@@ -506,15 +594,15 @@ export default function StandardEditor() {
           canvas.renderAll()
           return
         case 'arrow':
-          // 箭头保持点击创建
-          const arrowPath = createArrowPath(pointer.x, pointer.y, pointer.x + 100, pointer.y - 50)
-          shape = new fabric.Path(arrowPath, {
-            left: pointer.x,
-            top: pointer.y - 50,
-            fill: 'transparent',
+          // 箭头拖拽绘制 - 创建初始线条（从起点到起点，长度为0）
+          console.log('🏹 Starting arrow drag from', pointer)
+          shape = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], {
             stroke: '#ef4444',
             strokeWidth: 3,
-            selectable: false
+            selectable: false,
+            evented: false,
+            originX: 'left',
+            originY: 'top'
           })
           break
       }
@@ -557,11 +645,15 @@ export default function StandardEditor() {
           })
           break
         case 'arrow':
-          // 更新箭头路径
-          const newArrowPath = createArrowPath(startPoint.x, startPoint.y, pointer.x, pointer.y)
-          currentShape.set({
-            path: newArrowPath
+          // 更新箭头线条的终点
+          const line = currentShape as fabric.Line
+          console.log('🏹 Updating arrow to', pointer)
+          line.set({
+            x2: pointer.x,
+            y2: pointer.y
           })
+          // 重新计算线条的位置和尺寸
+          line.setCoords()
           break
       }
 
@@ -571,10 +663,42 @@ export default function StandardEditor() {
     const handleMouseUp = () => {
       if (!isDrawing || !currentShape) return
 
+      // 箭头特殊处理：替换线条为完整的箭头路径
+      if (currentTool === 'arrow' && startPoint) {
+        const line = currentShape as fabric.Line
+        const endX = line.x2 || startPoint.x
+        const endY = line.y2 || startPoint.y
+
+        console.log('🏹 Creating arrow from', startPoint, 'to', { x: endX, y: endY })
+
+        // 移除临时线条
+        canvas.remove(currentShape)
+
+        // 创建完整的箭头路径
+        const arrowPath = createArrowPath(startPoint.x, startPoint.y, endX, endY)
+        const arrowShape = new fabric.Path(arrowPath, {
+          fill: 'transparent',
+          stroke: '#ef4444',
+          strokeWidth: 3,
+          selectable: true,
+          evented: true
+        })
+
+        canvas.add(arrowShape)
+        canvas.setActiveObject(arrowShape)
+
+        // 重置状态
+        setIsDrawing(false)
+        setStartPoint(null)
+        setCurrentShape(null)
+        canvas.renderAll()
+        return
+      }
+
+      // 其他形状的标准处理
       setIsDrawing(false)
       setStartPoint(null)
 
-      // 使形状可选择
       currentShape.set({ selectable: true })
       canvas.setActiveObject(currentShape)
       setCurrentShape(null)
@@ -894,15 +1018,28 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
     }
   }
 
-  // 图片上传
+  // 图片上传 - 基于 Fabric.js 社区最佳实践
   const handleImageUpload = (file: File) => {
-    if (!canvas) return
+    if (!canvas) {
+      console.error('❌ Canvas not available for image upload')
+      return
+    }
+
+    console.log('📸 Starting image upload:', file.name, file.type, file.size)
 
     const reader = new FileReader()
     reader.onload = async (e) => {
-      const imgUrl = e.target?.result as string
-      if (imgUrl) {
-        const img = await FabricImage.fromURL(imgUrl)
+      try {
+        const imgUrl = e.target?.result as string
+        if (!imgUrl) {
+          console.error('❌ Failed to read image file')
+          return
+        }
+
+        console.log('📸 Creating Fabric image from URL...')
+        const img = await FabricImage.fromURL(imgUrl, {
+          crossOrigin: 'anonymous'
+        })
 
         // 保存原始尺寸信息用于后续高清导出
         const originalWidth = img.width || 0
@@ -944,11 +1081,21 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
           evented: true
         })
 
+        console.log('📸 Adding image to canvas...')
         canvas.add(img)
         canvas.setActiveObject(img)
         canvas.renderAll()
+
+        console.log('✅ Image upload completed successfully')
+      } catch (error) {
+        console.error('❌ Failed to upload image:', error)
       }
     }
+
+    reader.onerror = () => {
+      console.error('❌ Failed to read file')
+    }
+
     reader.readAsDataURL(file)
   }
 
