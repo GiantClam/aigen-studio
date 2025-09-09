@@ -335,7 +335,7 @@ export default function ImageEditor() {
       }
       initRef.current = false
     }
-  }, [])
+  }, [canvas])
 
   // 监听工具变化，更新画布交互模式
   useEffect(() => {

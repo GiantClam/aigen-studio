@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage, Path } from 'fabric'
 import * as fabric from 'fabric'
+import { exportSelectedObjectsSmart, calculateOptimalMultiplier } from '@/utils/fabric-object-export'
 import {
   MousePointer2,
   Square,
@@ -162,7 +163,7 @@ export default function StandardEditor() {
       window.removeEventListener('resize', handleResize)
       fabricCanvas.dispose()
     }
-  }, [])
+  }, [currentTool])
 
   // 工具切换 - 使用Fabric.js标准方式
   useEffect(() => {
@@ -204,7 +205,7 @@ export default function StandardEditor() {
   }, [canvas, currentTool])
 
   // 标准的对象创建
-  const createObject = (pointer: { x: number, y: number }) => {
+  const createObject = useCallback((pointer: { x: number, y: number }) => {
     if (!canvas) return
 
     let obj = null
@@ -262,7 +263,7 @@ export default function StandardEditor() {
       canvas.setActiveObject(obj)
       canvas.renderAll()
     }
-  }
+  }, [canvas, currentTool])
 
   // 简单的画布点击处理
   useEffect(() => {
@@ -280,334 +281,51 @@ export default function StandardEditor() {
     return () => {
       canvas.off('mouse:down', handleMouseDown)
     }
-  }, [canvas, currentTool])
+  }, [canvas, currentTool, createObject])
 
-  // 获取选中对象的图片数据
-  const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: any } | null> => {
-    if (!canvas) return null
+  // 获取选中对象的图片数据 - 使用 Fabric.js 成熟解决方案
+const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: any } | null> => {
+  if (!canvas) return null
 
-    const activeObjects = canvas.getActiveObjects()
-    if (activeObjects.length === 0) return null
+  const activeObjects = canvas.getActiveObjects()
+  if (activeObjects.length === 0) return null
 
-    try {
-      console.log('� === STARTING OBJECT CAPTURE ===')
-      console.log('�📸 Capturing selected objects...', {
-        count: activeObjects.length,
-        objectTypes: activeObjects.map(obj => obj.type)
-      })
+  try {
+    console.log('🎯 === USING FABRIC.JS MATURE SOLUTION ===')
+    console.log('📸 Capturing selected objects...', {
+      count: activeObjects.length,
+      objectTypes: activeObjects.map(obj => obj.type)
+    })
 
-      // Force re-render canvas to ensure all object positions are correct
-      canvas.renderAll()
+    // 使用智能导出函数，自动选择最佳方法
+    const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
+    
+    const result = await exportSelectedObjectsSmart(canvas, {
+      format: 'png',
+      quality: 1,
+      multiplier: optimalMultiplier,
+      padding: 20,
+      backgroundColor: 'white'
+    })
 
-      // Get current viewport transform matrix
-      const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
-      const zoom = vpt[0]
-      const panX = vpt[4]
-      const panY = vpt[5]
-
-      console.log('� Current viewport transform:', {
-        zoom,
-        panX,
-        panY,
-        fullTransform: vpt
-      })
-
-      // Calculate all selected objects' precise bounding box in canvas coordinates
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-
-      activeObjects.forEach((obj, index) => {
-        // Force update object coordinates for all object types
-        obj.setCoords()
-
-        // CRITICAL FIX: getBoundingRect() already returns CANVAS coordinates!
-        // The previous assumption was wrong - no coordinate transformation needed.
-        // toDataURL() expects canvas coordinates, which is exactly what getBoundingRect() provides.
-
-        const bounds = obj.getBoundingRect()
-
-        console.log(`🔍 Object ${index} (${obj.type}) bounds (canvas coordinates):`, {
-          left: bounds.left,
-          top: bounds.top,
-          width: bounds.width,
-          height: bounds.height,
-          right: bounds.left + bounds.width,
-          bottom: bounds.top + bounds.height,
-          area: bounds.width * bounds.height
-        })
-
-        console.log(`📍 Viewport info for reference:`, {
-          zoom, panX, panY,
-          note: "getBoundingRect() returns canvas coordinates regardless of viewport transform"
-        })
-
-        // Use the bounds directly - they are already in canvas coordinate system
-        minX = Math.min(minX, bounds.left)
-        minY = Math.min(minY, bounds.top)
-        maxX = Math.max(maxX, bounds.left + bounds.width)
-        maxY = Math.max(maxY, bounds.top + bounds.height)
-      })
-
-      // 计算实际内容区域（不添加过多padding）
-      const contentWidth = maxX - minX
-      const contentHeight = maxY - minY
-
-      // 动态计算padding，避免过大的白边
-      const paddingRatio = 0.05 // 5%的边距
-      const minPadding = 10
-      const maxPadding = 50
-
-      const dynamicPadding = Math.max(
-        minPadding,
-        Math.min(
-          maxPadding,
-          Math.max(contentWidth * paddingRatio, contentHeight * paddingRatio)
-        )
-      )
-
-      const captureArea = {
-        left: minX - dynamicPadding,
-        top: minY - dynamicPadding,
-        width: contentWidth + dynamicPadding * 2,
-        height: contentHeight + dynamicPadding * 2
-      }
-
-      // 确保捕获区域在画布范围内
-      const canvasWidth = canvas.getWidth()
-      const canvasHeight = canvas.getHeight()
-
-      console.log('🔧 Before boundary fix:', {
-        captureArea: { ...captureArea },
-        canvas: { width: canvasWidth, height: canvasHeight },
-        objectBounds: { minX, minY, maxX, maxY }
-      })
-
-      // 🧪 边界情况分析
-      const boundaryAnalysis = {
-        leftOverflow: captureArea.left < 0,
-        rightOverflow: captureArea.left + captureArea.width > canvasWidth,
-        topOverflow: captureArea.top < 0,
-        bottomOverflow: captureArea.top + captureArea.height > canvasHeight,
-        completelyOutside:
-          captureArea.left >= canvasWidth ||
-          captureArea.top >= canvasHeight ||
-          captureArea.left + captureArea.width <= 0 ||
-          captureArea.top + captureArea.height <= 0
-      }
-
-      console.log('🔍 Boundary analysis:', boundaryAnalysis)
-
-      // CRITICAL FIX: 对于AI图像编辑，我们需要完整的对象，不应该裁剪
-      // 如果对象超出画布边界，我们需要扩展画布或使用特殊的捕获方法
-
-      // 保存原始捕获区域用于计算
-      const originalLeft = captureArea.left
-      const originalTop = captureArea.top
-      const originalRight = captureArea.left + captureArea.width
-      const originalBottom = captureArea.top + captureArea.height
-
-      // 检查是否需要扩展捕获区域
-      const needsExpansion = originalLeft < 0 || originalTop < 0 ||
-                            originalRight > canvasWidth || originalBottom > canvasHeight
-
-      if (needsExpansion) {
-        console.log('🔧 Object extends beyond canvas, using full object capture method')
-
-        // 对于超出边界的对象，我们使用原始的完整捕获区域
-        // 这样可以确保AI模型收到完整的图像数据
-        captureArea.left = originalLeft
-        captureArea.top = originalTop
-        captureArea.width = originalRight - originalLeft
-        captureArea.height = originalBottom - originalTop
-
-        // 标记这是一个扩展捕获，后续处理时需要特殊处理
-        console.log('📏 Using extended capture area for complete object')
-      } else {
-        // 对象完全在画布内，使用标准裁剪
-        const clampedLeft = Math.max(0, originalLeft)
-        const clampedTop = Math.max(0, originalTop)
-        const clampedRight = Math.min(canvasWidth, originalRight)
-        const clampedBottom = Math.min(canvasHeight, originalBottom)
-
-        captureArea.left = clampedLeft
-        captureArea.top = clampedTop
-        captureArea.width = clampedRight - clampedLeft
-        captureArea.height = clampedBottom - clampedTop
-      }
-
-      console.log('🔧 After boundary fix:', {
-        captureArea: { ...captureArea },
-        originalBounds: {
-          left: originalLeft,
-          top: originalTop,
-          right: originalRight,
-          bottom: originalBottom
-        },
-        method: needsExpansion ? 'extended_capture' : 'standard_clamp',
-        needsExpansion: needsExpansion,
-        finalArea: captureArea.width * captureArea.height
-      })
-
-      console.log('� Bounding box calculation:', {
-        objectBounds: { minX, minY, maxX, maxY },
-        contentSize: { width: contentWidth, height: contentHeight },
-        dynamicPadding: dynamicPadding
-      })
-
-      console.log('�📸 Capture area calculation:', {
-        viewport: { zoom, panX, panY },
-        content: { width: contentWidth, height: contentHeight },
-        padding: dynamicPadding,
-        beforeClamp: {
-          left: minX - dynamicPadding,
-          top: minY - dynamicPadding,
-          width: contentWidth + dynamicPadding * 2,
-          height: contentHeight + dynamicPadding * 2
-        },
-        finalArea: captureArea,
-        canvas: { width: canvasWidth, height: canvasHeight }
-      })
-
-      // 计算最佳的multiplier以保持高清晰度
-      // 检查选中对象中是否有图像，如果有，使用其原始分辨率
-      let bestMultiplier = 2 // 默认2倍分辨率
-
-      activeObjects.forEach(obj => {
-        if (obj.type === 'image') {
-          const imgObj = obj as any
-          if (imgObj._originalElement) {
-            const originalWidth = imgObj._originalElement.naturalWidth || imgObj._originalElement.width
-            const originalHeight = imgObj._originalElement.naturalHeight || imgObj._originalElement.height
-            const currentWidth = imgObj.getScaledWidth()
-            const currentHeight = imgObj.getScaledHeight()
-
-            // 计算原始图像与当前显示尺寸的比例
-            const widthRatio = originalWidth / currentWidth
-            const heightRatio = originalHeight / currentHeight
-            const imageMultiplier = Math.max(widthRatio, heightRatio)
-
-            // 使用最高的分辨率需求，但限制在合理范围内
-            bestMultiplier = Math.max(bestMultiplier, Math.min(imageMultiplier, 4))
-
-            console.log('📸 Image resolution analysis:', {
-              original: { width: originalWidth, height: originalHeight },
-              current: { width: currentWidth, height: currentHeight },
-              ratio: { width: widthRatio, height: heightRatio },
-              suggestedMultiplier: imageMultiplier
-            })
-          }
-        }
-      })
-
-      console.log('📸 Using multiplier:', bestMultiplier)
-
-      // Validate capture area before export
-      if (captureArea.left < 0 || captureArea.top < 0 ||
-          captureArea.left + captureArea.width > canvasWidth ||
-          captureArea.top + captureArea.height > canvasHeight) {
-        console.warn('⚠️ Capture area extends beyond canvas bounds, adjusting...')
-        captureArea.left = Math.max(0, captureArea.left)
-        captureArea.top = Math.max(0, captureArea.top)
-        captureArea.width = Math.min(captureArea.width, canvasWidth - captureArea.left)
-        captureArea.height = Math.min(captureArea.height, canvasHeight - captureArea.top)
-      }
-
-      console.log('📸 Final validated capture area:', captureArea)
-
-      // Use precise capture area for image export
-      let imageData: string
-
-      if (needsExpansion) {
-        // 对于超出边界的对象，使用特殊的捕获方法
-        console.log('🎨 Using extended capture method for out-of-bounds objects')
-
-        // 创建临时画布来渲染完整的对象
-        const tempCanvas = document.createElement('canvas')
-        const tempCtx = tempCanvas.getContext('2d')!
-
-        tempCanvas.width = captureArea.width * bestMultiplier
-        tempCanvas.height = captureArea.height * bestMultiplier
-
-        // 设置白色背景
-        tempCtx.fillStyle = 'white'
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
-
-        // 缩放上下文以匹配multiplier
-        tempCtx.scale(bestMultiplier, bestMultiplier)
-
-        // 平移上下文以正确定位对象
-        tempCtx.translate(-captureArea.left, -captureArea.top)
-
-        // 渲染选中的对象到临时画布
-        activeObjects.forEach(obj => {
-          obj.render(tempCtx)
-        })
-
-        imageData = tempCanvas.toDataURL('image/png', 1)
-        console.log('✅ Extended capture completed, image size:', imageData.length)
-      } else {
-        // 标准捕获方法
-        imageData = canvas.toDataURL({
-          left: captureArea.left,
-          top: captureArea.top,
-          width: captureArea.width,
-          height: captureArea.height,
-          format: 'png',
-          quality: 1,
-          multiplier: bestMultiplier
-        })
-      }
-
-      // Validate that all objects are within capture area
-      const validationResults = activeObjects.map((obj, index) => {
-        const bounds = obj.getBoundingRect()
-        const inBounds = bounds.left >= captureArea.left &&
-                        bounds.top >= captureArea.top &&
-                        bounds.left + bounds.width <= captureArea.left + captureArea.width &&
-                        bounds.top + bounds.height <= captureArea.top + captureArea.height
-
-        console.log(`✅ Object ${index} (${obj.type}) validation:`, {
-          bounds: bounds,
-          captureArea: captureArea,
-          inBounds: inBounds,
-          overlap: {
-            left: Math.max(bounds.left, captureArea.left),
-            top: Math.max(bounds.top, captureArea.top),
-            right: Math.min(bounds.left + bounds.width, captureArea.left + captureArea.width),
-            bottom: Math.min(bounds.top + bounds.height, captureArea.top + captureArea.height)
-          }
-        })
-
-        return { index, type: obj.type, inBounds }
-      })
-
-      console.log('🎯 === CAPTURE COMPLETE ===')
-      console.log('📸 Image captured successfully:', {
-        dataSize: imageData.length,
-        captureArea: captureArea,
-        multiplier: bestMultiplier,
-        viewportTransform: vpt,
-        allObjectsInBounds: validationResults.every(r => r.inBounds),
-        validationResults: validationResults
-      })
-
-      return {
-        imageData,
-        bounds: {
-          left: captureArea.left,
-          top: captureArea.top,
-          width: captureArea.width,
-          height: captureArea.height,
-          originalBounds: {
-            minX, minY, maxX, maxY,
-            contentWidth, contentHeight
-          }
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error generating selected objects image:', error)
+    if (!result) {
+      console.error('❌ Failed to export selected objects')
       return null
     }
+
+    console.log('✅ Fabric.js smart export completed:', {
+      imageSize: result.imageData.length,
+      bounds: result.bounds,
+      multiplier: optimalMultiplier,
+      method: 'fabric_smart_export'
+    })
+
+    return result
+  } catch (error) {
+    console.error('❌ Error generating selected objects image:', error)
+    return null
   }
+}
 
   // AI聊天功能
   const sendMessage = async () => {
