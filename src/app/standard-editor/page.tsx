@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage, Path } from 'fabric'
 import * as fabric from 'fabric'
-import { exportSelectedObjectsSmart, calculateOptimalMultiplier } from '@/utils/fabric-object-export'
+import { exportSelectedObjectsSmart, calculateOptimalMultiplier, getPreciseBounds } from '@/utils/fabric-object-export'
 import {
   MousePointer2,
   Square,
@@ -299,13 +299,14 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
 
     // 使用智能导出函数，自动选择最佳方法
     const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
-    
+
     const result = await exportSelectedObjectsSmart(canvas, {
       format: 'png',
       quality: 1,
       multiplier: optimalMultiplier,
-      padding: 20,
-      backgroundColor: 'white'
+      tightBounds: true,  // 使用紧密边界，无白边
+      padding: 0,         // 无边距
+      backgroundColor: 'transparent'  // 透明背景
     })
 
     if (!result) {

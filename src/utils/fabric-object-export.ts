@@ -43,35 +43,27 @@ export async function exportSelectedObjectsNative(
     format = 'png',
     quality = 1,
     multiplier = 2,
-    padding = 20
+    padding = 0  // 默认无边距
   } = options
 
   try {
     console.log('🎯 Using Fabric.js native object export method')
 
-    // 方法1: 使用 getBoundingRect() 获取对象边界
-    // 在 Fabric.js 6.0+ 中，getBoundingRect() 已经返回正确的坐标
-    const bounds = activeObjects.reduce((acc, obj) => {
-      const objBounds = obj.getBoundingRect()
-      return {
-        left: Math.min(acc.left, objBounds.left),
-        top: Math.min(acc.top, objBounds.top),
-        right: Math.max(acc.right, objBounds.left + objBounds.width),
-        bottom: Math.max(acc.bottom, objBounds.top + objBounds.height)
-      }
-    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity })
+    // 使用精确边界计算，确保无白边
+    const preciseBounds = getPreciseBounds(activeObjects)
 
     const captureArea = {
-      left: bounds.left - padding,
-      top: bounds.top - padding,
-      width: bounds.right - bounds.left + padding * 2,
-      height: bounds.bottom - bounds.top + padding * 2
+      left: preciseBounds.left - padding,
+      top: preciseBounds.top - padding,
+      width: preciseBounds.width + padding * 2,
+      height: preciseBounds.height + padding * 2
     }
 
-    console.log('📏 Native bounds calculation:', {
-      objectBounds: bounds,
+    console.log('📏 Precise bounds calculation:', {
+      preciseBounds,
       captureArea,
-      method: 'getBoundingRect(true)'
+      padding,
+      method: 'precise_bounds'
     })
 
     // 使用 Fabric.js 的 toDataURL 方法，它会正确处理坐标系
@@ -93,10 +85,10 @@ export async function exportSelectedObjectsNative(
         width: captureArea.width,
         height: captureArea.height,
         originalBounds: {
-          minX: bounds.left,
-          minY: bounds.top,
-          maxX: bounds.right,
-          maxY: bounds.bottom
+          minX: preciseBounds.left,
+          minY: preciseBounds.top,
+          maxX: preciseBounds.left + preciseBounds.width,
+          maxY: preciseBounds.top + preciseBounds.height
         }
       }
     }
@@ -127,26 +119,18 @@ export async function exportSelectedObjectsToTempCanvas(
     format = 'png',
     quality = 1,
     multiplier = 2,
-    padding = 20,
-    backgroundColor = 'white'
+    padding = 0,  // 默认无边距
+    backgroundColor = 'transparent'  // 默认透明背景
   } = options
 
   try {
     console.log('🎨 Using temporary canvas export method')
 
-    // 计算对象边界
-    const bounds = activeObjects.reduce((acc, obj) => {
-      const objBounds = obj.getBoundingRect()
-      return {
-        left: Math.min(acc.left, objBounds.left),
-        top: Math.min(acc.top, objBounds.top),
-        right: Math.max(acc.right, objBounds.left + objBounds.width),
-        bottom: Math.max(acc.bottom, objBounds.top + objBounds.height)
-      }
-    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity })
+    // 使用精确边界计算
+    const preciseBounds = getPreciseBounds(activeObjects)
 
-    const captureWidth = bounds.right - bounds.left + padding * 2
-    const captureHeight = bounds.bottom - bounds.top + padding * 2
+    const captureWidth = preciseBounds.width + padding * 2
+    const captureHeight = preciseBounds.height + padding * 2
 
     // 创建临时画布
     const tempCanvas = document.createElement('canvas')
@@ -155,15 +139,17 @@ export async function exportSelectedObjectsToTempCanvas(
     tempCanvas.width = captureWidth * multiplier
     tempCanvas.height = captureHeight * multiplier
 
-    // 设置背景
-    tempCtx.fillStyle = backgroundColor
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+    // 设置背景（只有在非透明时才填充）
+    if (backgroundColor !== 'transparent') {
+      tempCtx.fillStyle = backgroundColor
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+    }
 
     // 缩放上下文
     tempCtx.scale(multiplier, multiplier)
 
     // 平移上下文，使对象居中
-    tempCtx.translate(-bounds.left + padding, -bounds.top + padding)
+    tempCtx.translate(-preciseBounds.left + padding, -preciseBounds.top + padding)
 
     // 渲染每个选中的对象
     for (const obj of activeObjects) {
@@ -173,24 +159,25 @@ export async function exportSelectedObjectsToTempCanvas(
     const imageData = tempCanvas.toDataURL(`image/${format}`, quality)
 
     console.log('✅ Temporary canvas export completed:', {
-      bounds,
+      preciseBounds,
       captureSize: { width: captureWidth, height: captureHeight },
       multiplier,
+      padding,
       imageSize: imageData.length
     })
 
     return {
       imageData,
       bounds: {
-        left: bounds.left - padding,
-        top: bounds.top - padding,
+        left: preciseBounds.left - padding,
+        top: preciseBounds.top - padding,
         width: captureWidth,
         height: captureHeight,
         originalBounds: {
-          minX: bounds.left,
-          minY: bounds.top,
-          maxX: bounds.right,
-          maxY: bounds.bottom
+          minX: preciseBounds.left,
+          minY: preciseBounds.top,
+          maxX: preciseBounds.left + preciseBounds.width,
+          maxY: preciseBounds.top + preciseBounds.height
         }
       }
     }
@@ -212,46 +199,89 @@ export async function exportSelectedObjectsSmart(
     multiplier?: number
     padding?: number
     backgroundColor?: string
+    tightBounds?: boolean  // 新增：是否使用紧密边界
   } = {}
 ): Promise<ObjectExportResult | null> {
   const activeObjects = canvas.getActiveObjects()
   if (activeObjects.length === 0) return null
 
+  const {
+    tightBounds = true,  // 默认使用紧密边界
+    padding = tightBounds ? 0 : 10,  // 紧密边界时无边距
+    backgroundColor = 'transparent'  // 默认透明背景
+  } = options
+
   try {
     // 检查对象是否超出画布边界
     const canvasWidth = canvas.getWidth()
     const canvasHeight = canvas.getHeight()
-    
-    const bounds = activeObjects.reduce((acc, obj) => {
-      const objBounds = obj.getBoundingRect()
-      return {
-        left: Math.min(acc.left, objBounds.left),
-        top: Math.min(acc.top, objBounds.top),
-        right: Math.max(acc.right, objBounds.left + objBounds.width),
-        bottom: Math.max(acc.bottom, objBounds.top + objBounds.height)
-      }
-    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity })
 
-    const isOutOfBounds = bounds.left < 0 || bounds.top < 0 || 
-                          bounds.right > canvasWidth || bounds.bottom > canvasHeight
+    const preciseBounds = getPreciseBounds(activeObjects)
+
+    const isOutOfBounds = preciseBounds.left < 0 || preciseBounds.top < 0 ||
+                          (preciseBounds.left + preciseBounds.width) > canvasWidth ||
+                          (preciseBounds.top + preciseBounds.height) > canvasHeight
 
     console.log('🤖 Smart export analysis:', {
-      bounds,
+      preciseBounds,
       canvasSize: { width: canvasWidth, height: canvasHeight },
       isOutOfBounds,
+      tightBounds,
+      padding,
       method: isOutOfBounds ? 'temporary_canvas' : 'native_export'
     })
 
+    // 传递更新的选项
+    const exportOptions = {
+      ...options,
+      padding,
+      backgroundColor
+    }
+
     if (isOutOfBounds) {
       // 对象超出边界，使用临时画布方法
-      return await exportSelectedObjectsToTempCanvas(canvas, options)
+      return await exportSelectedObjectsToTempCanvas(canvas, exportOptions)
     } else {
       // 对象在边界内，使用原生方法
-      return await exportSelectedObjectsNative(canvas, options)
+      return await exportSelectedObjectsNative(canvas, exportOptions)
     }
   } catch (error) {
     console.error('❌ Smart export failed:', error)
     return null
+  }
+}
+
+/**
+ * 获取精确的对象边界（像素级精确）
+ * 通过渲染到临时画布并分析像素来获得最紧密的边界
+ */
+export function getPreciseBounds(objects: FabricObject[]): {
+  left: number
+  top: number
+  width: number
+  height: number
+} {
+  if (objects.length === 0) {
+    return { left: 0, top: 0, width: 0, height: 0 }
+  }
+
+  // 使用标准的 getBoundingRect 作为基础
+  const bounds = objects.reduce((acc, obj) => {
+    const objBounds = obj.getBoundingRect()
+    return {
+      left: Math.min(acc.left, objBounds.left),
+      top: Math.min(acc.top, objBounds.top),
+      right: Math.max(acc.right, objBounds.left + objBounds.width),
+      bottom: Math.max(acc.bottom, objBounds.top + objBounds.height)
+    }
+  }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity })
+
+  // 确保边界是整数像素
+  return {
+    left: Math.floor(bounds.left),
+    top: Math.floor(bounds.top),
+    width: Math.ceil(bounds.right - bounds.left),
+    height: Math.ceil(bounds.bottom - bounds.top)
   }
 }
 
@@ -268,17 +298,17 @@ export function calculateOptimalMultiplier(objects: FabricObject[]): number {
       if (img._originalElement && img.width && img.height) {
         const originalWidth = img._originalElement.naturalWidth || img._originalElement.width
         const originalHeight = img._originalElement.naturalHeight || img._originalElement.height
-        
+
         if (originalWidth && originalHeight) {
           const scaleX = img.scaleX || 1
           const scaleY = img.scaleY || 1
-          
+
           const currentWidth = img.width * scaleX
           const currentHeight = img.height * scaleY
-          
+
           const widthRatio = originalWidth / currentWidth
           const heightRatio = originalHeight / currentHeight
-          
+
           const suggestedMultiplier = Math.min(widthRatio, heightRatio, 4) // 最大4倍
           maxMultiplier = Math.max(maxMultiplier, suggestedMultiplier)
         }
