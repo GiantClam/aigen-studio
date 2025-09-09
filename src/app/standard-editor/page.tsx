@@ -396,8 +396,8 @@ export default function StandardEditor() {
 
       console.log('🔍 Boundary analysis:', boundaryAnalysis)
 
-      // CRITICAL FIX: 正确处理无限画布的边界裁剪
-      // 无限画布意味着对象可能在任意方向超出画布边界
+      // CRITICAL FIX: 对于AI图像编辑，我们需要完整的对象，不应该裁剪
+      // 如果对象超出画布边界，我们需要扩展画布或使用特殊的捕获方法
 
       // 保存原始捕获区域用于计算
       const originalLeft = captureArea.left
@@ -405,28 +405,33 @@ export default function StandardEditor() {
       const originalRight = captureArea.left + captureArea.width
       const originalBottom = captureArea.top + captureArea.height
 
-      // 计算与画布的交集区域
-      const clampedLeft = Math.max(0, originalLeft)
-      const clampedTop = Math.max(0, originalTop)
-      const clampedRight = Math.min(canvasWidth, originalRight)
-      const clampedBottom = Math.min(canvasHeight, originalBottom)
+      // 检查是否需要扩展捕获区域
+      const needsExpansion = originalLeft < 0 || originalTop < 0 ||
+                            originalRight > canvasWidth || originalBottom > canvasHeight
 
-      // 检查是否有有效的交集
-      const hasValidIntersection = clampedLeft < clampedRight && clampedTop < clampedBottom
+      if (needsExpansion) {
+        console.log('🔧 Object extends beyond canvas, using full object capture method')
 
-      if (hasValidIntersection) {
-        // 有有效交集，使用交集区域
+        // 对于超出边界的对象，我们使用原始的完整捕获区域
+        // 这样可以确保AI模型收到完整的图像数据
+        captureArea.left = originalLeft
+        captureArea.top = originalTop
+        captureArea.width = originalRight - originalLeft
+        captureArea.height = originalBottom - originalTop
+
+        // 标记这是一个扩展捕获，后续处理时需要特殊处理
+        console.log('📏 Using extended capture area for complete object')
+      } else {
+        // 对象完全在画布内，使用标准裁剪
+        const clampedLeft = Math.max(0, originalLeft)
+        const clampedTop = Math.max(0, originalTop)
+        const clampedRight = Math.min(canvasWidth, originalRight)
+        const clampedBottom = Math.min(canvasHeight, originalBottom)
+
         captureArea.left = clampedLeft
         captureArea.top = clampedTop
         captureArea.width = clampedRight - clampedLeft
         captureArea.height = clampedBottom - clampedTop
-      } else {
-        // 没有交集（对象完全在画布外），创建最小有效区域
-        console.warn('⚠️ Object completely outside canvas, creating minimal capture area')
-        captureArea.left = Math.max(0, Math.min(canvasWidth - 1, originalLeft))
-        captureArea.top = Math.max(0, Math.min(canvasHeight - 1, originalTop))
-        captureArea.width = 1
-        captureArea.height = 1
       }
 
       console.log('🔧 After boundary fix:', {
@@ -437,15 +442,9 @@ export default function StandardEditor() {
           right: originalRight,
           bottom: originalBottom
         },
-        clampedBounds: {
-          left: clampedLeft,
-          top: clampedTop,
-          right: clampedRight,
-          bottom: clampedBottom
-        },
-        hasValidIntersection,
-        intersectionArea: hasValidIntersection ?
-          (clampedRight - clampedLeft) * (clampedBottom - clampedTop) : 0
+        method: needsExpansion ? 'extended_capture' : 'standard_clamp',
+        needsExpansion: needsExpansion,
+        finalArea: captureArea.width * captureArea.height
       })
 
       console.log('� Bounding box calculation:', {
@@ -515,15 +514,48 @@ export default function StandardEditor() {
       console.log('📸 Final validated capture area:', captureArea)
 
       // Use precise capture area for image export
-      const imageData = canvas.toDataURL({
-        left: captureArea.left,
-        top: captureArea.top,
-        width: captureArea.width,
-        height: captureArea.height,
-        format: 'png',
-        quality: 1,
-        multiplier: bestMultiplier // Use calculated optimal resolution
-      })
+      let imageData: string
+
+      if (needsExpansion) {
+        // 对于超出边界的对象，使用特殊的捕获方法
+        console.log('🎨 Using extended capture method for out-of-bounds objects')
+
+        // 创建临时画布来渲染完整的对象
+        const tempCanvas = document.createElement('canvas')
+        const tempCtx = tempCanvas.getContext('2d')!
+
+        tempCanvas.width = captureArea.width * bestMultiplier
+        tempCanvas.height = captureArea.height * bestMultiplier
+
+        // 设置白色背景
+        tempCtx.fillStyle = 'white'
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+
+        // 缩放上下文以匹配multiplier
+        tempCtx.scale(bestMultiplier, bestMultiplier)
+
+        // 平移上下文以正确定位对象
+        tempCtx.translate(-captureArea.left, -captureArea.top)
+
+        // 渲染选中的对象到临时画布
+        activeObjects.forEach(obj => {
+          obj.render(tempCtx)
+        })
+
+        imageData = tempCanvas.toDataURL('image/png', 1)
+        console.log('✅ Extended capture completed, image size:', imageData.length)
+      } else {
+        // 标准捕获方法
+        imageData = canvas.toDataURL({
+          left: captureArea.left,
+          top: captureArea.top,
+          width: captureArea.width,
+          height: captureArea.height,
+          format: 'png',
+          quality: 1,
+          multiplier: bestMultiplier
+        })
+      }
 
       // Validate that all objects are within capture area
       const validationResults = activeObjects.map((obj, index) => {

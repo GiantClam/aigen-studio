@@ -494,7 +494,7 @@ export class VertexAIService {
 
       console.log('🖼️ Editing image with Google GenAI SDK...');
       console.log('   Model:', model);
-      console.log('   Prompt:', prompt.substring(0, 100) + '...');
+      console.log('   Original prompt:', prompt.substring(0, 100) + '...');
       console.log('   Image type:', mimeType);
 
       // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
