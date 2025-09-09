@@ -41,6 +41,11 @@ const nextConfig = {
     // 优化包导入
     optimizePackageImports: ['lucide-react'],
   },
+
+  // 禁用有问题的开发工具 (修复 Next.js 15.5.2 的 devtools bug)
+  devIndicators: {
+    position: 'bottom-right',
+  },
 }
 
 module.exports = nextConfig

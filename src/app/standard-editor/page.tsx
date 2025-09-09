@@ -136,33 +136,13 @@ export default function StandardEditor() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 右键菜单处理函数 - 基于 Fabric.js 社区最佳实践
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+
+
+  // React 右键菜单处理函数 - 作为备用方案
+  const handleReactContextMenu = useCallback((e: React.MouseEvent) => {
+    // 阻止默认右键菜单，但让 Fabric.js 事件处理
     e.preventDefault()
-    e.stopPropagation()
-
-    if (!canvas) {
-      console.warn('⚠️ Canvas not available for context menu')
-      return
-    }
-
-    const activeObjects = canvas.getActiveObjects()
-    console.log('🖱️ Right click detected. Active objects:', activeObjects.length)
-
-    if (activeObjects.length === 0) {
-      console.log('ℹ️ No objects selected, hiding context menu')
-      setContextMenu({ visible: false, x: 0, y: 0, selectedObjects: [] })
-      return
-    }
-
-    console.log('✅ Showing context menu for', activeObjects.length, 'selected objects')
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      selectedObjects: activeObjects
-    })
-  }, [canvas])
+  }, [])
 
   // 隐藏右键菜单
   const hideContextMenu = useCallback(() => {
@@ -270,6 +250,162 @@ export default function StandardEditor() {
     }))
   }, [])
 
+  // 处理AI请求 - 集成 gemini-2.5-flash-image-preview 模型
+  const processAiRequest = useCallback(async (message: string) => {
+    if (!canvas) {
+      console.error('Canvas not available')
+      return
+    }
+
+    console.log('🤖 Processing AI request:', message)
+
+    try {
+      // 获取选中对象的图片数据
+      const result = await getSelectedObjectsImage()
+
+      if (result) {
+        // 场景1: 有选中对象 - 图像编辑
+        console.log('📸 Selected objects image captured, performing image editing')
+        console.log('🎨 Processing selected objects with Gemini Flash Image...', {
+          instruction: message,
+          imageDataLength: result.imageData.length,
+          bounds: result.bounds
+        })
+
+        // 发送图片和文本到Gemini Flash Image模型
+        const response = await fetch('/api/ai/image/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageData: result.imageData,
+            instruction: message,
+            model: 'gemini-2.5-flash-image-preview'
+          })
+        })
+
+        console.log('📡 Edit API Response status:', response.status)
+        const apiResult = await response.json()
+
+        if (!response.ok) {
+          throw new Error(apiResult.error || `API request failed: ${response.status}`)
+        }
+
+        console.log('✅ AI edit response received:', apiResult)
+
+        // 处理AI响应 - 添加编辑后的图片到画布
+        if (apiResult.success && apiResult.data.editedImageUrl) {
+          await addAiGeneratedImage(apiResult.data.editedImageUrl, result.bounds)
+          console.log('🎨 AI-edited image added to canvas')
+        } else {
+          throw new Error(apiResult.error || 'No edited image received')
+        }
+
+      } else {
+        // 场景2: 没有选中对象 - 图像生成
+        console.log('📝 No objects selected, performing image generation')
+        console.log('🎨 Generating image with Gemini Flash Image...', { prompt: message })
+
+        const response = await fetch('/api/ai/image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: message,
+            model: 'gemini-2.5-flash-image-preview'
+          })
+        })
+
+        console.log('📡 Generate API Response status:', response.status)
+        const apiResult = await response.json()
+
+        if (!response.ok) {
+          throw new Error(apiResult.error || `API request failed: ${response.status}`)
+        }
+
+        console.log('✅ AI generation response received:', apiResult)
+
+        // 处理AI响应 - 添加生成的图片到画布
+        if (apiResult.success && apiResult.data.imageUrl) {
+          await addAiGeneratedImage(apiResult.data.imageUrl)
+          console.log('🎨 AI-generated image added to canvas')
+        } else {
+          throw new Error(apiResult.error || 'No generated image received')
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ AI request failed:', error)
+      throw error
+    }
+  }, [canvas])
+
+  // 添加AI生成的图片到画布
+  const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
+    if (!canvas) return
+
+    try {
+      console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
+
+      // 创建图片对象
+      const img = await FabricImage.fromURL(imageUrl, {
+        crossOrigin: 'anonymous'
+      })
+
+      // 设置图片位置和大小
+      if (bounds) {
+        // 如果有边界信息，在原位置右侧添加编辑后的图片
+        const offsetX = bounds.width + 20 // 在原图右侧20px处
+
+        img.set({
+          left: bounds.left + offsetX,
+          top: bounds.top,
+          scaleX: bounds.width / (img.width || 1),
+          scaleY: bounds.height / (img.height || 1),
+        })
+
+        console.log('📍 Positioned edited image next to original', {
+          originalBounds: bounds,
+          newPosition: { left: bounds.left + offsetX, top: bounds.top }
+        })
+      } else {
+        // 如果没有边界信息，添加到画布中心
+        const viewport = canvas.getVpCenter()
+        const scale = Math.min(300 / (img.width || 1), 300 / (img.height || 1))
+
+        img.set({
+          left: viewport.x - (img.width || 0) * scale / 2,
+          top: viewport.y - (img.height || 0) * scale / 2,
+          scaleX: scale,
+          scaleY: scale,
+        })
+
+        console.log('📍 Positioned generated image at viewport center', {
+          viewport,
+          scale,
+          imageSize: { width: img.width, height: img.height }
+        })
+      }
+
+      img.set({
+        selectable: true,
+        evented: true
+      })
+
+      // 添加到画布
+      canvas.add(img)
+      canvas.setActiveObject(img)
+      canvas.renderAll()
+
+      console.log('✅ AI generated image added successfully')
+    } catch (error) {
+      console.error('❌ Failed to add AI generated image:', error)
+      throw error
+    }
+  }, [canvas])
+
 
 
   // AI chat states
@@ -290,25 +426,8 @@ export default function StandardEditor() {
 
     console.log('🎨 Initializing new canvas instance')
 
-    // 由于我们添加了 canvas 检查，这个逻辑不再需要
-    if (false) {
-      try {
-        const objectsCount = canvas.getObjects().length
-        console.log('🔄 Saving canvas state before recreation')
-        console.log('📊 Objects count before save:', objectsCount)
-
-        if (objectsCount > 0) {
-          canvasState = JSON.stringify(canvas.toJSON())
-          console.log('� Canvas state saved successfully')
-        } else {
-          console.log('ℹ️ No objects to save')
-        }
-      } catch (error) {
-        console.warn('❌ Failed to save canvas state:', error)
-      }
-    } else {
-      console.log('ℹ️ No existing canvas to save (first initialization)')
-    }
+    // Canvas 初始化 - 不需要保存状态，因为这是首次创建
+    console.log('ℹ️ Initializing new canvas (first time or after cleanup)')
 
     const container = canvasRef.current.parentElement
     const containerWidth = container?.clientWidth || window.innerWidth
@@ -413,15 +532,42 @@ export default function StandardEditor() {
       console.error('❌ Failed to initialize free drawing brush:', error)
     }
 
+    // 绑定右键菜单事件 - 使用 DOM 事件避免干扰绘制功能
+    console.log('🖱️ Binding right-click context menu events...')
+
+    const contextMenuHandler = (e: MouseEvent) => {
+      e.preventDefault()
+
+      const activeObjects = fabricCanvas.getActiveObjects()
+      console.log('🖱️ DOM right click detected. Active objects:', activeObjects.length)
+
+      // 总是显示右键菜单，但根据是否有选中对象显示不同选项
+      if (activeObjects.length === 0) {
+        console.log('✅ Showing context menu for canvas (no objects selected)')
+      } else {
+        console.log('✅ Showing context menu for', activeObjects.length, 'selected objects')
+      }
+
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        selectedObjects: activeObjects
+      })
+    }
+
+    fabricCanvas.upperCanvasEl.addEventListener('contextmenu', contextMenuHandler)
+
     setCanvas(fabricCanvas)
 
     console.log('✅ Canvas initialized successfully')
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      fabricCanvas.upperCanvasEl.removeEventListener('contextmenu', contextMenuHandler)
       fabricCanvas.dispose()
     }
-  }, []) // 只在组件挂载时初始化画布，不依赖 currentTool
+  }, []) // 只在组件挂载时初始化画布
 
   // 工具切换 - 使用Fabric.js标准方式
   useEffect(() => {
@@ -1239,7 +1385,7 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
         <canvas
           ref={canvasRef}
           className="w-full h-full cursor-crosshair"
-          onContextMenu={handleContextMenu}
+          onContextMenu={handleReactContextMenu}
         />
 
         {/* 拖放提示覆盖层 */}
@@ -1272,36 +1418,68 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
               transform: 'translate(-50%, -10px)'
             }}
           >
+            {/* AI功能 - 总是显示，但文本根据场景变化 */}
             <button
               onClick={() => showAiDialog(contextMenu.x, contextMenu.y)}
               className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center space-x-2 text-sm"
             >
               <span className="text-blue-500">🤖</span>
-              <span>AI Generate</span>
-            </button>
-            <button
-              onClick={exportSelectedObjects}
-              className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center space-x-2 text-sm"
-            >
-              <Download className="w-4 h-4 text-green-500" />
-              <span>Download PNG</span>
-            </button>
-            <div className="border-t border-gray-200 my-1" />
-            <button
-              onClick={() => {
-                if (canvas) {
-                  const activeObjects = canvas.getActiveObjects()
-                  activeObjects.forEach(obj => canvas.remove(obj))
-                  canvas.discardActiveObject()
-                  canvas.renderAll()
+              <span>
+                {contextMenu.selectedObjects.length > 0
+                  ? 'AI Edit with Gemini'
+                  : 'AI Generate with Gemini'
                 }
-                hideContextMenu()
-              }}
-              className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center space-x-2 text-sm text-red-600"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
+              </span>
             </button>
+
+            {/* 只有选中对象时才显示的选项 */}
+            {contextMenu.selectedObjects.length > 0 && (
+              <>
+                <button
+                  onClick={exportSelectedObjects}
+                  className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center space-x-2 text-sm"
+                >
+                  <Download className="w-4 h-4 text-green-500" />
+                  <span>Download PNG</span>
+                </button>
+                <div className="border-t border-gray-200 my-1" />
+                <button
+                  onClick={() => {
+                    if (canvas) {
+                      const activeObjects = canvas.getActiveObjects()
+                      activeObjects.forEach(obj => canvas.remove(obj))
+                      canvas.discardActiveObject()
+                      canvas.renderAll()
+                    }
+                    hideContextMenu()
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center space-x-2 text-sm text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </>
+            )}
+
+            {/* 只有空白画布时才显示的选项 */}
+            {contextMenu.selectedObjects.length === 0 && (
+              <>
+                <div className="border-t border-gray-200 my-1" />
+                <div className="px-4 py-2 text-xs text-gray-500">
+                  Canvas Actions
+                </div>
+                <button
+                  onClick={() => {
+                    // 可以添加其他画布操作，比如清空画布、重置视图等
+                    hideContextMenu()
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-600"
+                >
+                  <span>📋</span>
+                  <span>Paste (Coming Soon)</span>
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
@@ -1579,13 +1757,15 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
           >
             <div className="flex items-center space-x-2 mb-3">
               <span className="text-blue-500">🤖</span>
-              <h3 className="font-semibold text-gray-800">AI Assistant</h3>
+              <h3 className="font-semibold text-gray-800">Gemini AI Assistant</h3>
             </div>
             <div className="space-y-3">
               <textarea
                 value={aiDialog.message}
                 onChange={(e) => adjustTextareaHeight(e.target.value)}
-                placeholder="Describe what you want to do with the selected objects..."
+                placeholder={contextMenu.selectedObjects.length > 0
+                  ? "Describe how to edit the selected objects..."
+                  : "Describe the image you want to generate..."}
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all duration-200"
                 style={{
                   height: `${aiDialog.textareaHeight}px`,
@@ -1602,12 +1782,7 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                     setAiDialog(prev => ({ ...prev, isLoading: true }))
 
                     try {
-                      // 这里调用现有的AI处理逻辑
-                      const result = await getSelectedObjectsImage()
-                      if (result) {
-                        // 发送AI请求的逻辑...
-                        console.log('AI request with message:', aiDialog.message)
-                      }
+                      await processAiRequest(aiDialog.message)
                     } catch (error) {
                       console.error('AI request failed:', error)
                     } finally {
@@ -1619,7 +1794,10 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                   disabled={!aiDialog.message.trim() || aiDialog.isLoading}
                   className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                 >
-                  {aiDialog.isLoading ? 'Processing...' : 'Generate'}
+                  {aiDialog.isLoading
+                    ? 'Processing with Gemini...'
+                    : (contextMenu.selectedObjects.length > 0 ? 'Edit with AI' : 'Generate Image')
+                  }
                 </button>
                 <button
                   onClick={hideAiDialog}
