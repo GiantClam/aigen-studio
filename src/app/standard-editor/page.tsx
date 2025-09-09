@@ -449,7 +449,7 @@ export default function StandardEditor() {
 
     try {
       // 删除所有选中的对象
-      activeObjects.forEach(obj => {
+      activeObjects.forEach((obj: any) => {
         currentCanvas.remove(obj)
       })
 
