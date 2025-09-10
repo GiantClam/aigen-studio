@@ -129,14 +129,65 @@ export default function StandardEditor() {
 
     console.log('📁 Files dropped:', files.length, 'Images:', imageFiles.length)
 
-    if (imageFiles.length > 0) {
-      // 处理第一个图片文件
-      console.log('📸 Processing image:', imageFiles[0].name)
-      handleImageUpload(imageFiles[0])
+    if (imageFiles.length === 0) {
+      console.warn('⚠️ No image files found in drop')
+      return
     }
+
+    // 处理多个图片文件 - 基于 Fabric.js 社区最佳实践
+    handleMultipleImageUpload(imageFiles)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 处理文件输入上传 - 基于 Fabric.js 社区最佳实践
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No files selected')
+      return
+    }
 
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    console.log('📁 Files selected:', files.length, 'Images:', imageFiles.length)
+
+    if (imageFiles.length === 0) {
+      console.warn('⚠️ No image files found in selection')
+      return
+    }
+
+    // 处理多个图片文件
+    handleMultipleImageUpload(imageFiles)
+
+    // 清空文件输入，允许重复选择相同文件
+    e.target.value = ''
+  }, [])
+
+  // 多图片上传处理 - 基于 Fabric.js 社区最佳实践
+  const handleMultipleImageUpload = useCallback((files: File[]) => {
+    console.log(`📸 Starting multiple image upload: ${files.length} files`)
+
+    // 智能布局参数
+    const GRID_SPACING = 20 // 图片间距
+    const MAX_COLUMNS = 3 // 最大列数
+    const START_X = 50 // 起始X坐标
+    const START_Y = 50 // 起始Y坐标
+
+    files.forEach((file, index) => {
+      // 计算网格位置
+      const column = index % MAX_COLUMNS
+      const row = Math.floor(index / MAX_COLUMNS)
+      const offsetX = column * (300 + GRID_SPACING) // 假设每个图片最大宽度300px
+      const offsetY = row * (300 + GRID_SPACING) // 假设每个图片最大高度300px
+
+      console.log(`📸 Processing image ${index + 1}/${files.length}: ${file.name}`)
+      console.log(`📍 Grid position: column=${column}, row=${row}, offset=(${offsetX}, ${offsetY})`)
+
+      // 为每个图片添加位置偏移
+      handleImageUploadWithPosition(file, {
+        x: START_X + offsetX,
+        y: START_Y + offsetY
+      })
+    })
+  }, [])
 
   // React 右键菜单处理函数 - 作为备用方案
   const handleReactContextMenu = useCallback((e: React.MouseEvent) => {
@@ -1235,7 +1286,11 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
 
   // 图片上传 - 基于 Fabric.js 社区最佳实践
   const handleImageUpload = (file: File) => {
-    if (!canvas) {
+    // 通过全局变量获取当前画布实例，避免闭包问题
+    const currentCanvas = canvasRef.current ?
+      (window as any).fabricCanvasInstance || canvas : null
+
+    if (!currentCanvas) {
       console.error('❌ Canvas not available for image upload')
       return
     }
@@ -1266,8 +1321,8 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
         })
 
         // 智能缩放：保持宽高比，适应画布大小
-        const canvasWidth = canvas.getWidth()
-        const canvasHeight = canvas.getHeight()
+        const canvasWidth = currentCanvas.getWidth()
+        const canvasHeight = currentCanvas.getHeight()
         const maxDisplayWidth = Math.min(400, canvasWidth * 0.4)
         const maxDisplayHeight = Math.min(400, canvasHeight * 0.4)
 
@@ -1297,9 +1352,9 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
         })
 
         console.log('📸 Adding image to canvas...')
-        canvas.add(img)
-        canvas.setActiveObject(img)
-        canvas.renderAll()
+        currentCanvas.add(img)
+        currentCanvas.setActiveObject(img)
+        currentCanvas.renderAll()
 
         console.log('✅ Image upload completed successfully')
       } catch (error) {
@@ -1313,6 +1368,89 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
 
     reader.readAsDataURL(file)
   }
+
+  // 带位置参数的图片上传 - 基于 Fabric.js 社区最佳实践
+  const handleImageUploadWithPosition = useCallback((file: File, position: { x: number, y: number }) => {
+    // 通过全局变量获取当前画布实例，避免闭包问题
+    const currentCanvas = canvasRef.current ?
+      (window as any).fabricCanvasInstance || canvas : null
+
+    if (!currentCanvas) {
+      console.error('❌ Canvas not available for image upload')
+      return
+    }
+
+    console.log('📸 Starting positioned image upload:', file.name, 'at position:', position)
+
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const imgUrl = e.target?.result as string
+        if (!imgUrl) {
+          console.error('❌ Failed to read image file')
+          return
+        }
+
+        console.log('📸 Creating Fabric image from URL...')
+        const img = await FabricImage.fromURL(imgUrl, {
+          crossOrigin: 'anonymous'
+        })
+
+        // 保存原始尺寸信息用于后续高清导出
+        const originalWidth = img.width || 0
+        const originalHeight = img.height || 0
+
+        console.log('📸 Uploaded image info:', {
+          original: { width: originalWidth, height: originalHeight },
+          file: { name: file.name, size: file.size },
+          position: position
+        })
+
+        // 智能缩放：保持宽高比，适应多图布局
+        const maxDisplayWidth = 250 // 多图模式下使用较小的尺寸
+        const maxDisplayHeight = 250
+
+        if (originalWidth > 0 && originalHeight > 0) {
+          const scale = Math.min(
+            maxDisplayWidth / originalWidth,
+            maxDisplayHeight / originalHeight,
+            1 // 不放大，只缩小
+          )
+          img.scale(scale)
+
+          console.log('📸 Image scaled for multi-upload:', {
+            scale: scale,
+            display: {
+              width: originalWidth * scale,
+              height: originalHeight * scale
+            }
+          })
+        }
+
+        // 设置图像位置到指定坐标
+        img.set({
+          left: position.x,
+          top: position.y,
+          selectable: true,
+          evented: true
+        })
+
+        console.log('📸 Adding positioned image to canvas...')
+        currentCanvas.add(img)
+        currentCanvas.renderAll()
+
+        console.log('✅ Positioned image upload completed successfully')
+      } catch (error) {
+        console.error('❌ Failed to upload positioned image:', error)
+      }
+    }
+
+    reader.onerror = () => {
+      console.error('❌ Failed to read file')
+    }
+
+    reader.readAsDataURL(file)
+  }, [canvas])
 
   // 标准功能
   const deleteSelected = () => {
@@ -1676,14 +1814,21 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
                     const input = document.createElement('input')
                     input.type = 'file'
                     input.accept = 'image/*'
+                    input.multiple = true // 支持多文件选择
                     input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0]
-                      if (file) handleImageUpload(file)
+                      const target = e.target as HTMLInputElement
+                      const files = target.files
+                      if (!files || files.length === 0) return
+
+                      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+                      if (imageFiles.length > 0) {
+                        handleMultipleImageUpload(imageFiles)
+                      }
                     }
                     input.click()
                   }}
                   className="p-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
-                  title="Upload Image"
+                  title="Upload Images (Multiple)"
                 >
                   <Upload className="w-4 h-4" />
                 </button>
