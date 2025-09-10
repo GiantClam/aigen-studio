@@ -71,3 +71,16 @@ CREATE TABLE IF NOT EXISTS publications (
 CREATE INDEX IF NOT EXISTS idx_contents_user_id ON contents(user_id);
 CREATE INDEX IF NOT EXISTS idx_platform_accounts_user_id ON platform_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_content_analytics_content_id ON content_analytics(content_id); 
+
+-- Templates table for homepage cards (for Supabase, adjust types accordingly)
+CREATE TABLE IF NOT EXISTS templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  prompt TEXT NOT NULL,
+  type TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_templates_name ON templates(name);

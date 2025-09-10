@@ -76,3 +76,20 @@ model Project {
   @@index([userId])
   @@index([createdAt])
 }
+
+// 首页模板模型（从外部来源抓取并导入 Supabase，同时也可在本地 SQLite 以便开发）
+model Template {
+  id        String       @id @default(cuid())
+  name      String
+  imageUrl  String
+  prompt    String
+  type      TemplateType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+enum TemplateType {
+  SINGLE_IMAGE_GENERATION  // 单图生图
+  MULTI_IMAGE_GENERATION   // 多图生图
+  TEXT_TO_IMAGE            // 文生图
+}
