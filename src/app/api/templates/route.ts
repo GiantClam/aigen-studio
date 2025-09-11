@@ -10,7 +10,7 @@ export async function GET() {
 
     // 构建或运行时如未配置 ENV，返回空数据以保证不会阻断构建
     if (!url || !anon) {
-      return NextResponse.json({ templates: [] }, { status: 200 })
+      return NextResponse.json([])
     }
 
     const supabase = createClient(url, anon)
@@ -22,12 +22,14 @@ export async function GET() {
       .limit(60)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Supabase error:', error)
+      return NextResponse.json([], { status: 200 }) // 返回空数组而不是错误
     }
 
-    return NextResponse.json({ templates: data || [] })
+    return NextResponse.json(data || [])
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Unknown error' }, { status: 500 })
+    console.error('API error:', e)
+    return NextResponse.json([], { status: 200 }) // 返回空数组而不是错误
   }
 }
 

@@ -35,6 +35,20 @@ interface ChatMessage {
   timestamp: string
 }
 
+// 模板接口
+interface TemplateData {
+  id: string
+  name: string
+  prompt: string
+  type: 'single-image' | 'multi-image' | 'text-to-image'
+  parameters?: {
+    style?: string
+    quality?: string
+    aspectRatio?: string
+    creativity?: number
+  }
+}
+
 export default function ImageEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvas, setCanvas] = useState<Canvas | null>(null)
@@ -52,7 +66,40 @@ export default function ImageEditor() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null)
   const initRef = useRef(false)
+
+  // 加载模板数据
+  useEffect(() => {
+    const loadTemplate = () => {
+      try {
+        const templateData = sessionStorage.getItem('selectedTemplate')
+        if (templateData) {
+          const template = JSON.parse(templateData) as TemplateData
+          setSelectedTemplate(template)
+          
+          // 预填充提示词到输入框
+          setInputMessage(template.prompt)
+          
+          // 显示模板加载成功消息
+          const templateMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `🎨 已加载模板 "${template.name}"！提示词已预填充，你可以直接生成或修改后使用。`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+          setChatMessages(prev => [...prev, templateMessage])
+          
+          // 清除 sessionStorage 中的模板数据
+          sessionStorage.removeItem('selectedTemplate')
+        }
+      } catch (error) {
+        console.error('Failed to load template:', error)
+      }
+    }
+
+    loadTemplate()
+  }, [])
 
   // 无限画布初始化
   useEffect(() => {
@@ -752,6 +799,11 @@ export default function ImageEditor() {
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="font-semibold text-gray-800">AI助手</span>
+              {selectedTemplate && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                  {selectedTemplate.name}
+                </span>
+              )}
             </div>
             <button
               onClick={() => setIsChatExpanded(!isChatExpanded)}

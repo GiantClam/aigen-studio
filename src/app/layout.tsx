@@ -79,8 +79,6 @@ export default function RootLayout({
                   <div className="text-sm font-semibold text-gray-300">Product</div>
                   <ul className="mt-3 space-y-2 text-sm">
                     <li><a className="hover:text-white" href="/standard-editor">Standard Editor</a></li>
-                    <li><a className="hover:text-white" href="/image-editor">Modern Canvas</a></li>
-                    <li><a className="hover:text-white" href="/test-canvas">Test Canvas</a></li>
                   </ul>
                 </div>
                 <div>
@@ -88,7 +86,7 @@ export default function RootLayout({
                   <ul className="mt-3 space-y-2 text-sm">
                     <li><a className="hover:text-white" href="https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/" target="_blank" rel="noreferrer">Model Intro</a></li>
                     <li><a className="hover:text-white" href="https://developers.googleblog.com/en/how-to-prompt-gemini-2-5-flash-image-generation-for-the-best-results/" target="_blank" rel="noreferrer">Prompting Guide</a></li>
-                    <li><a className="hover:text-white" href="https://blog.google/products/gemini/updated-image-editing-model/" target="_blank" rel="noreferrer">Model Updates</a></li>
+                    <li><a className="hover:text-white" href="https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/" target="_blank" rel="noreferrer">Model Updates</a></li>
                   </ul>
                 </div>
                 <div>
