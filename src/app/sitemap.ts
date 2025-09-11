@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const { data: templates } = await supabase
         .from('templates')
         .select('name, updated_at')
+        .eq('isvalid', true)
         .order('updated_at', { ascending: false })
 
       templateUrls = templates?.map((template) => ({

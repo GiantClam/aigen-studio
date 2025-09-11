@@ -10,6 +10,7 @@
     "lint": "next lint",
     "seed:templates": "node scripts/seed-templates.mjs",
     "seed:readme": "node scripts/seed-from-readme.mjs",
+    "seed:fashion": "node scripts/seed-fashion-mag-templates.mjs",
     "translate:templates": "node scripts/translate-templates.mjs",
     "deploy": "npx vercel --prod",
     "preview": "npx vercel"

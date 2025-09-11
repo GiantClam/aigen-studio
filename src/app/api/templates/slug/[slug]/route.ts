@@ -24,6 +24,7 @@ export async function GET(
     const { data: templates, error } = await supabase
       .from('templates')
       .select('*')
+      .eq('isvalid', true)
       .order('updated_at', { ascending: false })
 
     if (error) {

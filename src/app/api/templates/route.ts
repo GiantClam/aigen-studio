@@ -18,6 +18,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('templates')
       .select('id,name,image_url,prompt,type,updated_at')
+      .eq('isvalid', true)
       .order('updated_at', { ascending: false })
 
     if (error) {

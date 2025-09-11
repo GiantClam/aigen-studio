@@ -34,6 +34,7 @@ export default function TemplatesGrid() {
         const { data, error } = await supabase
           .from('templates')
           .select('id,name,image_url,prompt,type,created_at,updated_at')
+          .eq('isvalid', true)
           .order('updated_at', { ascending: false })
           .limit(8)
         
