@@ -470,7 +470,7 @@ export default function Home() {
                   <span>Start Editing</span>
                 </Link>
                 <Link
-                  href="/image-editor"
+                  href="/standard-editor"
                   className="flex items-center justify-center space-x-2 px-8 py-4 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-all duration-200 text-lg font-semibold border border-white/30"
                 >
                   <ImageIcon className="w-5 h-5" />

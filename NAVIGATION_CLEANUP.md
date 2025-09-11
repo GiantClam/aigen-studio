@@ -33,7 +33,7 @@
 1. **Footer导航**:
    ```typescript
    // 移除前
-   <li><a className="hover:text-white" href="/image-editor">Modern Canvas</a></li>
+   <li><a className="hover:text-white" href="/standard-editor">Modern Canvas</a></li>
    <li><a className="hover:text-white" href="/test-canvas">Test Canvas</a></li>
    
    // 移除后

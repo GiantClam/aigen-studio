@@ -191,7 +191,7 @@ Image added to canvas, total objects: 1
 ```
 ✓ Compiled successfully
 Route (app)                    Size     First Load JS
-└ ○ /image-editor             93.9 kB  199 kB
+└ ○ /standard-editor          93.9 kB  199 kB
 ```
 
 ### **功能验证**

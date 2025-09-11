@@ -187,7 +187,7 @@ fabricCanvas.on('mouse:down', (e) => {
 
 Route (app)                    Size     First Load JS
 ┌ ○ /                         160 B    105 kB
-├ ○ /image-editor             94.4 kB  200 kB
+├ ○ /standard-editor          94.4 kB  200 kB
 ├ ƒ /api/ai/image/generate    134 B    102 kB
 ├ ƒ /api/ai/image/edit        134 B    102 kB
 └ ƒ /api/health               134 B    102 kB

@@ -25,6 +25,7 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
   const [isFavorited, setIsFavorited] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -43,7 +44,7 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
     sessionStorage.setItem('selectedTemplate', JSON.stringify(templateData))
     
     // 跳转到编辑器
-    router.push('/image-editor')
+    router.push('/standard-editor')
   }
 
   const handleViewDetails = () => {
@@ -60,12 +61,26 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
   const copyPrompt = (e: React.MouseEvent) => {
     e.stopPropagation()
     navigator.clipboard.writeText(template.prompt)
-    // 这里可以添加复制成功的提示
+    setToastMessage('Prompt copied')
+    window.setTimeout(() => setToastMessage(null), 1500)
   }
 
   const shareTemplate = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // 这里可以添加分享功能
+    const slug = generateSlug(template.name)
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/templates/${slug}` : ''
+    const shareData = {
+      title: template.name,
+      text: 'Check out this AI image template',
+      url
+    }
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      ;(navigator as any).share(shareData).catch(() => {/* ignore */})
+    } else if (url) {
+      navigator.clipboard.writeText(url)
+      setToastMessage('Link copied')
+      window.setTimeout(() => setToastMessage(null), 1500)
+    }
   }
 
   const getTypeColor = (type: string) => {
@@ -269,6 +284,13 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
             {getTypeLabel(template.type)}
           </span>
         </div>
+
+        {/* 轻量提示 */}
+        {toastMessage && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1 rounded-full">
+            {toastMessage}
+          </div>
+        )}
       </div>
       
       {/* 内容 */}

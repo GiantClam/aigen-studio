@@ -50,7 +50,7 @@ const apiRoutes = [
   { path: '/api/ai/image/edit', file: './dist/api/ai/image/edit.js' },
   { path: '/api/ai/image/analyze', file: './dist/api/ai/image/analyze.js' },
   { path: '/api/ai/image/generate', file: './dist/api/ai/image/generate.js' },
-  { path: '/image-editor', file: './dist/api/image-editor.js' },
+  { path: '/standard-editor', file: './dist/api/image-editor.js' },
   { path: '/', file: './dist/api/index.js' }
 ];
 
@@ -74,7 +74,7 @@ apiRoutes.forEach(route => {
 // 启动服务器
 app.listen(PORT, () => {
   console.log(`🚀 Development server running at http://localhost:${PORT}`);
-  console.log(`📝 Image Editor: http://localhost:${PORT}/image-editor`);
+  console.log(`📝 Image Editor: http://localhost:${PORT}/standard-editor`);
   console.log(`🔍 Health Check: http://localhost:${PORT}/api/health`);
   console.log('');
   console.log('📋 Available API endpoints:');

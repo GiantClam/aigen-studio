@@ -50,7 +50,7 @@ async function runTests() {
     { method: 'GET', path: '/api/health', expected: 200 },
     
     // 图像编辑器页面
-    { method: 'GET', path: '/image-editor', expected: 200 },
+    { method: 'GET', path: '/standard-editor', expected: 200 },
     
     // 根路径重定向
     { method: 'GET', path: '/', expected: 302 },
@@ -120,7 +120,7 @@ async function runTests() {
   console.log('✅ All endpoints accessible');
   
   console.log('\n🚀 Ready for development!');
-  console.log('   - Image Editor: http://localhost:3000/image-editor');
+  console.log('   - Image Editor: http://localhost:3000/standard-editor');
   console.log('   - Health Check: http://localhost:3000/api/health');
   console.log('   - API Documentation: See README.md');
 }

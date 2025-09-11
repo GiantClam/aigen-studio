@@ -67,7 +67,7 @@ cp .env.example .env.local
 npm run dev
 
 # 访问应用
-http://localhost:3000/image-editor
+http://localhost:3000/standard-editor
 ```
 
 #### 生产部署
@@ -122,7 +122,7 @@ node test-vertex-ai.js
 - `POST /api/ai/image/edit` - 图像编辑
 - `POST /api/ai/image/analyze` - 图像分析
 - `POST /api/ai/image/generate` - 图像生成
-- `GET /image-editor` - 图像编辑器页面
+- `GET /standard-editor` - 图像编辑器页面
 
 ### 🎯 **优势**
 

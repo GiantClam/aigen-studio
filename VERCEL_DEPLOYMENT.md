@@ -46,7 +46,7 @@ vercel login
 部署成功后，访问以下端点验证：
 
 - `/` - 首页
-- `/image-editor` - 图像编辑器
+- `/standard-editor` - 图像编辑器
 - `/api/health` - 健康检查
 - `/api/ai/image/generate` - AI 图像生成
 - `/api/ai/image/edit` - AI 图像编辑

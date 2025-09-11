@@ -28,6 +28,7 @@ export default function TemplateDetailPage() {
   const [template, setTemplate] = useState<Template | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFavorited, setIsFavorited] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [parameters, setParameters] = useState({
     style: 'realistic',
     quality: 'high',
@@ -76,7 +77,8 @@ export default function TemplateDetailPage() {
   const copyPrompt = () => {
     if (template) {
       navigator.clipboard.writeText(template.prompt)
-      // 这里可以添加复制成功的提示
+      setToastMessage('Prompt copied')
+      window.setTimeout(() => setToastMessage(null), 1500)
     }
   }
 
@@ -95,8 +97,25 @@ export default function TemplateDetailPage() {
       // 将模板数据存储到 sessionStorage
       sessionStorage.setItem('selectedTemplate', JSON.stringify(templateData))
       
-      // 跳转到编辑器
-      router.push('/image-editor')
+      // 跳转到标准编辑器
+      router.push('/standard-editor')
+    }
+  }
+
+  const shareTemplate = () => {
+    if (!template) return
+    const slug = (typeof window !== 'undefined') ? `${window.location.origin}/templates/${encodeURIComponent((template.name || '').toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''))}` : ''
+    const shareData = {
+      title: template.name,
+      text: 'Check out this AI image template',
+      url: slug
+    }
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      ;(navigator as any).share(shareData).catch(() => {/* ignore */})
+    } else if (slug) {
+      navigator.clipboard.writeText(shareData.url)
+      setToastMessage('Link copied')
+      window.setTimeout(() => setToastMessage(null), 1500)
     }
   }
 
@@ -160,6 +179,13 @@ export default function TemplateDetailPage() {
               />
             </div>
 
+            {/* 轻量提示 */}
+            {toastMessage && (
+              <div className="text-center">
+                <span className="inline-block bg-black/80 text-white text-xs px-3 py-1 rounded-full">{toastMessage}</span>
+              </div>
+            )}
+
             {/* 操作按钮 */}
             <div className="flex flex-wrap gap-3">
               <button
@@ -190,8 +216,8 @@ export default function TemplateDetailPage() {
               </button>
               
               <button className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors flex items-center space-x-2">
-                <Share2 className="w-5 h-5" />
-                <span>Share</span>
+                <Share2 className="w-5 h-5" onClick={shareTemplate} />
+                <span onClick={shareTemplate}>Share</span>
               </button>
             </div>
           </div>

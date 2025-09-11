@@ -222,7 +222,7 @@ const handleDrop = (e) => {
 
 Route (app)                    Size     First Load JS
 ┌ ○ /                         160 B    105 kB
-├ ○ /image-editor             93.8 kB  199 kB
+├ ○ /standard-editor          93.8 kB  199 kB
 ├ ƒ /api/ai/image/generate    134 B    102 kB
 └ ƒ /api/health               134 B    102 kB
 ```

@@ -16,7 +16,7 @@
 | 端点 | 方法 | 状态 | 描述 |
 |------|------|------|------|
 | `/` | GET | ✅ | 根路径，显示图像编辑器 |
-| `/image-editor` | GET | ✅ | 图像编辑器主页面 |
+| `/standard-editor` | GET | ✅ | 图像编辑器主页面 |
 | `/api/health` | GET | ✅ | 健康检查端点 |
 | `/api/ai/image/edit` | POST | ✅ | 图像编辑 API |
 | `/api/ai/image/analyze` | POST | ✅ | 图像分析 API |
@@ -39,7 +39,7 @@ curl http://localhost:3000/api/health
 ```
 
 #### ✅ **2. 图像编辑器页面**
-- 访问: http://localhost:3000/image-editor
+- 访问: http://localhost:3000/standard-editor
 - 完整的 HTML 页面加载
 - Fabric.js 画布功能
 - AI 聊天面板
@@ -106,7 +106,7 @@ node test-local-server.js
 ### 📱 访问应用
 
 #### 🎨 **图像编辑器**
-**URL**: http://localhost:3000/image-editor
+**URL**: http://localhost:3000/standard-editor
 
 **功能**:
 - 无限画布编辑
@@ -168,5 +168,5 @@ JWT_SECRET=your-jwt-secret
 
 **🎯 项目现在完全可以进行本地开发和生产部署！**
 
-**开发地址**: http://localhost:3000/image-editor
+**开发地址**: http://localhost:3000/standard-editor
 **健康检查**: http://localhost:3000/api/health

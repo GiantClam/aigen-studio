@@ -70,7 +70,7 @@ const handleUseTemplate = () => {
   if (!mounted) return  // 防止SSR时执行
   
   // 安全的路由操作
-  router.push('/image-editor')
+  router.push('/standard-editor')
 }
 ```
 

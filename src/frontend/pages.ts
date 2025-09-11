@@ -766,7 +766,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                     </svg>
                     Sign in with Google
                 </button>
-                <a href="/image-editor" class="btn btn-primary">
+                <a href="/standard-editor" class="btn btn-primary">
                     <i class="fas fa-rocket"></i>
                     Get Started
                 </a>
@@ -784,11 +784,11 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                 </p>
 
                 <div class="hero-actions">
-                    <a href="/image-editor" class="btn btn-hero btn-hero-primary btn-large">
+                    <a href="/standard-editor" class="btn btn-hero btn-hero-primary btn-large">
                         <i class="fas fa-magic"></i>
                         Start Creating
                     </a>
-                    <a href="/image-editor" class="btn btn-hero btn-hero-secondary btn-large">
+                    <a href="/standard-editor" class="btn btn-hero btn-hero-secondary btn-large">
                         <i class="fas fa-rocket"></i>
                         Get Started
                     </a>
@@ -1001,7 +1001,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             </div>
 
             <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
-                <a href="/image-editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                <a href="/standard-editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖼️</div>
                     <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI Image Editor</h3>
                     <p style="color: var(--text-secondary); font-size: 0.875rem;">Professional image editing with AI enhancement and smart repair tools</p>
@@ -1062,7 +1062,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Google AI Studio access</li>
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Community support</li>
                     </ul>
-                    <a href="/image-editor" class="btn btn-outline" style="width: 100%;">Get Started</a>
+                    <a href="/standard-editor" class="btn btn-outline" style="width: 100%;">Get Started</a>
                 </div>
 
                 <div class="pricing-card" style="background: white; border-radius: 1rem; padding: 2.5rem; text-align: center; box-shadow: var(--shadow-lg); border: 2px solid var(--primary-color); position: relative; transform: scale(1.05);">
@@ -1077,7 +1077,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>API access included</li>
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>Priority support</li>
                     </ul>
-                    <a href="/image-editor" class="btn btn-primary" style="width: 100%;">Start Creating</a>
+                    <a href="/standard-editor" class="btn btn-primary" style="width: 100%;">Start Creating</a>
                 </div>
             </div>
 

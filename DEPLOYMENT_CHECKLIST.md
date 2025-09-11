@@ -39,7 +39,7 @@ npx vercel --prod
 
 ### 3. 验证部署
 - [ ] 访问首页 `/`
-- [ ] 访问图像编辑器 `/image-editor`
+- [ ] 访问图像编辑器 `/standard-editor`
 - [ ] 测试 API 端点 `/api/health`
 - [ ] 测试 AI 功能
 

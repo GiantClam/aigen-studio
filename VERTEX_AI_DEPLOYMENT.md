@@ -71,7 +71,7 @@ npm run dev
 ### 4. 访问应用
 
 ```
-http://localhost:3000/image-editor
+http://localhost:3000/standard-editor
 ```
 
 ## 🌐 API 端点

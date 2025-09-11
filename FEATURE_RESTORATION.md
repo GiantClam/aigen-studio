@@ -91,7 +91,7 @@
 ```
 Route (app)                    Size     First Load JS
 ┌ ○ /                         160 B    105 kB
-├ ○ /image-editor             5.68 kB  111 kB
+├ ○ /standard-editor          5.68 kB  111 kB
 ├ ƒ /api/ai/image/generate    134 B    102 kB
 ├ ƒ /api/ai/image/edit        134 B    102 kB
 └ ƒ /api/health               134 B    102 kB

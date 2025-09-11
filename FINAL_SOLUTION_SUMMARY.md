@@ -172,7 +172,7 @@ const addImage = async (file) => {
 
 Route (app)                    Size     First Load JS
 ┌ ○ /                         160 B    105 kB
-├ ○ /image-editor             93.8 kB  199 kB
+├ ○ /standard-editor          93.8 kB  199 kB
 ├ ƒ /api/ai/image/generate    134 B    102 kB
 └ ƒ /api/health               134 B    102 kB
 ```
@@ -215,7 +215,7 @@ const scale = Math.min(maxWidth / img.width, maxHeight / img.height)
 ## 🎯 测试验证步骤
 
 ### **1. 画布初始化测试**
-- 打开 http://localhost:3000/image-editor
+- 打开 http://localhost:3000/standard-editor
 - 检查页面是否正常加载，无404错误
 - 画布应该显示为白色背景
 
@@ -267,7 +267,7 @@ const scale = Math.min(maxWidth / img.width, maxHeight / img.height)
 ## 📞 使用说明
 
 现在您可以：
-1. 访问 http://localhost:3000/image-editor
+1. 访问 http://localhost:3000/standard-editor
 2. 拖放图片文件到画布上传
 3. 使用左侧工具栏的各种工具进行编辑
 4. 与右侧AI助手对话获得帮助

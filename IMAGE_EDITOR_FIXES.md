@@ -148,7 +148,7 @@ const [currentTool, setCurrentTool] = useState<'select' | 'brush' | 'eraser' | .
 ### **构建结果**
 ```
 Route (app)                    Size     First Load JS
-└ ○ /image-editor             93.3 kB  199 kB
+└ ○ /standard-editor          93.3 kB  199 kB
 ```
 
 ### **功能验证**
