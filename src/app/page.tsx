@@ -241,7 +241,7 @@ export default function Home() {
                     </div>
                     <div className="relative group">
                       <img 
-                        src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face" 
+                        src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&h=200&fit=crop&crop=faces" 
                         alt="Character 2" 
                         className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
