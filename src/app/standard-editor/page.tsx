@@ -57,6 +57,7 @@ export default function StandardEditor() {
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const dragDepthRef = useRef(0)
 
   // 拖拽绘制状态
   const [isDrawing, setIsDrawing] = useState(false)
@@ -108,18 +109,32 @@ export default function StandardEditor() {
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy'
+    }
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragDepthRef.current += 1
     setIsDragOver(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragOver(false)
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+    if (dragDepthRef.current === 0) {
+      setIsDragOver(false)
+    }
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    dragDepthRef.current = 0
     setIsDragOver(false)
 
     console.log('🎯 Drop event triggered')
@@ -137,6 +152,20 @@ export default function StandardEditor() {
     // 处理多个图片文件 - 基于 Fabric.js 社区最佳实践
     handleMultipleImageUpload(imageFiles)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prevent default browser behavior (file open/navigation) on Windows Chrome
+  useEffect(() => {
+    const prevent = (ev: DragEvent) => {
+      ev.preventDefault()
+      ev.stopPropagation()
+    }
+    window.addEventListener('dragover', prevent)
+    window.addEventListener('drop', prevent)
+    return () => {
+      window.removeEventListener('dragover', prevent)
+      window.removeEventListener('drop', prevent)
+    }
+  }, [])
 
   // 处理文件输入上传 - 基于 Fabric.js 社区最佳实践
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,6 +262,11 @@ export default function StandardEditor() {
     if (activeObjects.length === 0) return
 
     try {
+      // 临时重置视口平移/缩放以避免导出偏移（Windows/Chrome 下尤为明显）
+      const originalVpt = canvas.viewportTransform ? [...canvas.viewportTransform] as number[] : null
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+      canvas.renderAll()
+
       const result = await exportSelectedObjectsSmart(canvas, {
         format: 'png',
         quality: 1,
@@ -251,8 +285,19 @@ export default function StandardEditor() {
         link.click()
         document.body.removeChild(link)
       }
+      // 恢复视口
+      if (originalVpt && originalVpt.length === 6) {
+        const vptTuple = originalVpt as unknown as [number, number, number, number, number, number]
+        canvas.setViewportTransform(vptTuple)
+        canvas.renderAll()
+      }
     } catch (error) {
       console.error('Export failed:', error)
+    } finally {
+      // 双保险恢复视口
+      if (canvas) {
+        canvas.renderAll()
+      }
     }
 
     hideContextMenu()
@@ -1613,6 +1658,7 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
       <div
         className="absolute inset-0 w-full h-full"
         onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
