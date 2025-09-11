@@ -91,7 +91,7 @@ export default function Home() {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&h=1080&fit=crop&crop=center" 
+            src="https://images.unsplash.com/photo-1503264116251-35a269479413?w=1920&h=1080&fit=crop&crop=center" 
             alt="AI Features Background" 
             className="w-full h-full object-cover"
           />
@@ -387,7 +387,7 @@ export default function Home() {
                 <div className="mt-6">
                   <div className="relative">
                     <img 
-                      src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=200&fit=crop&crop=center" 
+                      src="https://images.unsplash.com/photo-1503264116251-35a269479413?w=600&h=200&fit=crop&crop=center" 
                       alt="Brush Tool Demo" 
                       className="w-full h-32 object-cover rounded-xl shadow-lg"
                     />
