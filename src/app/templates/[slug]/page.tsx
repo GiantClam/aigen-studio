@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Copy, Heart, Share2, Download, Play, Settings, Star } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { generateSlug, formatSlugToTitle } from '@/lib/slug-utils'
+import Image from 'next/image'
 
 // 动态导入组件以避免SSR问题
 const TemplateCard = dynamic(() => import('@/components/templates/TemplateCard'), {
@@ -172,11 +173,15 @@ export default function TemplateDetailPage() {
           <div className="space-y-6">
             {/* 主图 */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              <img
-                src={template.image_url}
-                alt={template.name}
-                className="w-full h-96 object-cover"
-              />
+              <div className="relative w-full h-96">
+                <Image
+                  src={template.image_url}
+                  alt={template.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
             </div>
 
             {/* 轻量提示 */}

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Sparkles, Wand2, Image as ImageIcon, Zap, Star, ArrowRight, Palette, Type, Brush, Shapes } from 'lucide-react'
 import TemplatesGrid from './templates-grid'
 
@@ -38,10 +39,12 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* Background Image with Multiple Overlays */}
         <div className="absolute inset-0">
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop&crop=center" 
             alt="AI Art Background" 
-            className="w-full h-full object-cover"
+            fill
+            priority
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-purple-900/80 to-slate-900/90"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40"></div>
@@ -90,10 +93,11 @@ export default function Home() {
       <section id="features" className="relative py-20 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1503264116251-35a269479413?w=1920&h=1080&fit=crop&crop=center" 
             alt="AI Features Background" 
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/70 to-slate-900/80"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
@@ -124,38 +128,42 @@ export default function Home() {
               <div className="order-1 lg:order-2">
                 <div className="relative">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-48">
+                      <Image 
                         src="https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop&crop=center" 
                         alt="AI Generated Portrait" 
-                        className="w-full h-48 object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
                       <div className="absolute bottom-2 left-2 text-white text-sm font-semibold">Portrait</div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-48">
+                      <Image 
                         src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&crop=center" 
                         alt="AI Generated Landscape" 
-                        className="w-full h-48 object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
                       <div className="absolute bottom-2 left-2 text-white text-sm font-semibold">Landscape</div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-48">
+                      <Image 
                         src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&crop=center" 
                         alt="AI Generated Abstract" 
-                        className="w-full h-48 object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
                       <div className="absolute bottom-2 left-2 text-white text-sm font-semibold">Abstract</div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-48">
+                      <Image 
                         src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center" 
                         alt="AI Generated Art" 
-                        className="w-full h-48 object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
                       <div className="absolute bottom-2 left-2 text-white text-sm font-semibold">Art</div>
@@ -184,22 +192,24 @@ export default function Home() {
               </div>
               <div>
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="relative group">
-                    <img 
+                  <div className="relative group h-32">
+                    <Image 
                       src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=200&fit=crop&crop=center" 
                       alt="Before: Plain Image" 
-                      className="w-full h-32 object-cover rounded-2xl shadow-xl"
+                      fill
+                      className="object-cover rounded-2xl shadow-xl"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/80 to-blue-500/80 rounded-2xl"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-white text-xl font-bold">Before: Plain Image</span>
                     </div>
                   </div>
-                  <div className="relative group">
-                    <img 
+                  <div className="relative group h-32">
+                    <Image 
                       src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=200&fit=crop&crop=center&sat=150&hue=30" 
                       alt="After: AI Enhanced" 
-                      className="w-full h-32 object-cover rounded-2xl shadow-xl"
+                      fill
+                      className="object-cover rounded-2xl shadow-xl"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-400/80 to-purple-500/80 rounded-2xl"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -231,51 +241,57 @@ export default function Home() {
               <div className="order-1 lg:order-2">
                 <div className="relative">
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" 
                         alt="Character 1" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-xl"></div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&h=200&fit=crop&crop=faces" 
                         alt="Character 2" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-xl"></div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face" 
                         alt="Character 3" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-xl"></div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face" 
                         alt="Character 4" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-red-500/20 rounded-xl"></div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face" 
                         alt="Character 5" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-purple-500/20 rounded-xl"></div>
                     </div>
-                    <div className="relative group">
-                      <img 
+                    <div className="relative group h-24">
+                      <Image 
                         src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face" 
                         alt="Character 6" 
-                        className="w-full h-24 object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-xl"></div>
                     </div>
@@ -291,10 +307,11 @@ export default function Home() {
       <section id="templates" className="relative py-20 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1920&h=1080&fit=crop&crop=center" 
             alt="Templates Background" 
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 via-purple-900/70 to-pink-900/80"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30"></div>
@@ -316,10 +333,11 @@ export default function Home() {
       <section id="guides" className="relative py-20 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <img 
+          <Image 
             src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center" 
             alt="Professional Tools Background" 
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-blue-900/70 to-indigo-900/80"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/40"></div>
@@ -351,11 +369,12 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <div className="relative">
-                    <img 
+                  <div className="relative h-32">
+                    <Image 
                       src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=200&fit=crop&crop=center" 
                       alt="Selection Tool Demo" 
-                      className="w-full h-32 object-cover rounded-xl shadow-lg"
+                      fill
+                      className="object-cover rounded-xl shadow-lg"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-indigo-600/20 rounded-xl"></div>
                     <div className="absolute top-2 right-2 bg-white/90 rounded-lg px-3 py-1 text-sm font-semibold text-purple-600">
@@ -385,11 +404,12 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <div className="relative">
-                    <img 
+                  <div className="relative h-32">
+                    <Image 
                       src="https://images.unsplash.com/photo-1503264116251-35a269479413?w=600&h=200&fit=crop&crop=center" 
                       alt="Brush Tool Demo" 
-                      className="w-full h-32 object-cover rounded-xl shadow-lg"
+                      fill
+                      className="object-cover rounded-xl shadow-lg"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-600/20 rounded-xl"></div>
                     <div className="absolute top-2 right-2 bg-white/90 rounded-lg px-3 py-1 text-sm font-semibold text-blue-600">
@@ -413,11 +433,12 @@ export default function Home() {
                   <h4 className="text-2xl font-bold">Text Tool</h4>
                 </div>
                 <p className="text-lg mb-6 opacity-90">Add and edit text with professional typography controls. Multiple fonts, sizes, and styling options.</p>
-                <div className="relative">
-                  <img 
+                <div className="relative h-32">
+                  <Image 
                     src="https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&h=200&fit=crop&crop=center" 
                     alt="Text Tool Demo" 
-                    className="w-full h-32 object-cover rounded-2xl shadow-lg"
+                    fill
+                    className="object-cover rounded-2xl shadow-lg"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-600/20 rounded-2xl"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -439,11 +460,12 @@ export default function Home() {
                   <h4 className="text-2xl font-bold">Shape Tool</h4>
                 </div>
                 <p className="text-lg mb-6 opacity-90">Rectangles, circles, polygons and more. Perfect geometric shapes for any design.</p>
-                <div className="relative">
-                  <img 
+                <div className="relative h-32">
+                  <Image 
                     src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=200&fit=crop&crop=center" 
                     alt="Shape Tool Demo" 
-                    className="w-full h-32 object-cover rounded-2xl shadow-lg"
+                    fill
+                    className="object-cover rounded-2xl shadow-lg"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-600/20 rounded-2xl"></div>
                   <div className="absolute top-2 right-2 flex space-x-2">

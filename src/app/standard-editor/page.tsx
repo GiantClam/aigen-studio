@@ -1580,6 +1580,33 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
     }
   }
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('selectedTemplate')
+      if (!raw) return
+      const tpl = JSON.parse(raw)
+      if (tpl && typeof tpl.prompt === 'string') {
+        // 打开常驻 AI Assistant 面板，并将提示词填入输入框
+        setIsChatExpanded(true)
+        setInputMessage(tpl.prompt)
+        // 可选：在对话里提示当前模板（不自动发送）
+        setChatMessages(prev => ([
+          ...prev,
+          {
+            id: (Date.now()).toString(),
+            role: 'assistant',
+            content: `🧩 Template selected: ${tpl.name}. You can edit or generate with the prefilled prompt.`,
+            timestamp: new Date().toLocaleTimeString()
+          }
+        ]))
+      }
+    } catch (e) {
+      console.warn('Failed to read selectedTemplate from sessionStorage')
+    } finally {
+      sessionStorage.removeItem('selectedTemplate')
+    }
+  }, [])
+
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       {/* 无限画布 */}

@@ -17,9 +17,8 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('templates')
-      .select('id,name,image_url,prompt,type')
+      .select('id,name,image_url,prompt,type,updated_at')
       .order('updated_at', { ascending: false })
-      .limit(60)
 
     if (error) {
       console.error('Supabase error:', error)

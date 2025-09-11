@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, Star, Clock, Play, Copy, Share2 } from 'lucide-react'
 import { generateSlug } from '@/lib/slug-utils'
+import Image from 'next/image'
 
 interface Template {
   id: string
@@ -132,11 +133,13 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
       >
         <div className="flex">
           {/* 图片 */}
-          <div className="w-48 h-32 flex-shrink-0">
-            <img
+          <div className="w-48 h-32 flex-shrink-0 relative">
+            <Image
               src={template.image_url}
               alt={template.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="192px"
             />
           </div>
           
@@ -233,10 +236,12 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
     >
       {/* 图片 */}
       <div className="relative aspect-square overflow-hidden">
-        <img
+        <Image
           src={template.image_url}
           alt={template.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 768px) 100vw, 50vw"
         />
         
         {/* 悬停覆盖层 */}
