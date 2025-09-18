@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import SessionProviderClient from '@/components/SessionProviderClient'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -8,14 +9,16 @@ const isProd = process.env.NODE_ENV === 'production'
 export const metadata: Metadata = {
   metadataBase: new URL(isProd ? 'https://www.gemini-image-edit.com' : 'http://localhost:3000'),
   title: {
-    default: 'Gemini Image Editor | Image Generation & Editing with gemini-2.5-image-preview (nano-banana)',
-    template: '%s | Gemini Image Editor'
+    default: 'Nano Banana Image Editor | AI Image Generation & Editing',
+    template: '%s | Nano Banana Image Editor'
   },
   description:
-    'Modern AI image editor powered by gemini-2.5-image-preview (nano-banana). Templates for single-image, multi-image and text-to-image with professional tools and SEO-ready UI.',
+    'Nano Banana Image Editor powered by Nano Banana (Gemini 2.5 Flash Image). Create, edit, and refine images with subject consistency, multi-image blending and precise natural‑language edits. Templates for single‑image, multi‑image and text‑to‑image with professional tools and SEO‑ready UI.',
   keywords: [
+    'Nano Banana',
+    'Gemini 2.5 Flash Image',
+    // synonyms kept for SEO but de-emphasized
     'gemini-2.5-image-preview',
-    'nano-banana',
     'Gemini 2.5',
     'AI image generation',
     'AI image editing',
@@ -29,10 +32,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: 'https://www.gemini-image-edit.com/',
-    siteName: 'Gemini Image Editor',
-    title: 'Gemini Image Editor — Image Generation & Editing (gemini-2.5-image-preview, nano-banana)',
+    siteName: 'Nano Banana Image Editor',
+    title: 'Nano Banana Image Editor — AI Image Generation & Editing (Gemini 2.5 Flash Image)',
     description:
-      'Create and edit high‑quality images with gemini-2.5-image-preview (nano-banana). Rich templates and SEO support.',
+      'Create and edit high‑quality images with Nano Banana (Gemini 2.5 Flash Image). Rich templates and SEO support.',
     images: [
       {
         url: '/og-cover.png',
@@ -45,9 +48,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gemini Image Editor',
+    title: 'Nano Banana Image Editor',
     description:
-      'Image generation & editing powered by gemini-2.5-image-preview (nano-banana).',
+      'Image generation & editing powered by Nano Banana (Gemini 2.5 Flash Image).',
     images: ['/og-cover.png']
   },
   icons: {
@@ -63,6 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <SessionProviderClient>
         <div className="min-h-screen flex flex-col">
           <main className="flex-1">{children}</main>
           <footer className="bg-gray-950 text-gray-200">
@@ -101,6 +105,7 @@ export default function RootLayout({
               <div className="mt-10 border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
                 <div>© {new Date().getFullYear()} Gemini Image Editor</div>
                 <div className="mt-3 md:mt-0 space-x-4">
+                  <a className="hover:text-gray-300" href="/">Nano Banana Image Editor</a>
                   <a className="hover:text-gray-300" href="/privacy">Privacy Policy</a>
                   <a className="hover:text-gray-300" href="/terms">Terms of Service</a>
                   <a className="hover:text-gray-300" href="/sitemap.xml">Sitemap</a>
@@ -110,6 +115,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        </SessionProviderClient>
       </body>
     </html>
   )

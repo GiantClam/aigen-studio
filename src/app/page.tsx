@@ -2,10 +2,92 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Sparkles, Wand2, Image as ImageIcon, Zap, Star, ArrowRight, Palette, Type, Brush, Shapes } from 'lucide-react'
 import TemplatesGrid from './templates-grid'
+import Script from 'next/script'
+import HomeAuthMenu from '@/components/HomeAuthMenu'
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Script id="faq-ldjson" type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Nano Banana?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nano Banana (Gemini 2.5 Flash Image) is the image model we use to power AI image generation and editing on this site."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I get started on this website?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Click Get Started to open Standard Editor, sign in with GitHub or Google, then describe what you want to generate or select objects to edit with the AI Assistant."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do I need to sign in to generate or edit images?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Image generation and editing features require sign-in. You can browse templates without signing in."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the Standard Editor?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Standard Editor is a canvas-based editor built with Fabric.js. It supports AI generation, AI editing for selected objects, brush, shapes, text, arrow tools, drag-and-drop images, and exporting selections."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do templates work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Templates provide curated prompts and layouts. Choose a template to prefill the AI Assistant with a starting prompt, then fine-tune or edit results in the editor."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nano Banana excels at character/subject consistency across images, natural multi-image blending, precise local edits via natural language, and stable multi-round refinements. These make it ideal for creators who need coherent visual outcomes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Are there any limitations of Nano Banana?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "While powerful for natural-language editing, very fine-grained pixel-level control and traditional cut/mask tooling may be less comprehensive than pro photo editors. For best results, use iterative, step-by-step prompts."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Any practical tips for better results with Nano Banana?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Use a step-by-step approach: first set background, then lighting, then details. Keep prompts clear and scoped. For consistency, reuse descriptors (subject, style, camera angle) across iterations."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is Nano Banana free to use?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Availability and cost depend on account and region. Free tiers often include limited usage; paid usage is low-cost per image in typical setups."
+              }
+            }
+          ]
+        })}
+      </Script>
       {/* Top Navigation */}
       <header className="bg-white/70 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,8 +97,8 @@ export default function Home() {
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Gemini Image Editor</h1>
-                <p className="text-xs text-gray-500">gemini-2.5-image-preview (nano-banana)</p>
+                <h1 className="text-xl font-bold text-gray-900">Nano Banana Image Editor</h1>
+                <p className="text-xs text-gray-500">Powered by Nano Banana (Gemini 2.5 Flash Image)</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -30,6 +112,7 @@ export default function Home() {
                 <span>Get Started</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
+              <HomeAuthMenu />
             </div>
           </div>
         </div>
@@ -63,14 +146,14 @@ export default function Home() {
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium mb-6 border border-white/30">
               <Star className="w-4 h-4" />
-              <span>Powered by gemini-2.5-image-preview (nano-banana)</span>
+              <span>Nano Banana (Gemini 2.5 Flash Image)</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold text-white tracking-tight">
               Fashionable Image Creation & Editing
               <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Faster · More Accurate · More Flexible</span>
             </h2>
             <p className="mt-6 text-lg md:text-xl text-gray-200 max-w-3xl mx-auto">
-              Inspired by Pixlr&apos;s modern visual design. Showcase differences and advantages with image-text cards. Supports single-image, multi-image, and text-to-image templates.
+              Powered by <a href="#faq" className="underline decoration-white/40 hover:decoration-white">Nano Banana (Gemini 2.5 Flash Image)</a>. Enjoy subject consistency, natural-language local edits, and multi-image blending. Inspired by Pixlr&apos;s modern visual design.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -89,6 +172,8 @@ export default function Home() {
         </div>
       </section>
 
+      
+
       {/* Differentiators & Advantages - Pixlr Style */}
       <section id="features" className="relative py-20 overflow-hidden">
         {/* Background Image with Overlay */}
@@ -104,7 +189,7 @@ export default function Home() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h3 className="text-4xl md:text-5xl font-bold text-white mb-4">Limitless Artistry</h3>
+            <h3 className="text-4xl md:text-5xl font-bold text-white mb-4">Limitless Artistry with Nano Banana</h3>
             <p className="text-xl text-gray-200 max-w-3xl mx-auto">Explore Gemini Image Editor&apos;s AI-powered tools unleashing limitless creative possibilities. Perfect for both beginners and seasoned professionals.</p>
           </div>
 
@@ -121,7 +206,7 @@ export default function Home() {
                     <div className="bg-white/20 rounded-full p-3">
                       <Wand2 className="w-6 h-6" />
                     </div>
-                    <span className="text-lg font-semibold">Test Image Generator</span>
+                    <span className="text-lg font-semibold">Nano Banana Image Generator</span>
                   </div>
                 </div>
               </div>
@@ -482,7 +567,7 @@ export default function Home() {
           <div className="text-center mt-16">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 text-white">
               <h4 className="text-3xl font-bold mb-4">Ready to Create?</h4>
-              <p className="text-xl mb-6 opacity-90">Start your creative journey with our professional-grade tools</p>
+              <p className="text-xl mb-6 opacity-90">Start your creative journey with our professional-grade tools powered by <a href="#faq" className="underline decoration-white/40 hover:decoration-white">Nano Banana Image Editor</a>.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/standard-editor"
@@ -500,6 +585,111 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ for SEO - moved to bottom above footer */}
+      <section id="faq" className="relative py-20 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-purple-900/70 to-slate-900/80"></div>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h3 className="text-4xl md:text-5xl font-bold text-white mb-3">FAQ</h3>
+            <p className="text-gray-200 max-w-2xl mx-auto">Common questions about Nano Banana, how to use the site, and our editor.</p>
+          </div>
+          <div className="mx-auto max-w-3xl space-y-4">
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>What is Nano Banana?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Nano Banana is the image model that powers our AI image generation and editing. It enables faster iteration, high-quality results, and natural-language controlled edits.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>How do I start using the website?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Click <span className="font-semibold">Get Started</span> to open the Standard Editor. Sign in with GitHub or Google. Use the AI Assistant to generate images from text or select objects on the canvas and choose AI Edit.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>Do I need to sign in?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                You must be signed in to generate or edit images. Browsing templates is available without sign-in.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>What can I do in the Standard Editor?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                The editor supports a Fabric.js canvas, AI generation, AI editing of selected objects, brush, shapes, text, arrow tools, drag-and-drop uploads, and exporting selected elements as PNG.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>How do templates help?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Templates provide curated prompts and layouts to accelerate your workflow. Choose one to prefill the AI Assistant and then iterate inside the editor.
+              </div>
+            </details>
+
+            {/* Nano Banana focused entries for SEO weight */}
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Nano Banana excels at <span className="font-semibold">subject consistency</span> across multiple images, <span className="font-semibold">multi-image blending</span> with coherent lighting and texture, and <span className="font-semibold">precise local edits</span> controlled by natural language. It is optimized for stable multi-round refinement.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>Are there any limitations of Nano Banana?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Compared to pro editors, ultra fine-grained pixel tools and manual masking can be less comprehensive. For the best Nano Banana results, iterate step-by-step instead of issuing one very long prompt.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>Any practical tips for better results with Nano Banana?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Try a <span className="font-semibold">three-step flow</span>: set background → adjust lighting → refine details. Keep your subject descriptors consistent across rounds to maintain identity and style.
+              </div>
+            </details>
+
+            <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
+                <span>Is Nano Banana free?</span>
+                <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-3 text-gray-200">
+                Availability and pricing depend on your account and region. Free tiers usually have usage or quality limits; paid usage is typically low-cost per generated image.
+              </div>
+            </details>
           </div>
         </div>
       </section>

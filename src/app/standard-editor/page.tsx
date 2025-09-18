@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage, Path } from 'fabric'
+import { useSession } from 'next-auth/react'
+import LoginDialog from '@/components/LoginDialog'
 import * as fabric from 'fabric'
 import { exportSelectedObjectsSmart, calculateOptimalMultiplier, getPreciseBounds } from '@/utils/fabric-object-export'
 import {
@@ -49,6 +51,9 @@ function createArrowPath(x1: number, y1: number, x2: number, y2: number): string
 }
 
 export default function StandardEditor() {
+  const { status } = useSession()
+  const isAuthed = status === 'authenticated'
+  const [loginOpen, setLoginOpen] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text' | 'arrow'>('select')
@@ -63,6 +68,17 @@ export default function StandardEditor() {
   const [isDrawing, setIsDrawing] = useState(false)
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null)
   const [currentShape, setCurrentShape] = useState<any>(null)
+
+  // AI Edit 快捷按钮状态
+  const [aiEditButton, setAiEditButton] = useState<{
+    visible: boolean
+    x: number
+    y: number
+  }>({
+    visible: false,
+    x: 0,
+    y: 0
+  })
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -352,6 +368,11 @@ export default function StandardEditor() {
       console.error('Canvas not available')
       return
     }
+    // 登录校验
+    if (!isAuthed) {
+      setLoginOpen(true)
+      throw new Error('AUTH_REQUIRED')
+    }
 
     console.log('🤖 Processing AI request:', message)
 
@@ -436,7 +457,7 @@ export default function StandardEditor() {
       console.error('❌ AI request failed:', error)
       throw error
     }
-  }, [canvas])
+  }, [canvas, isAuthed])
 
   // 添加AI生成的图片到画布
   const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
@@ -717,6 +738,60 @@ export default function StandardEditor() {
     console.log('⌨️ Binding keyboard delete events...')
     document.addEventListener('keydown', handleKeyboardDelete)
 
+    // 监听对象选择变化，显示/隐藏 AI Edit 按钮（仅在 Select 工具下）
+    const handleSelectionCreated = () => {
+      // 只有 Select 工具才显示 AI Edit 按钮
+      if (currentTool !== 'select') {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+        return
+      }
+
+      const activeObjects = fabricCanvas.getActiveObjects()
+      if (activeObjects.length > 0) {
+        const bounds = fabricCanvas.getActiveObject()?.getBoundingRect()
+        if (bounds) {
+          setAiEditButton({
+            visible: true,
+            x: bounds.left + bounds.width - 10,
+            y: bounds.top + bounds.height - 10
+          })
+        }
+      } else {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+      }
+    }
+
+    // 监听选择更新事件（同样需要检查工具）
+    const handleSelectionUpdated = () => {
+      // 只有 Select 工具才显示 AI Edit 按钮
+      if (currentTool !== 'select') {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+        return
+      }
+
+      const activeObjects = fabricCanvas.getActiveObjects()
+      if (activeObjects.length > 0) {
+        const bounds = fabricCanvas.getActiveObject()?.getBoundingRect()
+        if (bounds) {
+          setAiEditButton({
+            visible: true,
+            x: bounds.left + bounds.width - 10,
+            y: bounds.top + bounds.height - 10
+          })
+        }
+      } else {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+      }
+    }
+
+    const handleSelectionCleared = () => {
+      setAiEditButton({ visible: false, x: 0, y: 0 })
+    }
+
+    fabricCanvas.on('selection:created', handleSelectionCreated)
+    fabricCanvas.on('selection:updated', handleSelectionUpdated)
+    fabricCanvas.on('selection:cleared', handleSelectionCleared)
+
     // 存储画布实例到全局变量，供键盘事件使用
     ;(window as any).fabricCanvasInstance = fabricCanvas
 
@@ -728,6 +803,9 @@ export default function StandardEditor() {
       window.removeEventListener('resize', handleResize)
       fabricCanvas.upperCanvasEl.removeEventListener('contextmenu', contextMenuHandler)
       document.removeEventListener('keydown', handleKeyboardDelete)
+      fabricCanvas.off('selection:created', handleSelectionCreated)
+      fabricCanvas.off('selection:updated', handleSelectionUpdated)
+      fabricCanvas.off('selection:cleared', handleSelectionCleared)
       // 清除全局画布实例
       ;(window as any).fabricCanvasInstance = null
       fabricCanvas.dispose()
@@ -744,6 +822,9 @@ export default function StandardEditor() {
         canvas.selection = true
         canvas.defaultCursor = 'default'
         canvas.hoverCursor = 'move'
+        // 允许命中检测与对象交互
+        canvas.skipTargetFind = false
+        // 恢复对象可选择（不强制重置每个对象的 selectable，交由 Fabric 默认行为）
         break
 
       case 'move':
@@ -751,6 +832,12 @@ export default function StandardEditor() {
         canvas.selection = false
         canvas.defaultCursor = 'grab'
         canvas.hoverCursor = 'grab'
+        // 禁止对象命中，启用画布平移体验
+        canvas.skipTargetFind = true
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+        // 隐藏 AI Edit 按钮
+        setAiEditButton({ visible: false, x: 0, y: 0 })
         break
 
       case 'draw':
@@ -781,6 +868,12 @@ export default function StandardEditor() {
           brushColor: canvas.freeDrawingBrush.color,
           brushType: canvas.freeDrawingBrush.constructor.name
         })
+        // 禁止对象命中，避免拖动对象
+        canvas.skipTargetFind = true
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+        // 隐藏 AI Edit 按钮
+        setAiEditButton({ visible: false, x: 0, y: 0 })
         break
 
       case 'rectangle':
@@ -790,6 +883,12 @@ export default function StandardEditor() {
         canvas.isDrawingMode = false
         canvas.selection = false
         canvas.defaultCursor = 'crosshair'
+        // 禁止对象命中，避免拖动对象
+        canvas.skipTargetFind = true
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+        // 隐藏 AI Edit 按钮
+        setAiEditButton({ visible: false, x: 0, y: 0 })
         break
     }
   }, [canvas, currentTool])
@@ -901,7 +1000,8 @@ export default function StandardEditor() {
             fill: '#000000'
           })
           canvas.add(shape)
-          canvas.setActiveObject(shape)
+          // 绘制完成后不自动选中对象，避免触发AI Edit按钮
+          // canvas.setActiveObject(shape)
           canvas.renderAll()
           return
         case 'arrow':
@@ -996,7 +1096,8 @@ export default function StandardEditor() {
         })
 
         canvas.add(arrowShape)
-        canvas.setActiveObject(arrowShape)
+        // 绘制完成后不自动选中对象，避免触发AI Edit按钮
+        // canvas.setActiveObject(arrowShape)
 
         // 重置状态
         setIsDrawing(false)
@@ -1011,7 +1112,8 @@ export default function StandardEditor() {
       setStartPoint(null)
 
       currentShape.set({ selectable: true })
-      canvas.setActiveObject(currentShape)
+      // 绘制完成后不自动选中对象，避免触发AI Edit按钮
+      // canvas.setActiveObject(currentShape)
       setCurrentShape(null)
       canvas.renderAll()
     }
@@ -1043,52 +1145,80 @@ export default function StandardEditor() {
   }, [hideContextMenu, hideAiDialog])
 
   // 获取选中对象的图片数据 - 使用 Fabric.js 成熟解决方案
-const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: any } | null> => {
-  if (!canvas) return null
+  const getSelectedObjectsImage = useCallback(async (): Promise<{ imageData: string; bounds: any } | null> => {
+    if (!canvas) return null
 
-  const activeObjects = canvas.getActiveObjects()
-  if (activeObjects.length === 0) return null
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return null
 
-  try {
-    console.log('🎯 === USING FABRIC.JS MATURE SOLUTION ===')
-    console.log('📸 Capturing selected objects...', {
-      count: activeObjects.length,
-      objectTypes: activeObjects.map(obj => obj.type)
-    })
+    try {
+      console.log('🎯 === USING FABRIC.JS MATURE SOLUTION ===')
+      console.log('📸 Capturing selected objects...', {
+        count: activeObjects.length,
+        objectTypes: activeObjects.map(obj => obj.type)
+      })
 
-    // 使用智能导出函数，自动选择最佳方法
-    const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
+      // 使用智能导出函数，自动选择最佳方法
+      const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
 
-    const result = await exportSelectedObjectsSmart(canvas, {
-      format: 'png',
-      quality: 1,
-      multiplier: optimalMultiplier,
-      tightBounds: true,  // 使用紧密边界，无白边
-      padding: 0,         // 无边距
-      backgroundColor: 'transparent'  // 透明背景
-    })
+      const result = await exportSelectedObjectsSmart(canvas, {
+        format: 'png',
+        quality: 1,
+        multiplier: optimalMultiplier,
+        tightBounds: true,  // 使用紧密边界，无白边
+        padding: 0,         // 无边距
+        backgroundColor: 'transparent'  // 透明背景
+      })
 
-    if (!result) {
-      console.error('❌ Failed to export selected objects')
+      if (!result) {
+        console.error('❌ Failed to export selected objects')
+        return null
+      }
+
+      console.log('✅ Fabric.js smart export completed:', {
+        imageSize: result.imageData.length,
+        bounds: result.bounds,
+        multiplier: optimalMultiplier,
+        method: 'fabric_smart_export'
+      })
+
+      return result
+    } catch (error) {
+      console.error('❌ Error generating selected objects image:', error)
       return null
     }
+  }, [canvas])
 
-    console.log('✅ Fabric.js smart export completed:', {
-      imageSize: result.imageData.length,
-      bounds: result.bounds,
-      multiplier: optimalMultiplier,
-      method: 'fabric_smart_export'
-    })
+  // AI Edit 快捷按钮点击处理
+  const handleAiEditClick = useCallback(async () => {
+    if (!isAuthed) {
+      setLoginOpen(true)
+      return
+    }
+    if (!canvas) return
 
-    return result
-  } catch (error) {
-    console.error('❌ Error generating selected objects image:', error)
-    return null
-  }
-}
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return
+
+    try {
+      const selectedData = await getSelectedObjectsImage()
+      if (!selectedData) {
+        throw new Error('Unable to capture selected objects image')
+      }
+
+      // 显示 AI 对话框
+      showAiDialog(aiEditButton.x, aiEditButton.y)
+    } catch (error) {
+      console.error('AI Edit shortcut failed:', error)
+    }
+  }, [canvas, isAuthed, aiEditButton.x, aiEditButton.y, showAiDialog, getSelectedObjectsImage])
 
   // AI聊天功能
   const sendMessage = async () => {
+    if (!isAuthed) {
+      setLoginOpen(true)
+      return
+    }
     if (!inputMessage.trim() || isLoading || !canvas) return
 
     const userMessage: ChatMessage = {
@@ -1654,6 +1784,7 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+      <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
       {/* 无限画布 */}
       <div
         className="absolute inset-0 w-full h-full"
@@ -1667,6 +1798,21 @@ const getSelectedObjectsImage = async (): Promise<{ imageData: string; bounds: a
           className="w-full h-full cursor-crosshair"
           onContextMenu={handleReactContextMenu}
         />
+
+        {/* AI Edit 快捷按钮 */}
+        {aiEditButton.visible && (
+          <button
+            onClick={handleAiEditClick}
+            className="absolute z-30 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg hover:bg-blue-700 transition-colors"
+            style={{
+              left: aiEditButton.x,
+              top: aiEditButton.y,
+              transform: 'translate(-100%, -100%)'
+            }}
+          >
+            AI Edit
+          </button>
+        )}
 
         {/* 拖放提示覆盖层 */}
         {isDragOver && (
