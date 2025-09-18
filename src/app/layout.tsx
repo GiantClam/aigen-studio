@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import SessionProviderClient from '@/components/SessionProviderClient'
+import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -82,7 +83,7 @@ export default function RootLayout({
                 <div>
                   <div className="text-sm font-semibold text-gray-300">Product</div>
                   <ul className="mt-3 space-y-2 text-sm">
-                    <li><a className="hover:text-white" href="/standard-editor">Standard Editor</a></li>
+                    <li><Link className="hover:text-white" href="/standard-editor">Standard Editor</Link></li>
                   </ul>
                 </div>
                 <div>
@@ -105,9 +106,9 @@ export default function RootLayout({
               <div className="mt-10 border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
                 <div>© {new Date().getFullYear()} Gemini Image Editor</div>
                 <div className="mt-3 md:mt-0 space-x-4">
-                  <a className="hover:text-gray-300" href="/">Nano Banana Image Editor</a>
-                  <a className="hover:text-gray-300" href="/privacy">Privacy Policy</a>
-                  <a className="hover:text-gray-300" href="/terms">Terms of Service</a>
+                  <Link className="hover:text-gray-300" href="/">Nano Banana Image Editor</Link>
+                  <Link className="hover:text-gray-300" href="/privacy">Privacy Policy</Link>
+                  <Link className="hover:text-gray-300" href="/terms">Terms of Service</Link>
                   <a className="hover:text-gray-300" href="/sitemap.xml">Sitemap</a>
                   <a className="hover:text-gray-300" href="/robots.txt">Robots</a>
                 </div>
