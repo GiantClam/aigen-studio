@@ -3,12 +3,15 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import SessionProviderClient from '@/components/SessionProviderClient'
 import Link from 'next/link'
+import Image from 'next/image'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
 const isProd = process.env.NODE_ENV === 'production'
+const siteUrl = isProd ? 'https://www.gemini-image-edit.com' : 'http://localhost:3000'
 export const metadata: Metadata = {
-  metadataBase: new URL(isProd ? 'https://www.gemini-image-edit.com' : 'http://localhost:3000'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Nano Banana Image Editor | AI Image Generation & Editing',
     template: '%s | Nano Banana Image Editor'
@@ -27,22 +30,23 @@ export const metadata: Metadata = {
     'multi image generation',
     'single image generation'
   ],
+  themeColor: '#0B1020',
   alternates: {
     canonical: '/'
   },
   openGraph: {
     type: 'website',
-    url: 'https://www.gemini-image-edit.com/',
+    url: siteUrl + '/',
     siteName: 'Nano Banana Image Editor',
     title: 'Nano Banana Image Editor — AI Image Generation & Editing (Gemini 2.5 Flash Image)',
     description:
       'Create and edit high‑quality images with Nano Banana (Gemini 2.5 Flash Image). Rich templates and SEO support.',
     images: [
       {
-        url: '/og-cover.png',
+        url: '/og-cover.svg',
         width: 1200,
         height: 630,
-        alt: 'Gemini Image Editor'
+        alt: 'Nano Banana Image Editor'
       }
     ],
     locale: 'en_US'
@@ -52,10 +56,15 @@ export const metadata: Metadata = {
     title: 'Nano Banana Image Editor',
     description:
       'Image generation & editing powered by Nano Banana (Gemini 2.5 Flash Image).',
-    images: ['/og-cover.png']
+    images: ['/og-cover.svg']
   },
   icons: {
-    icon: '/favicon.ico'
+    icon: ['/logo.svg', '/favicon-32x32.png'],
+    apple: ['/apple-touch-icon.png'],
+    shortcut: ['/logo.svg'],
+    other: [
+      { rel: 'mask-icon', url: '/logo.svg', media: '(prefers-color-scheme: dark)' }
+    ]
   }
 }
 
@@ -67,6 +76,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <Script id="org-ldjson" type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Nano Banana Image Editor',
+            url: siteUrl,
+            logo: siteUrl + '/logo.svg',
+            sameAs: []
+          })}
+        </Script>
         <SessionProviderClient>
         <div className="min-h-screen flex flex-col">
           <main className="flex-1">{children}</main>
@@ -74,10 +93,12 @@ export default function RootLayout({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
-                  <div className="text-lg font-bold">Gemini Image Editor</div>
+                  <div className="flex items-center gap-2 text-lg font-bold">
+                    <Image src="/logo.svg" alt="Nano Banana Image Editor logo" width={20} height={20} />
+                    <span>Nano Banana Image Editor</span>
+                  </div>
                   <p className="mt-3 text-sm text-gray-400">
-                    Powered by <span className="font-medium text-white">gemini-2.5-image-preview</span>
-                    (nano-banana). Stylish, fast and professional image generation & editing.
+                    Powered by Nano Banana (Gemini 2.5 Flash Image). Stylish, fast and professional image generation & editing.
                   </p>
                 </div>
                 <div>
@@ -104,7 +125,7 @@ export default function RootLayout({
                 </div>
               </div>
               <div className="mt-10 border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
-                <div>© {new Date().getFullYear()} Gemini Image Editor</div>
+                <div>© {new Date().getFullYear()} Nano Banana Image Editor</div>
                 <div className="mt-3 md:mt-0 space-x-4">
                   <Link className="hover:text-gray-300" href="/">Nano Banana Image Editor</Link>
                   <Link className="hover:text-gray-300" href="/privacy">Privacy Policy</Link>

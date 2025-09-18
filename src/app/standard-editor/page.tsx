@@ -1206,12 +1206,31 @@ export default function StandardEditor() {
         throw new Error('Unable to capture selected objects image')
       }
 
-      // 显示 AI 对话框
-      showAiDialog(aiEditButton.x, aiEditButton.y)
+      // 计算对话框在视口中的位置（将画布坐标转换为客户端坐标）
+      const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+      const rect = canvasRef.current?.getBoundingClientRect()
+      const scaleX = vpt[0]
+      const scaleY = vpt[3]
+      const translateX = vpt[4]
+      const translateY = vpt[5]
+
+      const bx = selectedData.bounds.left + selectedData.bounds.width // 右下角 x（画布坐标）
+      const by = selectedData.bounds.top + selectedData.bounds.height // 右下角 y（画布坐标）
+
+      // 转换为画布视口坐标（像素）
+      const viewportX = bx * scaleX + translateX
+      const viewportY = by * scaleY + translateY
+
+      // 加上 canvas DOM 在页面中的偏移，得到最终客户端坐标
+      const clientX = (rect?.left || 0) + viewportX
+      const clientY = (rect?.top || 0) + viewportY
+
+      // 显示 AI 对话框（使用客户端坐标）
+      showAiDialog(clientX, clientY)
     } catch (error) {
       console.error('AI Edit shortcut failed:', error)
     }
-  }, [canvas, isAuthed, aiEditButton.x, aiEditButton.y, showAiDialog, getSelectedObjectsImage])
+  }, [canvas, isAuthed, showAiDialog, getSelectedObjectsImage])
 
   // AI聊天功能
   const sendMessage = async () => {

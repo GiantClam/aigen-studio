@@ -93,9 +93,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
+              <Image
+                src="/logo.svg"
+                alt="Nano Banana Image Editor logo"
+                width={40}
+                height={40}
+                priority
+                className="rounded-xl shadow-lg"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Nano Banana Image Editor</h1>
                 <p className="text-xs text-gray-500">Powered by Nano Banana (Gemini 2.5 Flash Image)</p>
