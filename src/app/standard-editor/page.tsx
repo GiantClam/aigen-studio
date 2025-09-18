@@ -1821,7 +1821,9 @@ export default function StandardEditor() {
         {/* AI Edit 快捷按钮 */}
         {aiEditButton.visible && (
           <button
-            onClick={handleAiEditClick}
+            onMouseDown={(e) => { e.stopPropagation() }}
+            onClick={(e) => { e.stopPropagation(); handleAiEditClick() }}
+            data-ai-dialog
             className="absolute z-30 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg hover:bg-blue-700 transition-colors"
             style={{
               left: aiEditButton.x,
