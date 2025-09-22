@@ -1780,7 +1780,7 @@ export function generateImageEditorPage(): string {
                         this.canvas.selection = false;
                         this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
                         this.canvas.freeDrawingBrush.width = 5;
-                        this.canvas.freeDrawingBrush.color = '#000000';
+                        this.canvas.freeDrawingBrush.color = '#16a34a';
                         console.log('Brush tool activated - drawing mode');
                         break;
                     case 'eraser':
@@ -2655,7 +2655,7 @@ export function generateImageEditorPage(): string {
                     case 'brush':
                         this.editingCanvas.isDrawingMode = true;
                         this.editingCanvas.freeDrawingBrush.width = 5;
-                        this.editingCanvas.freeDrawingBrush.color = '#ff0000';
+                        this.editingCanvas.freeDrawingBrush.color = '#16a34a';
                         break;
                     case 'eraser':
                         this.editingCanvas.isDrawingMode = true;

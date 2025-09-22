@@ -63,6 +63,8 @@ export default function StandardEditor() {
   const [loginOpen, setLoginOpen] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [canvas, setCanvas] = useState<Canvas | null>(null)
+  // 初始化保护与调试日志
+  const canvasInitRef = useRef(false)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text' | 'arrow'>('select')
 
   // Floating window states
@@ -140,6 +142,12 @@ export default function StandardEditor() {
 
   // 首次访问检测和引导逻辑
   useEffect(() => {
+    if (canvasInitRef.current) {
+      console.warn('🟡 Canvas initialization attempted again - ignored')
+      return
+    }
+    canvasInitRef.current = true
+    console.log('🟢 Running canvas initialization (once)')
     if (isFirstVisit) {
       markEditorVisited()
       setShowEmptyState(true)
@@ -871,6 +879,13 @@ export default function StandardEditor() {
 
     fabricCanvas.on('mouse:down', (opt) => {
       const evt = opt.e as MouseEvent
+      console.log('🖱️ mouse:down event', {
+        tool: currentTool,
+        altKey: evt.altKey,
+        isDrawingMode: fabricCanvas.isDrawingMode,
+        selection: fabricCanvas.selection,
+        skipTargetFind: fabricCanvas.skipTargetFind
+      })
       if (evt.altKey === true || currentTool === 'move') {
         isDragging = true
         fabricCanvas.selection = false
@@ -969,9 +984,9 @@ export default function StandardEditor() {
         console.log('🖌️ Created new PencilBrush')
       }
 
-      // 设置画笔属性
+      // 设置画笔属性（默认绿色）
       fabricCanvas.freeDrawingBrush.width = 5
-      fabricCanvas.freeDrawingBrush.color = '#000000'
+      fabricCanvas.freeDrawingBrush.color = '#16a34a'
 
       console.log('✅ Free drawing brush initialized successfully:', {
         width: fabricCanvas.freeDrawingBrush.width,
@@ -1074,8 +1089,12 @@ export default function StandardEditor() {
       case 'select':
         canvas.isDrawingMode = false
         canvas.selection = true
+        canvas.selectionFullyContained = false
         canvas.defaultCursor = 'default'
         canvas.hoverCursor = 'move'
+        // 放宽命中条件，优先使用包围盒命中，便于选中细线段
+        canvas.perPixelTargetFind = false
+        canvas.targetFindTolerance = 12
         // 允许命中检测与对象交互
         canvas.skipTargetFind = false
         // 恢复对象可选择（不强制重置每个对象的 selectable，交由 Fabric 默认行为）
@@ -1112,9 +1131,9 @@ export default function StandardEditor() {
           }
         }
 
-        // 配置画笔属性
+        // 配置画笔属性（改为绿色）
         canvas.freeDrawingBrush.width = 5
-        canvas.freeDrawingBrush.color = '#000000'
+        canvas.freeDrawingBrush.color = '#16a34a'
 
         console.log('✅ Brush drawing mode enabled:', {
           isDrawingMode: canvas.isDrawingMode,
@@ -1178,7 +1197,7 @@ export default function StandardEditor() {
         break
 
       case 'text':
-        obj = new IText('Enter text', {
+        obj = new IText('请输入文字', {
           left: pointer.x,
           top: pointer.y,
           fontSize: 20,
@@ -1204,6 +1223,11 @@ export default function StandardEditor() {
     if (obj) {
       canvas.add(obj)
       canvas.setActiveObject(obj)
+      // 文字创建后自动进入编辑
+      if (obj instanceof IText) {
+        (obj as IText).enterEditing()
+        ;(obj as IText).selectAll()
+      }
       canvas.renderAll()
     }
   }, [canvas, currentTool])
@@ -1246,29 +1270,31 @@ export default function StandardEditor() {
           })
           break
         case 'text':
-          // 文本工具保持点击创建
-          shape = new IText('Enter text', {
+          // 文本工具保持点击创建（直接进入编辑）
+          shape = new IText('请输入文字', {
             left: pointer.x,
             top: pointer.y,
             fontSize: 20,
             fill: '#000000'
           })
           canvas.add(shape)
-          // 绘制完成后不自动选中对象，避免触发AI Edit按钮
-          // canvas.setActiveObject(shape)
+          canvas.setActiveObject(shape)
+          ;(shape as IText).enterEditing()
+          ;(shape as IText).selectAll()
           canvas.renderAll()
           return
         case 'arrow':
-          // 箭头拖拽绘制 - 创建初始线条（从起点到起点，长度为0）
-          console.log('🏹 Starting arrow drag from', pointer)
-          shape = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+          // 单对象箭头：使用 Path 表示，后续添加端点控制
+          shape = new fabric.Path('', {
             stroke: '#ef4444',
+            fill: 'transparent',
             strokeWidth: 3,
             selectable: false,
             evented: false,
-            originX: 'left',
-            originY: 'top'
+            objectCaching: false
           })
+          ;(shape as any).arrow = { x1: pointer.x, y1: pointer.y, x2: pointer.x, y2: pointer.y }
+          ;(shape as fabric.Path).set({ path: [ ['M', pointer.x, pointer.y], ['L', pointer.x, pointer.y] ] as any })
           break
       }
 
@@ -1310,15 +1336,14 @@ export default function StandardEditor() {
           })
           break
         case 'arrow':
-          // 更新箭头线条的终点
-          const line = currentShape as fabric.Line
-          console.log('🏹 Updating arrow to', pointer)
-          line.set({
-            x2: pointer.x,
-            y2: pointer.y
-          })
-          // 重新计算线条的位置和尺寸
-          line.setCoords()
+          // 更新单对象箭头的 path
+          const a = (currentShape as any).arrow
+          a.x2 = pointer.x
+          a.y2 = pointer.y
+          ;(currentShape as fabric.Path).set({ path: [
+            ['M', a.x1, a.y1], ['L', a.x2, a.y2]
+          ] as any })
+          ;(currentShape as fabric.Path).setCoords()
           break
       }
 
@@ -1328,36 +1353,112 @@ export default function StandardEditor() {
     const handleMouseUp = () => {
       if (!isDrawing || !currentShape) return
 
-      // 箭头特殊处理：替换线条为完整的箭头路径
+      // 箭头特殊处理：替换为单对象 Path，并添加端点控制
       if (currentTool === 'arrow' && startPoint) {
-        const line = currentShape as fabric.Line
-        const endX = line.x2 || startPoint.x
-        const endY = line.y2 || startPoint.y
-
-        console.log('🏹 Creating arrow from', startPoint, 'to', { x: endX, y: endY })
-
-        // 移除临时线条
-        canvas.remove(currentShape)
-
-        // 创建完整的箭头路径
-        const arrowPath = createArrowPath(startPoint.x, startPoint.y, endX, endY)
-        const arrowShape = new fabric.Path(arrowPath, {
-          fill: 'transparent',
-          stroke: '#ef4444',
-          strokeWidth: 3,
+        const a = (currentShape as any).arrow
+        const arrowPathObj = currentShape as fabric.Path
+        arrowPathObj.set({
           selectable: true,
-          evented: true
+          evented: true,
+          hasControls: true,
+          hasBorders: true,
+          perPixelTargetFind: false,
+          strokeUniform: true,
+          hoverCursor: 'move',
+          strokeLineCap: 'round',
+          strokeLineJoin: 'round',
+          padding: 10,
+          // 整体拖动，禁用缩放/旋转
+          lockScalingX: true,
+          lockScalingY: true,
+          lockRotation: true,
+          hasRotatingPoint: false
+        })
+        ;(arrowPathObj as any).targetFindTolerance = 10
+        ;(arrowPathObj as any).hitStrokeWidth = 20
+
+        // 归一化为对象局部坐标，修正命中区域与可选中性
+        const minX = Math.min(a.x1, a.x2)
+        const minY = Math.min(a.y1, a.y2)
+        const local = {
+          x1: a.x1 - minX,
+          y1: a.y1 - minY,
+          x2: a.x2 - minX,
+          y2: a.y2 - minY
+        }
+        const ang0 = Math.atan2(local.y2 - local.y1, local.x2 - local.x1)
+        const head0 = 14
+        const hx10 = local.x2 - head0 * Math.cos(ang0 - Math.PI/6)
+        const hy10 = local.y2 - head0 * Math.sin(ang0 - Math.PI/6)
+        const hx20 = local.x2 - head0 * Math.cos(ang0 + Math.PI/6)
+        const hy20 = local.y2 - head0 * Math.sin(ang0 + Math.PI/6)
+        ;(arrowPathObj as any).arrow = local
+        arrowPathObj.set({
+          left: minX,
+          top: minY,
+          objectCaching: false,
+          path: [
+            ['M', local.x1, local.y1], ['L', local.x2, local.y2],
+            ['M', local.x2, local.y2], ['L', hx10, hy10],
+            ['M', local.x2, local.y2], ['L', hx20, hy20]
+          ] as any
         })
 
-        canvas.add(arrowShape)
-        // 绘制完成后不自动选中对象，避免触发AI Edit按钮
-        // canvas.setActiveObject(arrowShape)
+        const positionHandlerFactory = (keyX: 'x1'|'x2', keyY: 'y1'|'y2') => () => {
+          const arr = (arrowPathObj as any).arrow
+          const sp = fabric.util.transformPoint(new fabric.Point(arr[keyX], arr[keyY]), arrowPathObj.calcTransformMatrix())
+          return sp
+        }
+        const actionHandlerFactory = (keyX: 'x1'|'x2', keyY: 'y1'|'y2') => (_evt: any, _transform: any, x: number, y: number) => {
+          // 局部坐标更新
+          const local = fabric.util.transformPoint(new fabric.Point(x, y), fabric.util.invertTransform(arrowPathObj.calcTransformMatrix()))
+          let { x1, y1, x2, y2 } = (arrowPathObj as any).arrow
+          if (keyX === 'x1') x1 = local.x; if (keyY === 'y1') y1 = local.y
+          if (keyX === 'x2') x2 = local.x; if (keyY === 'y2') y2 = local.y
 
-        // 重置状态
+          // 若出现负坐标，重新归一化局部坐标，并调整对象 left/top
+          const minX = Math.min(x1, x2)
+          const minY = Math.min(y1, y2)
+          const norm = { x1: x1 - minX, y1: y1 - minY, x2: x2 - minX, y2: y2 - minY }
+          ;(arrowPathObj as any).arrow = norm
+          arrowPathObj.set({ left: (arrowPathObj.left || 0) + minX, top: (arrowPathObj.top || 0) + minY })
+
+          // 重建 path
+          const ang = Math.atan2(norm.y2 - norm.y1, norm.x2 - norm.x1)
+          const head = 14
+          const hx1 = norm.x2 - head * Math.cos(ang - Math.PI/6)
+          const hy1 = norm.y2 - head * Math.sin(ang - Math.PI/6)
+          const hx2 = norm.x2 - head * Math.cos(ang + Math.PI/6)
+          const hy2 = norm.y2 - head * Math.sin(ang + Math.PI/6)
+          arrowPathObj.set({ path: [
+            ['M', norm.x1, norm.y1], ['L', norm.x2, norm.y2],
+            ['M', norm.x2, norm.y2], ['L', hx1, hy1],
+            ['M', norm.x2, norm.y2], ['L', hx2, hy2]
+          ] as any })
+
+          arrowPathObj.setCoords()
+          arrowPathObj.canvas?.requestRenderAll();
+          return true
+        }
+
+        const p1 = new fabric.Control({
+          positionHandler: positionHandlerFactory('x1','y1'),
+          actionHandler: actionHandlerFactory('x1','y1'),
+          cursorStyle: 'nwse-resize'
+        })
+        const p2 = new fabric.Control({
+          positionHandler: positionHandlerFactory('x2','y2'),
+          actionHandler: actionHandlerFactory('x2','y2'),
+          cursorStyle: 'nwse-resize'
+        })
+        // 恢复端点控制点；Fabric 仅在对象激活时显示控件，线身仍可整体拖动
+        ;(arrowPathObj as any).controls = { ...fabric.Object.prototype.controls, p1, p2 }
+        arrowPathObj.setCoords()
+
         setIsDrawing(false)
         setStartPoint(null)
         setCurrentShape(null)
-        canvas.renderAll()
+        canvas.requestRenderAll()
         return
       }
 
@@ -1366,8 +1467,9 @@ export default function StandardEditor() {
       setStartPoint(null)
 
       currentShape.set({ selectable: true })
-      // 绘制完成后不自动选中对象，避免触发AI Edit按钮
-      // canvas.setActiveObject(currentShape)
+      currentShape.setCoords()
+      // 为避免初次点击选不中，完成后主动设为活动对象一次
+      canvas.setActiveObject(currentShape)
       setCurrentShape(null)
       canvas.renderAll()
     }
@@ -1382,6 +1484,51 @@ export default function StandardEditor() {
       canvas.off('mouse:up', handleMouseUp)
     }
   }, [canvas, currentTool, isDrawing, startPoint, currentShape])
+
+  // 选择模式下：为 Path 箭头增加兜底命中（线段距离判定）
+  useEffect(() => {
+    if (!canvas) return
+    if (currentTool !== 'select') return
+
+    const distPointToSeg = (px: number, py: number, x1: number, y1: number, x2: number, y2: number) => {
+      const vx = x2 - x1, vy = y2 - y1
+      const wx = px - x1, wy = py - y1
+      const c1 = vx * wx + vy * wy
+      if (c1 <= 0) return Math.hypot(px - x1, py - y1)
+      const c2 = vx * vx + vy * vy
+      if (c2 <= c1) return Math.hypot(px - x2, py - y2)
+      const b = c1 / c2
+      const bx = x1 + b * vx, by = y1 + b * vy
+      return Math.hypot(px - bx, py - by)
+    }
+
+    const handleSelectMouseDown = (e: any) => {
+      if (e.target) return // Fabric 已命中对象
+      const pointer = canvas.getPointer(e.e)
+      const tolerance = 12
+        const objects = canvas.getObjects()
+      for (let i = objects.length - 1; i >= 0; i--) {
+        const obj: any = objects[i]
+        if (!(obj instanceof fabric.Path)) continue
+        if (!(obj as any).arrow) continue
+        // 计算主线段世界坐标（箭头局部 + 对象 left/top）
+        const arr = (obj as any).arrow
+        const x1 = (obj.left || 0) + arr.x1
+        const y1 = (obj.top || 0) + arr.y1
+        const x2 = (obj.left || 0) + arr.x2
+        const y2 = (obj.top || 0) + arr.y2
+        const d = distPointToSeg(pointer.x, pointer.y, x1, y1, x2, y2)
+        if (d <= tolerance) {
+          canvas.setActiveObject(obj)
+          canvas.requestRenderAll()
+          break
+        }
+      }
+    }
+
+    canvas.on('mouse:down', handleSelectMouseDown)
+    return () => { canvas.off('mouse:down', handleSelectMouseDown) }
+  }, [canvas, currentTool])
 
   // 全局点击事件处理
   useEffect(() => {
