@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 通过 email 获取用户信息
-    const user = await AuthService.getUserByEmail(session.user.email)
+    const user = await AuthService.ensureUserByEmail(session.user.email, session.user.name || undefined)
     if (!user) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }

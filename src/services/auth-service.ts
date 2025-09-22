@@ -75,6 +75,32 @@ export class AuthService {
   }
 
   /**
+   * 若用户不存在则按邮箱创建，默认角色为 user
+   */
+  static async ensureUserByEmail(email: string, name?: string): Promise<User | null> {
+    try {
+      const existing = await this.getUserByEmail(email)
+      if (existing) return existing
+
+      const { data, error } = await supabase
+        .from('users')
+        .insert({ email, name: name || null, role: 'user' })
+        .select('*')
+        .single()
+
+      if (error) {
+        console.error('按邮箱创建用户失败:', error)
+        return null
+      }
+
+      return data as unknown as User
+    } catch (error) {
+      console.error('按邮箱创建用户异常:', error)
+      return null
+    }
+  }
+
+  /**
    * 检查用户是否为管理员
    */
   static async isAdmin(identifier: string): Promise<boolean> {

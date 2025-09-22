@@ -403,14 +403,9 @@ export class PointsService {
         }
       }
 
-      // 获取注册积分规则
+      // 获取注册积分规则，若不存在或未启用，则使用默认 100 分
       const rule = await this.getPointRule('registration')
-      if (!rule || !rule.is_active) {
-        return {
-          success: false,
-          message: '注册积分规则未启用'
-        }
-      }
+      const pointsValue = rule && rule.is_active ? rule.points_value : 100
 
       // 创建用户积分记录
       const { error: pointsError } = await supabase
@@ -418,8 +413,8 @@ export class PointsService {
         .insert({
           id: `${userId}_points`,
           user_id: userId,
-          current_points: rule.points_value,
-          total_earned: rule.points_value,
+          current_points: pointsValue,
+          total_earned: pointsValue,
           total_spent: 0
         })
 
@@ -438,7 +433,7 @@ export class PointsService {
         .insert({
           id: transactionId,
           user_id: userId,
-          points: rule.points_value,
+          points: pointsValue,
           transaction_type: 'earn',
           source: 'registration',
           description: '新用户注册赠送积分'
@@ -454,7 +449,7 @@ export class PointsService {
 
       return {
         success: true,
-        message: `新用户注册成功，获得 ${rule.points_value} 积分`
+        message: `新用户注册成功，获得 ${pointsValue} 积分`
       }
     } catch (error) {
       console.error('初始化用户积分异常:', error)
