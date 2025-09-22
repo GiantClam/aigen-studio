@@ -1064,7 +1064,7 @@ export default function StandardEditor() {
       ;(window as any).fabricCanvasInstance = null
       fabricCanvas.dispose()
     }
-  }, [canvas, currentTool, handleKeyboardDelete]) // 只在组件挂载时初始化画布
+  }, []) // 只在组件挂载时初始化画布
 
   // 工具切换 - 使用Fabric.js标准方式
   useEffect(() => {

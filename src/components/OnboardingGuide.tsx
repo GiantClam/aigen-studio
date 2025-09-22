@@ -13,15 +13,15 @@ export default function OnboardingGuide({ isVisible, onComplete, onSkip }: Onboa
   // 不拦截鼠标事件，允许点击透传到编辑器；同时监听全局点击以关闭蒙层
   useEffect(() => {
     if (!isVisible) return
-    const onAnyClick = () => onComplete()
+    const onPointerUp = () => onComplete()
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onComplete()
     }
-    document.addEventListener('click', onAnyClick, { once: true })
+    window.addEventListener('pointerup', onPointerUp, { once: true })
     window.addEventListener('keydown', onKeyDown)
     const timer = window.setTimeout(onComplete, 5000)
     return () => {
-      document.removeEventListener('click', onAnyClick)
+      window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('keydown', onKeyDown)
       window.clearTimeout(timer)
     }
