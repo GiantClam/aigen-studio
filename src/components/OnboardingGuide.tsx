@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+
 interface OnboardingGuideProps {
   isVisible: boolean
   onComplete: () => void
@@ -8,39 +10,28 @@ interface OnboardingGuideProps {
 
 // 仅提供蒙层，不修改编辑器 DOM；点击任意位置关闭
 export default function OnboardingGuide({ isVisible, onComplete, onSkip }: OnboardingGuideProps) {
-  if (!isVisible) return null
-
-  const handleClick = () => {
-    onComplete()
-  }
-
-  // ESC 键关闭 + 定时自动隐藏（5 秒）
-  // 为保证纯叠加不干扰编辑器，不做任何 DOM 改动，仅监听全局事件
-  // 组件销毁时自动清理
-  // 注意：若不需要自动隐藏，可改为更长时间或去掉计时器
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const React = require('react') as typeof import('react')
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  React.useEffect(() => {
+  // 不拦截鼠标事件，允许点击透传到编辑器；同时监听全局点击以关闭蒙层
+  useEffect(() => {
+    if (!isVisible) return
+    const onAnyClick = () => onComplete()
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onComplete()
-      }
+      if (e.key === 'Escape') onComplete()
     }
+    document.addEventListener('click', onAnyClick, { once: true })
     window.addEventListener('keydown', onKeyDown)
-    const timer = window.setTimeout(() => {
-      onComplete()
-    }, 5000)
+    const timer = window.setTimeout(onComplete, 5000)
     return () => {
+      document.removeEventListener('click', onAnyClick)
       window.removeEventListener('keydown', onKeyDown)
       window.clearTimeout(timer)
     }
-  }, [onComplete])
+  }, [isVisible, onComplete])
+
+  if (!isVisible) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 cursor-pointer"
-      onClick={handleClick}
+      className="fixed inset-0 z-50 bg-black/50 pointer-events-none select-none"
       aria-label="onboarding-overlay"
       role="presentation"
     />
