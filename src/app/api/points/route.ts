@@ -21,10 +21,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    const userPoints = await PointsService.getUserPoints(user.id)
-    
+    let userPoints = await PointsService.getUserPoints(user.id)
+
+    // 若无积分记录，自动初始化（注册赠送）
     if (!userPoints) {
-      return NextResponse.json({ error: '用户积分信息不存在' }, { status: 404 })
+      await PointsService.initializeUserPoints(user.id)
+      userPoints = await PointsService.getUserPoints(user.id)
     }
 
     return NextResponse.json({
