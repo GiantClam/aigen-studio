@@ -140,9 +140,44 @@ npm run deploy
    - `GOOGLE_SERVICE_ACCOUNT_KEY`
    - `JWT_SECRET`
 
+### 环境变量总表（生产必看）
+
+必填：
+
+- `NEXT_PUBLIC_SUPABASE_URL`（Supabase 项目 URL）
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`（Supabase 匿名公钥）
+- `SUPABASE_SERVICE_ROLE_KEY`（Supabase Service Role 密钥，仅服务端）
+- `NEXTAUTH_SECRET`（next-auth 会话密钥）
+- `JWT_SECRET`（后端签名密钥）
+- `GOOGLE_CLOUD_PROJECT`（GCP 项目 ID）
+- `GOOGLE_CLOUD_LOCATION`（如 `us-central1` 或 `global`）
+- `GOOGLE_SERVICE_ACCOUNT_KEY`（服务账号 JSON 字符串，推荐）
+
+可选：
+
+- `GITHUB_ID`、`GITHUB_SECRET`（GitHub 登录）
+- `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`（Google 登录）
+- `REPLICATE_API_TOKEN`（如启用 Replicate）
+- `HTTP_PROXY`、`HTTPS_PROXY`、`NO_PROXY`（如需代理）
+
 ### 可选服务
 
 - **Replicate API**: 用于额外的图像生成功能（可选）
+
+## 🧱 权限与积分（摘要）
+
+- 角色字段：`users.role`（`admin` | `user`），新用户默认为 `user`
+- 管理页访问：仅 `admin` 可访问 `/admin/*`
+- 积分规则：
+  - 新注册赠送 100 分
+  - 每日首次登录 +10 分
+  - 每次 AI 生图 -5 分（临时定价）
+
+## 📦 模板上传（摘要）
+
+- 支持模板的名称、提示词、封面图、类型
+- 提供管理页面与上传端点 `/api/templates/upload`
+- 存储走 Supabase（无 Cloudflare R2 依赖）
 
 ## 📚 API 文档
 
@@ -172,6 +207,22 @@ AI 图像编辑和增强
   }
 }
 ```
+
+## 🚑 常见错误与解决
+
+- 413 Payload Too Large：
+  - 前端：导出 JPEG、降低质量、限制倍率、启用智能压缩
+  - 后端：限制并校验请求体大小，超限返回 413
+  - 提供直传/流式上传端点，避免 Base64 过大
+
+- 环境变量缺失：
+  - 严格模式会直接报错，请按“环境变量总表”补齐
+
+## 🚀 部署到 Vercel（快速）
+
+1. 连接 GitHub 仓库并导入 Vercel
+2. 在 Project → Settings → Environment Variables 配置“环境变量总表”中的必填项
+3. 点击 Deploy，或在本地 `vercel`/`npm run deploy`
 
 ### 图像分析 API
 

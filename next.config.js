@@ -3,6 +3,9 @@ const nextConfig = {
   // 启用严格模式
   reactStrictMode: true,
 
+  // 注意：Next.js 15 不再支持 api 配置
+  // 请求体大小限制现在通过 Vercel 配置或中间件处理
+
   // 优化webpack配置
   webpack: (config, { dev, isServer }) => {
     // 处理Fabric.js的特殊需求

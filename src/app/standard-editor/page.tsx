@@ -6,6 +6,13 @@ import { useSession } from 'next-auth/react'
 import LoginDialog from '@/components/LoginDialog'
 import * as fabric from 'fabric'
 import { exportSelectedObjectsSmart, calculateOptimalMultiplier, getPreciseBounds } from '@/utils/fabric-object-export'
+import { smartCompressImage, getBase64SizeMB } from '@/utils/image-compression'
+import { usePoints, usePointsCheck } from '@/hooks/usePoints'
+import PointsDisplay from '@/components/PointsDisplay'
+import OnboardingGuide from '@/components/OnboardingGuide'
+import EmptyState from '@/components/EmptyState'
+import TemplateSelector from '@/components/TemplateSelector'
+import { useFirstVisit } from '@/hooks/useFirstVisit'
 import {
   MousePointer2,
   Square,
@@ -69,6 +76,16 @@ export default function StandardEditor() {
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null)
   const [currentShape, setCurrentShape] = useState<any>(null)
 
+  // 积分系统
+  const { deductPoints, loading: pointsLoading, error: pointsError } = usePoints()
+  const { points, checkPoints, hasEnoughPoints } = usePointsCheck()
+
+  // 首次访问和引导系统
+  const { isFirstVisit, hasSeenOnboarding, markEditorVisited, markOnboardingSeen, shouldShowOnboarding } = useFirstVisit()
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showEmptyState, setShowEmptyState] = useState(false)
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+
   // AI Edit 快捷按钮状态
   const [aiEditButton, setAiEditButton] = useState<{
     visible: boolean
@@ -120,6 +137,49 @@ export default function StandardEditor() {
       }
     }
   }
+
+  // 首次访问检测和引导逻辑
+  useEffect(() => {
+    if (isFirstVisit) {
+      markEditorVisited()
+      setShowEmptyState(true)
+    }
+  }, [isFirstVisit, markEditorVisited])
+
+  // 检查是否应该显示引导
+  useEffect(() => {
+    if (shouldShowOnboarding()) {
+      setShowOnboarding(true)
+    }
+  }, [shouldShowOnboarding])
+
+  // 检查画布是否为空
+  const checkCanvasEmpty = useCallback(() => {
+    if (!canvas) return true
+    const objects = canvas.getObjects()
+    return objects.length === 0
+  }, [canvas])
+
+  // 监听画布变化，更新空状态显示
+  useEffect(() => {
+    if (!canvas) return
+
+    const updateEmptyState = () => {
+      const isEmpty = checkCanvasEmpty()
+      setShowEmptyState(isEmpty && isFirstVisit)
+    }
+
+    // 监听画布对象变化
+    canvas.on('object:added', updateEmptyState)
+    canvas.on('object:removed', updateEmptyState)
+    canvas.on('object:modified', updateEmptyState)
+
+    return () => {
+      canvas.off('object:added', updateEmptyState)
+      canvas.off('object:removed', updateEmptyState)
+      canvas.off('object:modified', updateEmptyState)
+    }
+  }, [canvas, checkCanvasEmpty, isFirstVisit])
 
   // 拖放处理函数
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -183,28 +243,88 @@ export default function StandardEditor() {
     }
   }, [])
 
-  // 处理文件输入上传 - 基于 Fabric.js 社区最佳实践
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) {
-      console.warn('⚠️ No files selected')
+  // 带位置参数的图片上传 - 基于 Fabric.js 社区最佳实践
+  const handleImageUploadWithPosition = useCallback((file: File, position: { x: number, y: number }) => {
+    // 通过全局变量获取当前画布实例，避免闭包问题
+    const currentCanvas = canvasRef.current ?
+      (window as any).fabricCanvasInstance || canvas : null
+
+    if (!currentCanvas) {
+      console.error('❌ Canvas not available for image upload')
       return
     }
 
-    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
-    console.log('📁 Files selected:', files.length, 'Images:', imageFiles.length)
+    console.log('📸 Starting positioned image upload:', file.name, 'at position:', position)
 
-    if (imageFiles.length === 0) {
-      console.warn('⚠️ No image files found in selection')
-      return
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const imgUrl = e.target?.result as string
+        if (!imgUrl) {
+          console.error('❌ Failed to read image file')
+          return
+        }
+
+        console.log('📸 Creating Fabric image from URL...')
+        const img = await FabricImage.fromURL(imgUrl, {
+          crossOrigin: 'anonymous'
+        })
+
+        // 保存原始尺寸信息用于后续高清导出
+        const originalWidth = img.width || 0
+        const originalHeight = img.height || 0
+
+        console.log('📸 Uploaded image info:', {
+          original: { width: originalWidth, height: originalHeight },
+          file: { name: file.name, size: file.size },
+          position: position
+        })
+
+        // 智能缩放：保持宽高比，适应多图布局
+        const maxDisplayWidth = 250 // 多图模式下使用较小的尺寸
+        const maxDisplayHeight = 250
+
+        if (originalWidth > 0 && originalHeight > 0) {
+          const scale = Math.min(
+            maxDisplayWidth / originalWidth,
+            maxDisplayHeight / originalHeight,
+            1 // 不放大，只缩小
+          )
+          img.scale(scale)
+
+          console.log('📸 Image scaled for multi-upload:', {
+            scale: scale,
+            display: {
+              width: originalWidth * scale,
+              height: originalHeight * scale
+            }
+          })
+        }
+
+        // 设置图像位置到指定坐标
+        img.set({
+          left: position.x,
+          top: position.y,
+          selectable: true,
+          evented: true
+        })
+
+        console.log('📸 Adding positioned image to canvas...')
+        currentCanvas.add(img)
+        currentCanvas.renderAll()
+
+        console.log('✅ Positioned image upload completed successfully')
+      } catch (error) {
+        console.error('❌ Failed to upload positioned image:', error)
+      }
     }
 
-    // 处理多个图片文件
-    handleMultipleImageUpload(imageFiles)
+    reader.onerror = () => {
+      console.error('❌ Failed to read file')
+    }
 
-    // 清空文件输入，允许重复选择相同文件
-    e.target.value = ''
-  }, [])
+    reader.readAsDataURL(file)
+  }, [canvas])
 
   // 多图片上传处理 - 基于 Fabric.js 社区最佳实践
   const handleMultipleImageUpload = useCallback((files: File[]) => {
@@ -232,7 +352,30 @@ export default function StandardEditor() {
         y: START_Y + offsetY
       })
     })
-  }, [])
+  }, [handleImageUploadWithPosition])
+
+  // 处理文件输入上传 - 基于 Fabric.js 社区最佳实践
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) {
+      console.warn('⚠️ No files selected')
+      return
+    }
+
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    console.log('📁 Files selected:', files.length, 'Images:', imageFiles.length)
+
+    if (imageFiles.length === 0) {
+      console.warn('⚠️ No image files found in selection')
+      return
+    }
+
+    // 处理多个图片文件
+    handleMultipleImageUpload(imageFiles)
+
+    // 清空文件输入，允许重复选择相同文件
+    e.target.value = ''
+  }, [handleMultipleImageUpload])
 
   // React 右键菜单处理函数 - 作为备用方案
   const handleReactContextMenu = useCallback((e: React.MouseEvent) => {
@@ -362,6 +505,135 @@ export default function StandardEditor() {
     }))
   }, [])
 
+  // 获取选中对象的图片数据 - 使用 Fabric.js 成熟解决方案
+  const getSelectedObjectsImage = useCallback(async (): Promise<{ imageData: string; bounds: any } | null> => {
+    if (!canvas) return null
+
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return null
+
+    try {
+      console.log('🎯 === USING FABRIC.JS MATURE SOLUTION ===')
+      console.log('📸 Capturing selected objects...', {
+        count: activeObjects.length,
+        objectTypes: activeObjects.map(obj => obj.type)
+      })
+
+      // 使用智能导出函数，自动选择最佳方法
+      const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
+
+      const result = await exportSelectedObjectsSmart(canvas, {
+        format: 'jpeg',  // 使用 JPEG 格式减少文件大小
+        quality: 0.8,    // 降低质量到 80% 以减少文件大小
+        multiplier: Math.min(optimalMultiplier, 2), // 限制最大倍数为 2
+        tightBounds: true,  // 使用紧密边界，无白边
+        padding: 0,         // 无边距
+        backgroundColor: 'white'  // 使用白色背景（JPEG 不支持透明）
+      })
+
+      if (!result) {
+        console.error('❌ Failed to export selected objects')
+        return null
+      }
+
+      console.log('✅ Fabric.js smart export completed:', {
+        imageSize: result.imageData.length,
+        bounds: result.bounds,
+        multiplier: optimalMultiplier,
+        method: 'fabric_smart_export'
+      })
+
+      // 检查图片大小并进行智能压缩
+      const originalSizeMB = getBase64SizeMB(result.imageData)
+      console.log('📏 Original image size:', originalSizeMB.toFixed(2), 'MB')
+
+      if (originalSizeMB > 5) { // 如果超过 5MB，进行压缩
+        console.log('🗜️ Image too large, compressing...')
+        try {
+          const compressedData = await smartCompressImage(result.imageData, 2048) // 压缩到 2MB
+          const compressedSizeMB = getBase64SizeMB(compressedData)
+          console.log('✅ Image compressed:', compressedSizeMB.toFixed(2), 'MB')
+          
+          return {
+            ...result,
+            imageData: compressedData
+          }
+        } catch (error) {
+          console.warn('⚠️ Image compression failed, using original:', error)
+        }
+      }
+
+      return result
+    } catch (error) {
+      console.error('❌ Error generating selected objects image:', error)
+      return null
+    }
+  }, [canvas])
+
+  // 添加AI生成的图片到画布
+  const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
+    if (!canvas) return
+
+    try {
+      console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
+
+      // 创建图片对象
+      const img = await FabricImage.fromURL(imageUrl, {
+        crossOrigin: 'anonymous'
+      })
+
+      // 设置图片位置和大小
+      if (bounds) {
+        // 如果有边界信息，在原位置右侧添加编辑后的图片
+        const offsetX = bounds.width + 20 // 在原图右侧20px处
+
+        img.set({
+          left: bounds.left + offsetX,
+          top: bounds.top,
+          scaleX: bounds.width / (img.width || 1),
+          scaleY: bounds.height / (img.height || 1),
+        })
+
+        console.log('📍 Positioned edited image next to original', {
+          originalBounds: bounds,
+          newPosition: { left: bounds.left + offsetX, top: bounds.top }
+        })
+      } else {
+        // 如果没有边界信息，添加到画布中心
+        const viewport = canvas.getVpCenter()
+        const scale = Math.min(300 / (img.width || 1), 300 / (img.height || 1))
+
+        img.set({
+          left: viewport.x - (img.width || 0) * scale / 2,
+          top: viewport.y - (img.height || 0) * scale / 2,
+          scaleX: scale,
+          scaleY: scale,
+        })
+
+        console.log('📍 Positioned generated image at viewport center', {
+          viewport,
+          scale,
+          imageSize: { width: img.width, height: img.height }
+        })
+      }
+
+      img.set({
+        selectable: true,
+        evented: true
+      })
+
+      // 添加到画布
+      canvas.add(img)
+      canvas.setActiveObject(img)
+      canvas.renderAll()
+
+      console.log('✅ AI generated image added successfully')
+    } catch (error) {
+      console.error('❌ Failed to add AI generated image:', error)
+      throw error
+    }
+  }, [canvas])
+
   // 处理AI请求 - 集成 gemini-2.5-flash-image-preview 模型
   const processAiRequest = useCallback(async (message: string) => {
     if (!canvas) {
@@ -374,9 +646,21 @@ export default function StandardEditor() {
       throw new Error('AUTH_REQUIRED')
     }
 
+    // 检查积分是否足够
+    if (!hasEnoughPoints(5)) {
+      throw new Error('积分不足，需要 5 积分才能使用 AI 生成功能')
+    }
+
     console.log('🤖 Processing AI request:', message)
 
     try {
+      // 先扣除积分
+      const pointsResult = await deductPoints()
+      if (!pointsResult.success) {
+        throw new Error(pointsResult.message)
+      }
+      console.log('✅ 积分扣除成功:', pointsResult.message)
+
       // 获取选中对象的图片数据
       const result = await getSelectedObjectsImage()
 
@@ -453,75 +737,15 @@ export default function StandardEditor() {
         }
       }
 
+      // 刷新积分信息
+      await checkPoints()
+
     } catch (error) {
       console.error('❌ AI request failed:', error)
       throw error
     }
-  }, [canvas, isAuthed])
+  }, [canvas, isAuthed, hasEnoughPoints, deductPoints, getSelectedObjectsImage, checkPoints, addAiGeneratedImage])
 
-  // 添加AI生成的图片到画布
-  const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
-    if (!canvas) return
-
-    try {
-      console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
-
-      // 创建图片对象
-      const img = await FabricImage.fromURL(imageUrl, {
-        crossOrigin: 'anonymous'
-      })
-
-      // 设置图片位置和大小
-      if (bounds) {
-        // 如果有边界信息，在原位置右侧添加编辑后的图片
-        const offsetX = bounds.width + 20 // 在原图右侧20px处
-
-        img.set({
-          left: bounds.left + offsetX,
-          top: bounds.top,
-          scaleX: bounds.width / (img.width || 1),
-          scaleY: bounds.height / (img.height || 1),
-        })
-
-        console.log('📍 Positioned edited image next to original', {
-          originalBounds: bounds,
-          newPosition: { left: bounds.left + offsetX, top: bounds.top }
-        })
-      } else {
-        // 如果没有边界信息，添加到画布中心
-        const viewport = canvas.getVpCenter()
-        const scale = Math.min(300 / (img.width || 1), 300 / (img.height || 1))
-
-        img.set({
-          left: viewport.x - (img.width || 0) * scale / 2,
-          top: viewport.y - (img.height || 0) * scale / 2,
-          scaleX: scale,
-          scaleY: scale,
-        })
-
-        console.log('📍 Positioned generated image at viewport center', {
-          viewport,
-          scale,
-          imageSize: { width: img.width, height: img.height }
-        })
-      }
-
-      img.set({
-        selectable: true,
-        evented: true
-      })
-
-      // 添加到画布
-      canvas.add(img)
-      canvas.setActiveObject(img)
-      canvas.renderAll()
-
-      console.log('✅ AI generated image added successfully')
-    } catch (error) {
-      console.error('❌ Failed to add AI generated image:', error)
-      throw error
-    }
-  }, [canvas])
 
   // 键盘删除功能 - 基于 Fabric.js 社区最佳实践
   const handleKeyboardDelete = useCallback((event: KeyboardEvent) => {
@@ -665,6 +889,7 @@ export default function StandardEditor() {
           fabricCanvas.requestRenderAll()
           lastPosX = e.clientX
           lastPosY = e.clientY
+          requestAnimationFrame(() => refreshAiEditButtonPosition())
         }
       }
     })
@@ -673,7 +898,55 @@ export default function StandardEditor() {
       fabricCanvas.setViewportTransform(fabricCanvas.viewportTransform!)
       isDragging = false
       fabricCanvas.selection = true
+      refreshAiEditButtonPosition()
     })
+
+    // 统一刷新 AI Edit 按钮位置（支持多选、平移、缩放）
+    const refreshAiEditButtonPosition = () => {
+      if (currentTool !== 'select') {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+        return
+      }
+
+      const activeObjects = fabricCanvas.getActiveObjects()
+      if (!activeObjects || activeObjects.length === 0) {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+        return
+      }
+
+      let bounds: any | null = null
+      try {
+        // @ts-ignore: 支持对象数组
+        bounds = getPreciseBounds ? getPreciseBounds(activeObjects) : null
+      } catch (_) {
+        bounds = null
+      }
+      if (!bounds) {
+        const selection: any = fabricCanvas.getActiveObject()
+        bounds = selection?.getBoundingRect ? selection.getBoundingRect() : null
+      }
+      if (!bounds) {
+        setAiEditButton({ visible: false, x: 0, y: 0 })
+        return
+      }
+
+      const vpt = fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]
+      const scaleX = vpt[0]
+      const scaleY = vpt[3]
+      const translateX = vpt[4]
+      const translateY = vpt[5]
+      const rect = canvasRef.current?.getBoundingClientRect()
+
+      const right = bounds.left + bounds.width
+      const bottom = bounds.top + bounds.height
+      const viewportX = right * scaleX + translateX
+      const viewportY = bottom * scaleY + translateY
+
+      const clientX = (rect?.left || 0) + viewportX
+      const clientY = (rect?.top || 0) + viewportY
+
+      setAiEditButton({ visible: true, x: clientX - 10, y: clientY - 10 })
+    }
 
     // 窗口大小变化处理
     const handleResize = () => {
@@ -681,6 +954,7 @@ export default function StandardEditor() {
       const newHeight = window.innerHeight
       fabricCanvas.setDimensions({ width: newWidth, height: newHeight })
       fabricCanvas.renderAll()
+      refreshAiEditButtonPosition()
     }
 
     window.addEventListener('resize', handleResize)
@@ -740,48 +1014,12 @@ export default function StandardEditor() {
 
     // 监听对象选择变化，显示/隐藏 AI Edit 按钮（仅在 Select 工具下）
     const handleSelectionCreated = () => {
-      // 只有 Select 工具才显示 AI Edit 按钮
-      if (currentTool !== 'select') {
-        setAiEditButton({ visible: false, x: 0, y: 0 })
-        return
-      }
-
-      const activeObjects = fabricCanvas.getActiveObjects()
-      if (activeObjects.length > 0) {
-        const bounds = fabricCanvas.getActiveObject()?.getBoundingRect()
-        if (bounds) {
-          setAiEditButton({
-            visible: true,
-            x: bounds.left + bounds.width - 10,
-            y: bounds.top + bounds.height - 10
-          })
-        }
-      } else {
-        setAiEditButton({ visible: false, x: 0, y: 0 })
-      }
+      refreshAiEditButtonPosition()
     }
 
     // 监听选择更新事件（同样需要检查工具）
     const handleSelectionUpdated = () => {
-      // 只有 Select 工具才显示 AI Edit 按钮
-      if (currentTool !== 'select') {
-        setAiEditButton({ visible: false, x: 0, y: 0 })
-        return
-      }
-
-      const activeObjects = fabricCanvas.getActiveObjects()
-      if (activeObjects.length > 0) {
-        const bounds = fabricCanvas.getActiveObject()?.getBoundingRect()
-        if (bounds) {
-          setAiEditButton({
-            visible: true,
-            x: bounds.left + bounds.width - 10,
-            y: bounds.top + bounds.height - 10
-          })
-        }
-      } else {
-        setAiEditButton({ visible: false, x: 0, y: 0 })
-      }
+      refreshAiEditButtonPosition()
     }
 
     const handleSelectionCleared = () => {
@@ -791,6 +1029,17 @@ export default function StandardEditor() {
     fabricCanvas.on('selection:created', handleSelectionCreated)
     fabricCanvas.on('selection:updated', handleSelectionUpdated)
     fabricCanvas.on('selection:cleared', handleSelectionCleared)
+
+    // 对象移动/缩放/旋转/修改后刷新
+    const handleObjectChange = () => requestAnimationFrame(() => refreshAiEditButtonPosition())
+    fabricCanvas.on('object:moving', handleObjectChange)
+    fabricCanvas.on('object:scaling', handleObjectChange)
+    fabricCanvas.on('object:rotating', handleObjectChange)
+    fabricCanvas.on('object:modified', handleObjectChange)
+
+    // 缩放滚轮后刷新
+    const wheelHandler = () => requestAnimationFrame(() => refreshAiEditButtonPosition())
+    fabricCanvas.on('mouse:wheel', wheelHandler)
 
     // 存储画布实例到全局变量，供键盘事件使用
     ;(window as any).fabricCanvasInstance = fabricCanvas
@@ -806,11 +1055,16 @@ export default function StandardEditor() {
       fabricCanvas.off('selection:created', handleSelectionCreated)
       fabricCanvas.off('selection:updated', handleSelectionUpdated)
       fabricCanvas.off('selection:cleared', handleSelectionCleared)
+      fabricCanvas.off('object:moving', handleObjectChange)
+      fabricCanvas.off('object:scaling', handleObjectChange)
+      fabricCanvas.off('object:rotating', handleObjectChange)
+      fabricCanvas.off('object:modified', handleObjectChange)
+      fabricCanvas.off('mouse:wheel', wheelHandler)
       // 清除全局画布实例
       ;(window as any).fabricCanvasInstance = null
       fabricCanvas.dispose()
     }
-  }, []) // 只在组件挂载时初始化画布
+  }, [canvas, currentTool, handleKeyboardDelete]) // 只在组件挂载时初始化画布
 
   // 工具切换 - 使用Fabric.js标准方式
   useEffect(() => {
@@ -1144,50 +1398,6 @@ export default function StandardEditor() {
     return () => document.removeEventListener('click', handleGlobalClick)
   }, [hideContextMenu, hideAiDialog])
 
-  // 获取选中对象的图片数据 - 使用 Fabric.js 成熟解决方案
-  const getSelectedObjectsImage = useCallback(async (): Promise<{ imageData: string; bounds: any } | null> => {
-    if (!canvas) return null
-
-    const activeObjects = canvas.getActiveObjects()
-    if (activeObjects.length === 0) return null
-
-    try {
-      console.log('🎯 === USING FABRIC.JS MATURE SOLUTION ===')
-      console.log('📸 Capturing selected objects...', {
-        count: activeObjects.length,
-        objectTypes: activeObjects.map(obj => obj.type)
-      })
-
-      // 使用智能导出函数，自动选择最佳方法
-      const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
-
-      const result = await exportSelectedObjectsSmart(canvas, {
-        format: 'png',
-        quality: 1,
-        multiplier: optimalMultiplier,
-        tightBounds: true,  // 使用紧密边界，无白边
-        padding: 0,         // 无边距
-        backgroundColor: 'transparent'  // 透明背景
-      })
-
-      if (!result) {
-        console.error('❌ Failed to export selected objects')
-        return null
-      }
-
-      console.log('✅ Fabric.js smart export completed:', {
-        imageSize: result.imageData.length,
-        bounds: result.bounds,
-        multiplier: optimalMultiplier,
-        method: 'fabric_smart_export'
-      })
-
-      return result
-    } catch (error) {
-      console.error('❌ Error generating selected objects image:', error)
-      return null
-    }
-  }, [canvas])
 
   // AI Edit 快捷按钮点击处理
   const handleAiEditClick = useCallback(async () => {
@@ -1563,88 +1773,6 @@ export default function StandardEditor() {
     reader.readAsDataURL(file)
   }
 
-  // 带位置参数的图片上传 - 基于 Fabric.js 社区最佳实践
-  const handleImageUploadWithPosition = useCallback((file: File, position: { x: number, y: number }) => {
-    // 通过全局变量获取当前画布实例，避免闭包问题
-    const currentCanvas = canvasRef.current ?
-      (window as any).fabricCanvasInstance || canvas : null
-
-    if (!currentCanvas) {
-      console.error('❌ Canvas not available for image upload')
-      return
-    }
-
-    console.log('📸 Starting positioned image upload:', file.name, 'at position:', position)
-
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      try {
-        const imgUrl = e.target?.result as string
-        if (!imgUrl) {
-          console.error('❌ Failed to read image file')
-          return
-        }
-
-        console.log('📸 Creating Fabric image from URL...')
-        const img = await FabricImage.fromURL(imgUrl, {
-          crossOrigin: 'anonymous'
-        })
-
-        // 保存原始尺寸信息用于后续高清导出
-        const originalWidth = img.width || 0
-        const originalHeight = img.height || 0
-
-        console.log('📸 Uploaded image info:', {
-          original: { width: originalWidth, height: originalHeight },
-          file: { name: file.name, size: file.size },
-          position: position
-        })
-
-        // 智能缩放：保持宽高比，适应多图布局
-        const maxDisplayWidth = 250 // 多图模式下使用较小的尺寸
-        const maxDisplayHeight = 250
-
-        if (originalWidth > 0 && originalHeight > 0) {
-          const scale = Math.min(
-            maxDisplayWidth / originalWidth,
-            maxDisplayHeight / originalHeight,
-            1 // 不放大，只缩小
-          )
-          img.scale(scale)
-
-          console.log('📸 Image scaled for multi-upload:', {
-            scale: scale,
-            display: {
-              width: originalWidth * scale,
-              height: originalHeight * scale
-            }
-          })
-        }
-
-        // 设置图像位置到指定坐标
-        img.set({
-          left: position.x,
-          top: position.y,
-          selectable: true,
-          evented: true
-        })
-
-        console.log('📸 Adding positioned image to canvas...')
-        currentCanvas.add(img)
-        currentCanvas.renderAll()
-
-        console.log('✅ Positioned image upload completed successfully')
-      } catch (error) {
-        console.error('❌ Failed to upload positioned image:', error)
-      }
-    }
-
-    reader.onerror = () => {
-      console.error('❌ Failed to read file')
-    }
-
-    reader.readAsDataURL(file)
-  }, [canvas])
 
   // 标准功能
   const deleteSelected = () => {
@@ -1801,12 +1929,101 @@ export default function StandardEditor() {
     }
   }, [])
 
+  // 空状态处理函数
+  const handleEmptyStateUpload = useCallback(() => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.multiple = true
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files && files.length > 0) {
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+        if (imageFiles.length > 0) {
+          handleMultipleImageUpload(imageFiles)
+          setShowEmptyState(false)
+        }
+      }
+    }
+    input.click()
+  }, [handleMultipleImageUpload])
+
+  const handleEmptyStateAIGenerate = useCallback(() => {
+    setShowEmptyState(false)
+    // 触发 AI 生成功能
+    setAiDialog({
+      visible: true,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      message: '请描述你想要生成的图片',
+      isLoading: false,
+      textareaHeight: 72
+    })
+  }, [])
+
+  const handleEmptyStateTemplates = useCallback(() => {
+    setShowTemplateSelector(true)
+  }, [])
+
+  const handleEmptyStateGuide = useCallback(() => {
+    setShowOnboarding(true)
+  }, [])
+
+  // 引导完成处理
+  const handleOnboardingComplete = useCallback(() => {
+    setShowOnboarding(false)
+    markOnboardingSeen()
+  }, [markOnboardingSeen])
+
+  const handleOnboardingSkip = useCallback(() => {
+    setShowOnboarding(false)
+    markOnboardingSeen()
+  }, [markOnboardingSeen])
+
+  // 模板选择处理
+  const handleTemplateSelect = useCallback((template: any) => {
+    console.log('Selected template:', template)
+    // 这里可以加载模板到画布
+    setShowEmptyState(false)
+  }, [])
+
   return (
     <div className="w-full h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
+      
+      {/* 新用户引导 */}
+      <OnboardingGuide
+        isVisible={showOnboarding}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+      />
+
+      {/* 空状态界面 */}
+      {showEmptyState && (
+        <EmptyState
+          onUpload={handleEmptyStateUpload}
+          onAIGenerate={handleEmptyStateAIGenerate}
+          onShowTemplates={handleEmptyStateTemplates}
+          onStartGuide={handleEmptyStateGuide}
+        />
+      )}
+
+      {/* 模板选择器 */}
+      <TemplateSelector
+        isVisible={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelectTemplate={handleTemplateSelect}
+      />
+      
+      {/* 积分显示 */}
+      {isAuthed && (
+        <div className="absolute top-4 right-4 z-50">
+          <PointsDisplay compact={true} />
+        </div>
+      )}
       {/* 无限画布 */}
       <div
-        className="absolute inset-0 w-full h-full"
+        className="upload-area absolute inset-0 w-full h-full"
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -1821,10 +2038,10 @@ export default function StandardEditor() {
         {/* AI Edit 快捷按钮 */}
         {aiEditButton.visible && (
           <button
+            className="ai-edit-button absolute z-30 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg hover:bg-blue-700 transition-colors"
             onMouseDown={(e) => { e.stopPropagation() }}
             onClick={(e) => { e.stopPropagation(); handleAiEditClick() }}
             data-ai-dialog
-            className="absolute z-30 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg hover:bg-blue-700 transition-colors"
             style={{
               left: aiEditButton.x,
               top: aiEditButton.y,
@@ -1932,7 +2149,7 @@ export default function StandardEditor() {
       )}
 
       {/* 竖屏工具栏 - 减少30%宽度 */}
-      <div className="absolute top-6 left-4 z-40">
+      <div className="toolbar absolute top-6 left-4 z-40">
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-2 w-14">
           <div className="flex flex-col items-center space-y-1">
             {/* 工具栏展开/收起按钮 */}
@@ -2075,7 +2292,7 @@ export default function StandardEditor() {
 
                 <button
                   onClick={downloadImage}
-                  className="p-2 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
+                  className="save-button p-2 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg w-10 h-10 flex items-center justify-center"
                   title="Download Image"
                 >
                   <Download className="w-4 h-4" />

@@ -17,6 +17,15 @@ const getEnv = () => ({
 
 export async function POST(request: NextRequest) {
   try {
+    // 检查请求体大小
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB
+      return NextResponse.json({
+        success: false,
+        error: 'Request too large. Please reduce image size or quality.'
+      }, { status: 413 })
+    }
+
     const { imageData, instruction, model = 'gemini-2.5-flash-image-preview' } = await request.json()
 
     if (!imageData || !instruction) {
@@ -24,6 +33,14 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'imageData and instruction are required'
       }, { status: 400 })
+    }
+
+    // 检查图片数据大小
+    if (imageData.length > 8 * 1024 * 1024) { // 8MB Base64 数据
+      return NextResponse.json({
+        success: false,
+        error: 'Image data too large. Please reduce image size or quality.'
+      }, { status: 413 })
     }
 
     const env = getEnv()

@@ -12,6 +12,11 @@
     "seed:readme": "node scripts/seed-from-readme.mjs",
     "seed:fashion": "node scripts/seed-fashion-mag-templates.mjs",
     "translate:templates": "node scripts/translate-templates.mjs",
+    "upload:template": "node scripts/upload-template.mjs",
+    "test:template-upload": "node scripts/test-template-upload.mjs",
+    "test:413-fix": "node scripts/test-413-fix.mjs",
+    "init:points-db": "node scripts/init-points-db.mjs",
+    "init:user-roles": "node scripts/init-user-roles.mjs",
     "deploy": "npx vercel --prod",
     "preview": "npx vercel"
   },
