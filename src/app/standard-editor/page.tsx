@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import * as fabric from "fabric"
-import NanoCanvasApp from "../../../external/nanocanvas/App"
-import type { NanoCanvasConfig } from "../../../external/nanocanvas/types"
+import NanoCanvasApp from "@/external/nanocanvas/App"
+import type { NanoCanvasConfig } from "@/external/nanocanvas/types"
 
 if (typeof window !== "undefined") {
   ;(window as any).fabric = fabric

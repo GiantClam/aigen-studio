@@ -1,3 +1,3 @@
 {
-  "buildCommand": "if [ ! -d external/nanocanvas ]; then git clone https://github.com/GiantClam/nanocanvas.git external/nanocanvas; fi; next build"
+  "buildCommand": "next build"
 }
