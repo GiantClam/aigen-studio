@@ -20,9 +20,27 @@ export async function GET(
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
     const { slug } = await params
 
-    // 获取所有模板
+    const { data: bySlug, error: slugError } = await supabase
+      .from('nanobanana_templates')
+      .select('*')
+      .eq('slug', slug)
+      .eq('isvalid', true)
+      .limit(1)
+
+    if (slugError) {
+      console.error('Supabase error:', slugError)
+      return NextResponse.json(
+        { error: 'Failed to fetch template' },
+        { status: 500 }
+      )
+    }
+
+    if (bySlug && bySlug.length > 0) {
+      return NextResponse.json(bySlug[0])
+    }
+
     const { data: templates, error } = await supabase
-      .from('templates')
+      .from('nanobanana_templates')
       .select('*')
       .eq('isvalid', true)
       .order('updated_at', { ascending: false })
@@ -35,11 +53,7 @@ export async function GET(
       )
     }
 
-    // 根据slug查找匹配的模板
-    const matchedTemplate = templates?.find((template) => {
-      const templateSlug = generateSlug(template.name)
-      return templateSlug === slug
-    })
+    const matchedTemplate = templates?.find((template) => generateSlug(template.name) === slug)
 
     if (!matchedTemplate) {
       return NextResponse.json(

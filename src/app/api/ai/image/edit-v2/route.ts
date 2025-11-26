@@ -196,7 +196,7 @@ export async function PUT(request: NextRequest) {
 
     // 上传到 Supabase Storage
     const { data, error } = await supabase.storage
-      .from('templates')
+      .from('nanobanana_templates')
       .upload(fileName, file, {
         cacheControl: '3600',
         upsert: false
@@ -210,7 +210,7 @@ export async function PUT(request: NextRequest) {
 
     // 获取公开 URL
     const { data: urlData } = supabase.storage
-      .from('templates')
+      .from('nanobanana_templates')
       .getPublicUrl(fileName)
 
     return NextResponse.json({

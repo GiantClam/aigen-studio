@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+files=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -z "$files" ]; then
+  exit 0
+fi
+
+blocked_env=$(echo "$files" | grep -E '^\.env(\.local|\.development|\.production)?$' || true)
+if [ -n "$blocked_env" ]; then
+  echo "Detected staged environment file(s):"
+  echo "$blocked_env"
+  echo "Remove them from staging."
+  exit 1
+fi
+
+pattern='(-----BEGIN PRIVATE KEY-----|"type"\s*:\s*"service_account"|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY|NEXTAUTH_SECRET|JWT_SECRET=|DEEPSEEK_API_KEY|CLOUDFLARE_(API_TOKEN|IMAGES_API_TOKEN|R2_SECRET_ACCESS_KEY|R2_ACCESS_KEY_ID)|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9)'
+offenders=""
+
+for f in $files; do
+  case "$f" in
+    node_modules/*|.next/*|*.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp|*.mp4|*.mov|*.zip|*.gz|*.tgz|*.wasm|*.ttf|*.otf|*.woff2|*.pdf|*.patch|*.lock|*.tsbuildinfo)
+      continue
+      ;;
+  esac
+  content=$(git show ":$f" || true)
+  if echo "$content" | grep -E -n "$pattern" >/dev/null 2>&1; then
+    offenders="$offenders\n$f"
+  fi
+done
+
+if [ -n "$offenders" ]; then
+  echo "Potential secrets detected in staged files:"
+  printf "$offenders\n"
+  echo "Commit blocked. Remove secrets before committing."
+  exit 1
+fi
+
+exit 0

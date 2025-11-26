@@ -8,86 +8,91 @@ import HomeAuthMenu from '@/components/HomeAuthMenu'
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Script id="faq-ldjson" type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "What is Nano Banana?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Nano Banana (Gemini 2.5 Flash Image) is the image model we use to power AI image generation and editing on this site."
+      <Script
+        id="faq-ldjson"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ 
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Nano Banana?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nano Banana (Gemini 2.5 Flash Image) is the image model we use to power AI image generation and editing on this site."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I get started on this website?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Click Get Started to open Standard Editor, sign in with GitHub or Google, then describe what you want to generate or select objects to edit with the AI Assistant."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I need to sign in to generate or edit images?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Image generation and editing features require sign-in. You can browse templates without signing in."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the Standard Editor?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The Standard Editor is a canvas-based editor built with Fabric.js. It supports AI generation, AI editing for selected objects, brush, shapes, text, arrow tools, drag-and-drop images, and exporting selections."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do templates work?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Templates provide curated prompts and layouts. Choose a template to prefill the AI Assistant with a starting prompt, then fine-tune or edit results in the editor."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nano Banana excels at character/subject consistency across images, natural multi-image blending, precise local edits via natural language, and stable multi-round refinements. These make it ideal for creators who need coherent visual outcomes."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are there any limitations of Nano Banana?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "While powerful for natural-language editing, very fine-grained pixel-level control and traditional cut/mask tooling may be less comprehensive than pro photo editors. For best results, use iterative, step-by-step prompts."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Any practical tips for better results with Nano Banana?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Use a step-by-step approach: first set background, then lighting, then details. Keep prompts clear and scoped. For consistency, reuse descriptors (subject, style, camera angle) across iterations."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is Nano Banana free to use?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Availability and cost depend on account and region. Free tiers often include limited usage; paid usage is low-cost per image in typical setups."
+                }
               }
-            },
-            {
-              "@type": "Question",
-              "name": "How do I get started on this website?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Click Get Started to open Standard Editor, sign in with GitHub or Google, then describe what you want to generate or select objects to edit with the AI Assistant."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do I need to sign in to generate or edit images?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Image generation and editing features require sign-in. You can browse templates without signing in."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What is the Standard Editor?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "The Standard Editor is a canvas-based editor built with Fabric.js. It supports AI generation, AI editing for selected objects, brush, shapes, text, arrow tools, drag-and-drop images, and exporting selections."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How do templates work?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Templates provide curated prompts and layouts. Choose a template to prefill the AI Assistant with a starting prompt, then fine-tune or edit results in the editor."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Nano Banana excels at character/subject consistency across images, natural multi-image blending, precise local edits via natural language, and stable multi-round refinements. These make it ideal for creators who need coherent visual outcomes."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Are there any limitations of Nano Banana?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "While powerful for natural-language editing, very fine-grained pixel-level control and traditional cut/mask tooling may be less comprehensive than pro photo editors. For best results, use iterative, step-by-step prompts."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Any practical tips for better results with Nano Banana?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Use a step-by-step approach: first set background, then lighting, then details. Keep prompts clear and scoped. For consistency, reuse descriptors (subject, style, camera angle) across iterations."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Is Nano Banana free to use?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Availability and cost depend on account and region. Free tiers often include limited usage; paid usage is low-cost per image in typical setups."
-              }
-            }
-          ]
-        })}
-      </Script>
+            ]
+          }, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
+        }}
+      />
       {/* Top Navigation */}
       <header className="bg-white/70 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +116,7 @@ export default function Home() {
               <Link href="#features" className="text-sm text-gray-700 hover:text-gray-900">Features</Link>
               <Link href="#guides" className="text-sm text-gray-700 hover:text-gray-900">Guides</Link>
               <Link
-                href="/standard-editor"
+                href="/workspace"
                 className="ml-2 flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow"
               >
                 <span>Get Started</span>
@@ -162,7 +167,7 @@ export default function Home() {
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/standard-editor"
+                href="/workspace"
                 className="flex items-center justify-center space-x-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-xl hover:from-cyan-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl text-lg font-semibold"
               >
                 <Wand2 className="w-5 h-5" />
@@ -575,14 +580,14 @@ export default function Home() {
               <p className="text-xl mb-6 opacity-90">Start your creative journey with our professional-grade tools powered by <a href="#faq" className="underline decoration-white/40 hover:decoration-white">Nano Banana Image Editor</a>.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/standard-editor"
+                  href="/workspace"
                   className="flex items-center justify-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl text-lg font-semibold"
                 >
                   <Wand2 className="w-5 h-5" />
                   <span>Start Editing</span>
                 </Link>
                 <Link
-                  href="/standard-editor"
+                  href="/workspace"
                   className="flex items-center justify-center space-x-2 px-8 py-4 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-all duration-200 text-lg font-semibold border border-white/30"
                 >
                   <ImageIcon className="w-5 h-5" />

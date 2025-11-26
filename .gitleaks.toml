@@ -1,0 +1,14 @@
+title = "image-editor gitleaks config"
+
+[allowlist]
+paths = [
+  '''\.env\.example$''',
+  '''README\.md$''',
+  '''docs/.*''',
+  '''src/lib/common-components/README\.md$'''
+]
+regexes = [
+  '''your-(?:jwt-secret|nextauth-secret|google-client-id|google-client-secret|api-token|api-key)''',
+  '''YOUR-(?:API|SECRET|TOKEN|KEY)'''
+]
+

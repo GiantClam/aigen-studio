@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { supabase } from '@/services/supabase'
 import { 
   X, 
   Search, 
@@ -17,10 +18,13 @@ import {
 interface Template {
   id: string
   name: string
-  description: string
-  category: string
-  thumbnail: string
-  tags: string[]
+  description?: string
+  category?: string
+  thumbnail?: string
+  image_url?: string
+  tags?: string[]
+  prompt?: string
+  type?: 'single-image' | 'multi-image' | 'text-to-image'
   isPopular?: boolean
   isNew?: boolean
 }
@@ -40,8 +44,9 @@ export default function TemplateSelector({
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [templates, setTemplates] = useState<Template[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // 预设模板数据
+  // 预设模板数据（作为后备）
   const defaultTemplates: Template[] = useMemo(() => [
     {
       id: 'social-media-post',
@@ -115,27 +120,115 @@ export default function TemplateSelector({
     }
   ], [])
 
-  const categories = [
-    { id: 'all', name: '全部', count: defaultTemplates.length },
-    { id: 'social', name: '社交媒体', count: defaultTemplates.filter(t => t.category === 'social').length },
-    { id: 'business', name: '商务', count: defaultTemplates.filter(t => t.category === 'business').length },
-    { id: 'marketing', name: '营销', count: defaultTemplates.filter(t => t.category === 'marketing').length },
-    { id: 'personal', name: '个人', count: defaultTemplates.filter(t => t.category === 'personal').length },
-    { id: 'web', name: '网页', count: defaultTemplates.filter(t => t.category === 'web').length },
-    { id: 'events', name: '活动', count: defaultTemplates.filter(t => t.category === 'events').length },
-    { id: 'branding', name: '品牌', count: defaultTemplates.filter(t => t.category === 'branding').length },
-    { id: 'presentation', name: '演示', count: defaultTemplates.filter(t => t.category === 'presentation').length }
-  ]
+  // 动态计算分类（包括数据库模板的分类）
+  const categories = useMemo(() => {
+    const allCategories = [
+      { id: 'all', name: '全部' },
+      { id: 'text-to-image', name: '文生图' },
+      { id: 'single-image', name: '单图生图' },
+      { id: 'multi-image', name: '多图生图' },
+      { id: 'social', name: '社交媒体' },
+      { id: 'business', name: '商务' },
+      { id: 'marketing', name: '营销' },
+      { id: 'personal', name: '个人' },
+      { id: 'web', name: '网页' },
+      { id: 'events', name: '活动' },
+      { id: 'branding', name: '品牌' },
+      { id: 'presentation', name: '演示' }
+    ]
+    
+    // 计算每个分类的数量
+    return allCategories.map(cat => ({
+      ...cat,
+      count: cat.id === 'all' 
+        ? templates.length 
+        : templates.filter(t => t.category === cat.id).length
+    })).filter(cat => cat.count > 0 || cat.id === 'all') // 只显示有模板的分类
+  }, [templates])
 
+  // 从数据库加载模板
   useEffect(() => {
-    setTemplates(defaultTemplates)
+    async function fetchTemplates() {
+      try {
+        setLoading(true)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+        
+        if (!supabaseUrl || !supabaseAnonKey) {
+          console.warn('[TemplateSelector] Supabase environment variables not configured, using default templates')
+          setTemplates(defaultTemplates)
+          setLoading(false)
+          return
+        }
+        
+        // 使用单例 supabase 客户端，避免创建多个 GoTrueClient 实例
+        const { data, error } = await supabase
+          .from('nanobanana_templates')
+          .select('id,name,image_url,prompt,type,created_at,updated_at')
+          .eq('isvalid', true)
+          .order('updated_at', { ascending: false })
+          .limit(50)
+        
+        if (error) {
+          console.error('[TemplateSelector] Supabase query error:', error)
+          // 出错时使用预设模板
+          setTemplates(defaultTemplates)
+        } else if (data && data.length > 0) {
+          // 转换数据库格式到组件格式
+          const formattedTemplates: Template[] = data.map((t: any) => {
+            // 根据模板类型设置分类和标签 - 支持三种模板类型
+            let category = 'database'
+            let tags: string[] = []
+            
+            if (t.type === 'text-to-image') {
+              category = 'text-to-image'
+              tags = ['文生图', 'AI生成']
+            } else if (t.type === 'single-image') {
+              category = 'single-image'
+              tags = ['单图生图', 'AI编辑']
+            } else if (t.type === 'multi-image') {
+              category = 'multi-image'
+              tags = ['多图生图', 'AI编辑']
+            } else if (t.type === 'image-to-image') {
+              category = 'single-image' // 通用图生图归类到单图生图
+              tags = ['图生图', 'AI编辑']
+            }
+            
+            return {
+              id: t.id,
+              name: t.name,
+              description: t.prompt || '',
+              category,
+              thumbnail: t.image_url || '',
+              image_url: t.image_url,
+              prompt: t.prompt,
+              type: t.type,
+              tags,
+              isPopular: false,
+              isNew: new Date(t.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 // 7天内创建的是新品
+            }
+          })
+          setTemplates(formattedTemplates)
+        } else {
+          // 没有数据时使用预设模板
+          setTemplates(defaultTemplates)
+        }
+      } catch (error) {
+        console.error('[TemplateSelector] Exception while fetching templates:', error)
+        setTemplates(defaultTemplates)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTemplates()
   }, [defaultTemplates])
 
   // 过滤模板
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+                         (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (template.tags && template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -242,8 +335,28 @@ export default function TemplateSelector({
                     className="group cursor-pointer bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-105"
                   >
                     <div className="relative">
-                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                        <ImageIcon className="w-12 h-12 text-gray-400" aria-hidden="true" />
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                        {template.image_url || template.thumbnail ? (
+                          <img 
+                            src={template.image_url || template.thumbnail} 
+                            alt={template.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // 图片加载失败时显示占位符
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              const parent = target.parentElement
+                              if (parent) {
+                                const placeholder = document.createElement('div')
+                                placeholder.className = 'w-full h-full flex items-center justify-center'
+                                placeholder.innerHTML = '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>'
+                                parent.appendChild(placeholder)
+                              }
+                            }}
+                          />
+                        ) : (
+                          <ImageIcon className="w-12 h-12 text-gray-400" aria-hidden="true" />
+                        )}
                       </div>
                       {template.isPopular && (
                         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
@@ -260,9 +373,9 @@ export default function TemplateSelector({
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 mb-1">{template.name}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                      <p className="text-sm text-gray-600 mb-3">{template.description || template.prompt || '无描述'}</p>
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {template.tags.slice(0, 3).map((tag, index) => (
+                        {template.tags && template.tags.slice(0, 3).map((tag, index) => (
                           <span
                             key={index}
                             className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
@@ -288,8 +401,20 @@ export default function TemplateSelector({
                     className="group cursor-pointer bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-102"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ImageIcon className="w-8 h-8 text-gray-400" aria-hidden="true" />
+                      <div className="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {template.image_url || template.thumbnail ? (
+                          <img 
+                            src={template.image_url || template.thumbnail} 
+                            alt={template.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" aria-hidden="true" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
@@ -305,9 +430,9 @@ export default function TemplateSelector({
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{template.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">{template.description || template.prompt || '无描述'}</p>
                         <div className="flex flex-wrap gap-1">
-                          {template.tags.map((tag, index) => (
+                          {template.tags && template.tags.map((tag, index) => (
                             <span
                               key={index}
                               className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
@@ -324,13 +449,18 @@ export default function TemplateSelector({
               </div>
             )}
 
-            {filteredTemplates.length === 0 && (
-            <div className="text-center py-12">
-              <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">没有找到模板</h3>
-              <p className="text-gray-500">尝试调整搜索条件或选择其他分类</p>
-            </div>
-            )}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-500">加载模板中...</p>
+              </div>
+            ) : filteredTemplates.length === 0 ? (
+              <div className="text-center py-12">
+                <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">没有找到模板</h3>
+                <p className="text-gray-500">尝试调整搜索条件或选择其他分类</p>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

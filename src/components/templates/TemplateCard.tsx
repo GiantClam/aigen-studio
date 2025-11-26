@@ -9,6 +9,7 @@ import Image from 'next/image'
 interface Template {
   id: string
   name: string
+  slug?: string
   image_url: string
   prompt: string
   type: 'single-image' | 'multi-image' | 'text-to-image'
@@ -50,7 +51,7 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
 
   const handleViewDetails = () => {
     if (!mounted) return
-    const slug = generateSlug(template.name)
+    const slug = template.slug || generateSlug(template.name)
     router.push(`/templates/${slug}`)
   }
 
@@ -68,7 +69,7 @@ export default function TemplateCard({ template, viewMode }: TemplateCardProps) 
 
   const shareTemplate = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const slug = generateSlug(template.name)
+    const slug = template.slug || generateSlug(template.name)
     const url = typeof window !== 'undefined' ? `${window.location.origin}/templates/${slug}` : ''
     const shareData = {
       title: template.name,

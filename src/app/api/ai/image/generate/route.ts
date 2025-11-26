@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { VertexAIService } from '@/services/vertex-ai'
+import { createCanvasTask, updateCanvasTaskStatus } from '@/services/canvas-task-service'
 
 // 环境变量适配器
 const getEnv = () => ({
@@ -22,7 +23,8 @@ export async function POST(request: NextRequest) {
       image,
       model = 'gemini-2.5-flash-image-preview',
       width = 1024,
-      height = 1024
+      height = 1024,
+      canvasId
     } = await request.json()
 
     if (!prompt) {
@@ -52,6 +54,12 @@ export async function POST(request: NextRequest) {
     console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image generation')
 
     // 如果有图像输入，使用图像编辑功能
+    let taskId: string | undefined
+    if (canvasId) {
+      const t = await createCanvasTask(canvasId, { type: image ? 'edit' : 'generate', prompt })
+      taskId = t.taskId
+    }
+
     const result = image
       ? await vertexAI.editImage(enhancedPrompt, image)
       : await vertexAI.generateImage(enhancedPrompt)
@@ -63,6 +71,7 @@ export async function POST(request: NextRequest) {
       const imageUrl = result.data.imageUrl || result.data.generatedImageUrl
 
       if (imageUrl) {
+        if (taskId) await updateCanvasTaskStatus(taskId, 'succeeded')
         return NextResponse.json({
           success: true,
           data: {
@@ -78,6 +87,7 @@ export async function POST(request: NextRequest) {
         })
       } else {
         console.error('No image URL found in result:', result.data)
+        if (taskId) await updateCanvasTaskStatus(taskId, 'failed', 'NO_IMAGE')
         return NextResponse.json({
           success: false,
           error: 'No image generated - missing image URL in response'
@@ -85,6 +95,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.error('Vertex AI generation failed:', result)
+      if (taskId) await updateCanvasTaskStatus(taskId, 'failed', 'PROVIDER_ERROR')
       return NextResponse.json({
         success: false,
         error: result.error || 'Failed to generate image with Vertex AI'
@@ -92,6 +103,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Image generation error:', error)
+    // 无法获得 taskId 时忽略状态更新
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

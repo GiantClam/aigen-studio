@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/services/supabase'
+import { supabase } from '@/services/supabase'
 import TemplateCard from '@/components/templates/TemplateCard'
 
 type TemplateItem = {
   id: string
   name: string
+  slug?: string
   image_url: string
   prompt: string
   type: 'single-image' | 'multi-image' | 'text-to-image'
@@ -25,27 +26,41 @@ export default function TemplatesGrid() {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
         
         if (!supabaseUrl || !supabaseAnonKey) {
+          console.warn('[TemplatesGrid] Supabase environment variables not configured')
           setTemplates([])
           setLoading(false)
           return
         }
         
-        const supabase = createClient(supabaseUrl, supabaseAnonKey)
+        // 使用单例 supabase 客户端，避免创建多个 GoTrueClient 实例
         const { data, error } = await supabase
-          .from('templates')
-          .select('id,name,image_url,prompt,type,created_at,updated_at')
+          .from('nanobanana_templates')
+          .select('id,name,slug,image_url,prompt,type,created_at,updated_at')
           .eq('isvalid', true)
           .order('updated_at', { ascending: false })
           .limit(8)
         
         if (error) {
-          console.error('Supabase error:', error)
+          // 详细记录错误信息
+          const errorInfo = {
+            message: error.message || 'Unknown error',
+            details: error.details || null,
+            hint: error.hint || null,
+            code: error.code || null,
+          }
+          console.error('[TemplatesGrid] Supabase query error:', errorInfo)
+          console.error('[TemplatesGrid] Full error object:', error)
           setTemplates([])
         } else {
           setTemplates(data || [])
         }
       } catch (error) {
-        console.error('Error fetching templates:', error)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const errorStack = error instanceof Error ? error.stack : undefined
+        console.error('[TemplatesGrid] Exception while fetching templates:', {
+          message: errorMessage,
+          stack: errorStack,
+        })
         setTemplates([])
       } finally {
         setLoading(false)

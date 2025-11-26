@@ -37,27 +37,15 @@ export default function TemplateDetailPage() {
     creativity: 0.7
   })
 
-  // 根据slug获取模板详情
+  // 根据slug获取模板详情（优先后端按 slug 查询）
   useEffect(() => {
     const fetchTemplateBySlug = async () => {
       try {
-        // 首先获取所有模板，然后根据slug匹配
-        const response = await fetch('/api/templates')
+        const slug = params.slug as string
+        const response = await fetch(`/api/templates/slug/${slug}`)
         if (response.ok) {
-          const templates = await response.json()
-          const slug = params.slug as string
-          
-          // 根据slug查找匹配的模板
-          const matchedTemplate = templates.find((t: Template) => {
-            const templateSlug = generateSlug(t.name)
-            return templateSlug === slug
-          })
-          
-          if (matchedTemplate) {
-            setTemplate(matchedTemplate)
-          } else {
-            router.push('/templates')
-          }
+          const tpl = await response.json()
+          setTemplate(tpl)
         } else {
           router.push('/templates')
         }
@@ -98,8 +86,8 @@ export default function TemplateDetailPage() {
       // 将模板数据存储到 sessionStorage
       sessionStorage.setItem('selectedTemplate', JSON.stringify(templateData))
       
-      // 跳转到标准编辑器
-      router.push('/standard-editor')
+      // 跳转到编辑器
+      router.push('/editor-next')
     }
   }
 

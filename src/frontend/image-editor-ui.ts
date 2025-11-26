@@ -854,10 +854,41 @@ export function generateImageEditorPage(): string {
             padding: 12px 16px 16px 16px;
             border-top: 1px solid var(--border);
             display: flex;
+            flex-direction: column;
             gap: 8px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 0 0 16px 16px;
             flex-shrink: 0;
+        }
+
+        .model-selector-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #model-selector {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+        }
+
+        #model-selector:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
         }
 
         #chat-input {
@@ -1166,8 +1197,17 @@ export function generateImageEditorPage(): string {
                     <!-- Chat messages will be added here -->
                 </div>
                 <div class="chat-input-container">
+                    <div class="model-selector-container">
+                        <label for="model-selector" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">模型:</label>
+                        <select id="model-selector">
+                            <option value="gemini-2.5-flash-image-preview">Gemini 2.5 Flash Image</option>
+                            <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image</option>
+                        </select>
+                    </div>
+                    <div class="input-row">
                     <input type="text" id="chat-input" placeholder="询问AI助手任何问题...">
                     <button id="send-btn" title="发送消息"><i class="fas fa-paper-plane"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1635,33 +1675,116 @@ export function generateImageEditorPage(): string {
                 });
             }
 
-            // 添加图像到画布
-            addImageToCanvas(file) {
+            // 添加图像到画布（优化版本：展示小尺寸，导出原始尺寸）
+            async addImageToCanvas(file) {
+                // 先上传文件到 R2，获取 URL
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('folder', 'canvas-images');
+
+                    const uploadResponse = await fetch('/api/storage/r2/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        throw new Error('Failed to upload image');
+                    }
+
+                    const uploadResult = await uploadResponse.json();
+                    const originalUrl = uploadResult.data.url;
+
+                    // 使用优化的图片加载器
+                    await this.addImageFromUrl(originalUrl, file.name, {
+                        displayMaxSize: 800, // 展示时最大 800px
+                        quality: 85
+                    });
+                } catch (error) {
+                    console.error('Failed to upload image, using local file:', error);
+                    // 降级：使用本地文件（Base64）
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    fabric.Image.fromURL(e.target.result, (img) => {
+                        this.addImageFromDataUrl(e.target.result, file.name);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            // 从 URL 添加图片（优化版本）
+            async addImageFromUrl(url, fileName = 'image', options = {}) {
+                const { displayMaxSize = 800, quality = 85 } = options;
+
+                // 生成显示用的 URL（小尺寸）
+                const displayUrl = this.getOptimizedImageUrl(url, 'display', displayMaxSize, quality);
+                
+                // 预加载原始尺寸
+                const originalSize = await this.getImageSize(url);
+                const displaySize = await this.getImageSize(displayUrl);
+
+                // 使用小尺寸 URL 加载到 Fabric.js（减少内存）
+                fabric.Image.fromURL(displayUrl, (img) => {
+                    if (!img) {
+                        console.error('Failed to load optimized image');
+                        return;
+                    }
+
+                    // 保存原始尺寸和 URL
+                    img._originalWidth = originalSize.width;
+                    img._originalHeight = originalSize.height;
+                    img._originalUrl = url; // 保存原始 URL 用于导出
+                    img._displayUrl = displayUrl;
+                    
+                    // 计算导出 multiplier
+                    const exportMultiplier = Math.min(
+                        Math.max(
+                            originalSize.width / displaySize.width,
+                            originalSize.height / displaySize.height
+                        ),
+                        4
+                    );
+                    img._exportMultiplier = exportMultiplier;
+
+                    // 检测分辨率类别
+                    const maxDimension = Math.max(originalSize.width, originalSize.height);
+                    let resolutionCategory = 'other';
+                    if (maxDimension <= 1024) resolutionCategory = '1K';
+                    else if (maxDimension <= 2048) resolutionCategory = '2K';
+                    else if (maxDimension <= 4096) resolutionCategory = '4K';
+                    img._resolutionCategory = resolutionCategory;
+
+                    // 计算内存节省百分比
+                    const originalPixels = originalSize.width * originalSize.height;
+                    const displayPixels = displaySize.width * displaySize.height;
+                    const memorySavedPercent = ((1 - displayPixels / originalPixels) * 100).toFixed(1);
+
+                    console.log('Optimized image loaded:', {
+                        original: originalSize,
+                        display: displaySize,
+                        multiplier: exportMultiplier,
+                        category: resolutionCategory,
+                        memorySaved: memorySavedPercent + '%'
+                    });
+
                         // 获取画布中心点
                         const canvasCenter = this.getCanvasCenter();
-
-                        // 获取画布容器的尺寸
                         const containerRect = this.container.getBoundingClientRect();
-                        const maxWidth = containerRect.width * 0.8; // 最大宽度为容器的80%
-                        const maxHeight = containerRect.height * 0.8; // 最大高度为容器的80%
+                    const maxWidth = containerRect.width * 0.8;
+                    const maxHeight = containerRect.height * 0.8;
 
-                        // 计算缩放比例，保持原始比例
+                    // 计算缩放比例
                         let scaleX = 1;
                         let scaleY = 1;
-
-                        if (img.width > maxWidth || img.height > maxHeight) {
-                            const scaleRatio = Math.min(maxWidth / img.width, maxHeight / img.height);
+                    if (displaySize.width > maxWidth || displaySize.height > maxHeight) {
+                        const scaleRatio = Math.min(maxWidth / displaySize.width, maxHeight / displaySize.height);
                             scaleX = scaleRatio;
                             scaleY = scaleRatio;
                         }
 
                         // 设置图像属性
                         img.set({
-                            left: canvasCenter.x - (img.width * scaleX) / 2,
-                            top: canvasCenter.y - (img.height * scaleY) / 2,
+                        left: canvasCenter.x - (displaySize.width * scaleX) / 2,
+                        top: canvasCenter.y - (displaySize.height * scaleY) / 2,
                             scaleX: scaleX,
                             scaleY: scaleY,
                             selectable: true,
@@ -1673,15 +1796,103 @@ export function generateImageEditorPage(): string {
                         this.canvas.setActiveObject(img);
                         this.canvas.renderAll();
                         this.saveState();
+                }, {
+                    crossOrigin: 'anonymous'
+                });
+            }
 
-                        console.log('Image added to canvas:', file.name,
-                                  'Original size:', img.width, 'x', img.height,
-                                  'Scale:', scaleX.toFixed(2));
+            // 从 Data URL 添加图片（降级方案）
+            addImageFromDataUrl(dataUrl, fileName = 'image') {
+                fabric.Image.fromURL(dataUrl, (img) => {
+                    const originalWidth = img.width || 0;
+                    const originalHeight = img.height || 0;
+                    
+                    if (img._originalElement) {
+                        img._originalWidth = img._originalElement.naturalWidth || originalWidth;
+                        img._originalHeight = img._originalElement.naturalHeight || originalHeight;
+                    } else {
+                        img._originalWidth = originalWidth;
+                        img._originalHeight = originalHeight;
+                    }
+
+                    const maxDimension = Math.max(originalWidth, originalHeight);
+                    let resolutionCategory = 'other';
+                    if (maxDimension <= 1024) resolutionCategory = '1K';
+                    else if (maxDimension <= 2048) resolutionCategory = '2K';
+                    else if (maxDimension <= 4096) resolutionCategory = '4K';
+                    img._resolutionCategory = resolutionCategory;
+
+                    const canvasCenter = this.getCanvasCenter();
+                    const containerRect = this.container.getBoundingClientRect();
+                    const maxWidth = containerRect.width * 0.8;
+                    const maxHeight = containerRect.height * 0.8;
+
+                    let scaleX = 1;
+                    let scaleY = 1;
+                    if (originalWidth > maxWidth || originalHeight > maxHeight) {
+                        const scaleRatio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
+                        scaleX = scaleRatio;
+                        scaleY = scaleRatio;
+                    }
+
+                    img.set({
+                        left: canvasCenter.x - (originalWidth * scaleX) / 2,
+                        top: canvasCenter.y - (originalHeight * scaleY) / 2,
+                        scaleX: scaleX,
+                        scaleY: scaleY,
+                        selectable: true,
+                        moveCursor: 'move',
+                        hoverCursor: 'move'
+                    });
+
+                    this.canvas.add(img);
+                    this.canvas.setActiveObject(img);
+                    this.canvas.renderAll();
+                    this.saveState();
                     }, {
                         crossOrigin: 'anonymous'
+                });
+            }
+
+            // 获取优化的图片 URL
+            getOptimizedImageUrl(url, purpose = 'display', maxSize = 800, quality = 85) {
+                // 如果是 Cloudflare Images
+                if (url.includes('imagedelivery.net')) {
+                    const urlObj = new URL(url);
+                    if (purpose === 'display') {
+                        urlObj.searchParams.set('w', maxSize.toString());
+                        urlObj.searchParams.set('q', quality.toString());
+                    }
+                    return urlObj.toString();
+                }
+
+                // 如果是 R2 或其他，使用代理 API
+                if (url.includes('r2.dev') || url.includes('r2.cloudflarestorage.com')) {
+                    const proxyUrl = '/api/image/proxy?url=' + encodeURIComponent(url);
+                    if (purpose === 'display') {
+                        return proxyUrl + '&w=' + maxSize + '&q=' + quality;
+                    }
+                    return proxyUrl;
+                }
+
+                // 默认返回原 URL
+                return url;
+            }
+
+            // 获取图片尺寸
+            getImageSize(url) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        resolve({
+                            width: img.naturalWidth,
+                            height: img.naturalHeight
                     });
                 };
-                reader.readAsDataURL(file);
+                    img.onerror = reject;
+                    img.src = url;
+                });
             }
 
             // 获取画布中心点（世界坐标）
@@ -2319,10 +2530,41 @@ export function generateImageEditorPage(): string {
                 if (!this.canvas) return;
 
                 try {
+                    // 计算最佳导出 multiplier，保持所有图片的原始分辨率
+                    let exportMultiplier = 2; // 默认值
+                    
+                    const objects = this.canvas.getObjects();
+                    objects.forEach(obj => {
+                        if (obj.type === 'image') {
+                            // 优先使用保存的 exportMultiplier
+                            if (obj._exportMultiplier) {
+                                exportMultiplier = Math.max(exportMultiplier, obj._exportMultiplier);
+                            } else {
+                                // 降级：计算 multiplier
+                                const originalWidth = obj._originalWidth || (obj._originalElement?.naturalWidth) || obj.width;
+                                const originalHeight = obj._originalHeight || (obj._originalElement?.naturalHeight) || obj.height;
+                                const currentWidth = obj.getScaledWidth();
+                                const currentHeight = obj.getScaledHeight();
+                                
+                                if (originalWidth && originalHeight && currentWidth && currentHeight) {
+                                    const widthRatio = originalWidth / currentWidth;
+                                    const heightRatio = originalHeight / currentHeight;
+                                    const imageMultiplier = Math.min(Math.max(widthRatio, heightRatio), 4);
+                                    exportMultiplier = Math.max(exportMultiplier, imageMultiplier);
+                                }
+                            }
+                        }
+                    });
+
+                    console.log('Exporting canvas with multiplier:', exportMultiplier, {
+                        method: 'optimized',
+                        note: 'Using display size for rendering, multiplier for export resolution'
+                    });
+
                     const dataURL = this.canvas.toDataURL({
                         format: 'png',
                         quality: 1.0,
-                        multiplier: 2 // 高分辨率导出
+                        multiplier: exportMultiplier // 使用计算出的 multiplier 保持原始分辨率
                     });
 
                     const link = document.createElement('a');
@@ -2330,7 +2572,7 @@ export function generateImageEditorPage(): string {
                     link.href = dataURL;
                     link.click();
 
-                    console.log('Canvas exported successfully');
+                    console.log('Canvas exported successfully at', Math.round(exportMultiplier) + 'x resolution');
                 } catch (error) {
                     console.error('Failed to export canvas:', error);
                 }
@@ -2561,13 +2803,39 @@ export function generateImageEditorPage(): string {
                         return;
                     }
 
+                    // 保存原始图片尺寸（用于导出时保持分辨率）
+                    const originalWidth = img.width || 0;
+                    const originalHeight = img.height || 0;
+                    
+                    // 保存到图片对象中
+                    if (img._originalElement) {
+                        img._originalWidth = img._originalElement.naturalWidth || originalWidth;
+                        img._originalHeight = img._originalElement.naturalHeight || originalHeight;
+                    } else {
+                        img._originalWidth = originalWidth;
+                        img._originalHeight = originalHeight;
+                    }
+
+                    // 检测分辨率类别
+                    const maxDimension = Math.max(originalWidth, originalHeight);
+                    let resolutionCategory = 'other';
+                    if (maxDimension <= 1024) resolutionCategory = '1K';
+                    else if (maxDimension <= 2048) resolutionCategory = '2K';
+                    else if (maxDimension <= 4096) resolutionCategory = '4K';
+                    img._resolutionCategory = resolutionCategory;
+
+                    console.log('Image resolution info:', {
+                        original: { width: originalWidth, height: originalHeight },
+                        category: resolutionCategory
+                    });
+
                     // Scale image to fit available space
                     const maxWidth = window.innerWidth - 200;
                     const maxHeight = window.innerHeight - 150;
-                    const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 0.8);
+                    const scale = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 0.8);
 
-                    const scaledWidth = img.width * scale;
-                    const scaledHeight = img.height * scale;
+                    const scaledWidth = originalWidth * scale;
+                    const scaledHeight = originalHeight * scale;
 
                     // Set canvas size to match scaled image
                     this.editingCanvas.setWidth(scaledWidth);
@@ -2723,7 +2991,7 @@ export function generateImageEditorPage(): string {
                                 body: JSON.stringify({
                                     imageData: this.currentEditingImage.src,
                                     instruction: 'Enhance image quality, improve colors and contrast, apply professional enhancements',
-                                    model: 'gemini-2.5-flash-image-preview'
+                                    model: getSelectedModel()
                                 })
                             });
 
@@ -2894,9 +3162,33 @@ export function generateImageEditorPage(): string {
 
             export() {
                 if (this.currentEditingImage && this.editingCanvas) {
+                    // 计算最佳导出 multiplier 以保持原始分辨率
+                    let exportMultiplier = 2; // 默认值
+                    
+                    // 查找画布中的图片对象，获取原始尺寸
+                    const imageObjects = this.editingCanvas.getObjects().filter(obj => obj.type === 'image');
+                    if (imageObjects.length > 0) {
+                        const img = imageObjects[0];
+                        const originalWidth = img._originalWidth || img.width;
+                        const originalHeight = img._originalHeight || img.height;
+                        const currentWidth = img.getScaledWidth();
+                        const currentHeight = img.getScaledHeight();
+                        
+                        if (originalWidth && originalHeight && currentWidth && currentHeight) {
+                            const widthRatio = originalWidth / currentWidth;
+                            const heightRatio = originalHeight / currentHeight;
+                            exportMultiplier = Math.min(Math.max(widthRatio, heightRatio), 4); // 限制最大 4 倍
+                            console.log('Calculated export multiplier:', exportMultiplier, {
+                                original: { width: originalWidth, height: originalHeight },
+                                current: { width: currentWidth, height: currentHeight }
+                            });
+                        }
+                    }
+
                     const dataURL = this.editingCanvas.toDataURL({
                         format: 'png',
-                        quality: 1.0
+                        quality: 1.0,
+                        multiplier: exportMultiplier // 使用计算出的 multiplier 保持原始分辨率
                     });
 
                     const link = document.createElement('a');
@@ -2904,7 +3196,7 @@ export function generateImageEditorPage(): string {
                     link.href = dataURL;
                     link.click();
 
-                    addMessage('ai', 'Exported current edited image.');
+                    addMessage('ai', 'Exported current edited image at ' + Math.round(exportMultiplier) + 'x resolution.');
                 } else if (this.getSelectedImages().length > 0) {
                     const selectedImages = this.getSelectedImages();
                     selectedImages.forEach((imageData, index) => {
@@ -3089,10 +3381,18 @@ export function generateImageEditorPage(): string {
             const chatInput = document.getElementById('chat-input');
             const sendBtn = document.getElementById('send-btn');
 
+            // 获取选中的模型
+            function getSelectedModel() {
+                const modelSelector = document.getElementById('model-selector') as HTMLSelectElement;
+                return modelSelector ? modelSelector.value : 'gemini-2.5-flash-image-preview';
+            }
+
             // 发送聊天消息或处理选中对象
             async function sendMessage() {
                 const message = chatInput.value.trim();
                 if (!message) return;
+                
+                const selectedModel = getSelectedModel();
 
                 // 确保聊天面板可见
                 ensureChatPanelVisible();
@@ -3282,7 +3582,7 @@ export function generateImageEditorPage(): string {
                         body: JSON.stringify({
                             imageData: imageData,
                             instruction: prompt,
-                            model: 'gemini-2.5-flash-image-preview'
+                            model: getSelectedModel()
                         })
                     });
 

@@ -18,7 +18,7 @@ export async function GET(
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     const { data, error } = await supabase
-      .from('templates')
+      .from('nanobanana_templates')
       .select('*')
       .eq('id', id)
       .eq('isvalid', true)
@@ -53,7 +53,7 @@ export async function DELETE(
 
     // 先获取模板信息，以便删除关联的图片
     const { data: template, error: fetchError } = await supabase
-      .from('templates')
+      .from('nanobanana_templates')
       .select('image_url')
       .eq('id', id)
       .single()
@@ -64,7 +64,7 @@ export async function DELETE(
 
     // 删除数据库记录
     const { error: deleteError } = await supabase
-      .from('templates')
+      .from('nanobanana_templates')
       .delete()
       .eq('id', id)
 
@@ -78,7 +78,7 @@ export async function DELETE(
         const fileName = template.image_url.split('/').pop()
         if (fileName) {
           await supabase.storage
-            .from('templates')
+            .from('nanobanana_templates')
             .remove([`templates/${fileName}`])
         }
       } catch (storageError) {

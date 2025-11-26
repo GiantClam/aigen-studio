@@ -24,6 +24,32 @@ const nextConfig = {
     // 优化模块解析
     config.resolve.modules = ['node_modules']
 
+    // 修复 ChunkLoadError - 优化代码分割
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks.cacheGroups,
+            // 确保关键组件不被分割
+            default: {
+              minChunks: 1,
+              priority: -20,
+              reuseExistingChunk: true,
+            },
+            // 将 Next.js 相关代码保持在一起
+            nextjs: {
+              test: /[\\/]node_modules[\\/](next|react|react-dom)[\\/]/,
+              name: 'nextjs',
+              chunks: 'all',
+              priority: 10,
+            },
+          },
+        },
+      }
+    }
+
     return config
   },
 
@@ -49,6 +75,18 @@ const nextConfig = {
   devIndicators: {
     position: 'bottom-right',
   },
+
+  // 添加编译时配置来避免 ChunkLoadError
+  compiler: {
+    // 移除 console.log 在生产环境中
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // 优化构建输出
+  generateEtags: false,
+  
+  // 确保正确的文件哈希
+  assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
 }
 
 module.exports = nextConfig

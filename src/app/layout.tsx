@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import SessionProviderClient from '@/components/SessionProviderClient'
@@ -6,6 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import SiteFooter from '@/components/SiteFooter'
 import Script from 'next/script'
+import { Suspense } from 'react'
+import ChunkErrorHandler from '@/components/ChunkErrorHandler'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,7 +33,6 @@ export const metadata: Metadata = {
     'multi image generation',
     'single image generation'
   ],
-  themeColor: '#0B1020',
   alternates: {
     canonical: '/'
   },
@@ -69,6 +70,26 @@ export const metadata: Metadata = {
   }
 }
 
+export const viewport: Viewport = {
+  themeColor: '#0B1020',
+}
+
+// 错误边界组件
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    }>
+      {children}
+    </Suspense>
+  )
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -77,23 +98,31 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Script id="org-ldjson" type="application/ld+json">
-          {JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: 'Nano Banana Image Editor',
-            url: siteUrl,
-            logo: siteUrl + '/logo.svg',
-            sameAs: []
-          })}
-        </Script>
-        <SessionProviderClient>
-        <div className="min-h-screen flex flex-col">
-          <main className="flex-1">{children}</main>
-          {/* 统一 Footer 组件，并在编辑器页自动隐藏 */}
-          <SiteFooter />
-        </div>
-        </SessionProviderClient>
+        <Script
+          id="org-ldjson"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Nano Banana Image Editor',
+              url: siteUrl,
+              logo: siteUrl + '/logo.svg',
+              sameAs: []
+            }, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
+          }}
+        />
+        <ChunkErrorHandler />
+        <ErrorBoundary>
+          <SessionProviderClient>
+            <div className="min-h-screen flex flex-col">
+              <main className="flex-1">{children}</main>
+              {/* 统一 Footer 组件，并在编辑器页自动隐藏 */}
+              <SiteFooter />
+            </div>
+          </SessionProviderClient>
+        </ErrorBoundary>
       </body>
     </html>
   )

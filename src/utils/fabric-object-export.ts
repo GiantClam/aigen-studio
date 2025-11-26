@@ -5,7 +5,7 @@
  * 解决视窗变换、边界处理和对象渲染的问题
  */
 
-import { Canvas, FabricObject } from 'fabric'
+import * as fabric from 'fabric'
 
 export interface ObjectExportResult {
   imageData: string
@@ -28,7 +28,7 @@ export interface ObjectExportResult {
  * 这是官方推荐的方法，可以正确处理视窗变换和边界问题
  */
 export async function exportSelectedObjectsNative(
-  canvas: Canvas,
+  canvas: fabric.Canvas,
   options: {
     format?: 'png' | 'jpeg'
     quality?: number
@@ -103,7 +103,7 @@ export async function exportSelectedObjectsNative(
  * 当对象超出画布边界时使用此方法
  */
 export async function exportSelectedObjectsToTempCanvas(
-  canvas: Canvas,
+  canvas: fabric.Canvas,
   options: {
     format?: 'png' | 'jpeg'
     quality?: number
@@ -192,7 +192,7 @@ export async function exportSelectedObjectsToTempCanvas(
  * 根据对象是否超出画布边界来选择合适的导出方法
  */
 export async function exportSelectedObjectsSmart(
-  canvas: Canvas,
+  canvas: fabric.Canvas,
   options: {
     format?: 'png' | 'jpeg'
     quality?: number
@@ -255,7 +255,7 @@ export async function exportSelectedObjectsSmart(
  * 获取精确的对象边界（像素级精确）
  * 通过渲染到临时画布并分析像素来获得最紧密的边界
  */
-export function getPreciseBounds(objects: FabricObject[]): {
+export function getPreciseBounds(objects: fabric.Object[]): {
   left: number
   top: number
   width: number
@@ -289,7 +289,7 @@ export function getPreciseBounds(objects: FabricObject[]): {
  * 获取对象的最佳分辨率倍数
  * 基于对象中图像的原始分辨率
  */
-export function calculateOptimalMultiplier(objects: FabricObject[]): number {
+export function calculateOptimalMultiplier(objects: fabric.Object[]): number {
   let maxMultiplier = 2 // 默认2倍
 
   for (const obj of objects) {

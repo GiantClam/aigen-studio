@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Canvas, Rect, Circle, IText } from 'fabric'
+import * as fabric from 'fabric'
 
 export default function TestCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [fabricCanvas, setFabricCanvas] = useState<Canvas | null>(null)
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -13,7 +13,7 @@ export default function TestCanvas() {
     console.log('🎨 Initializing simple test canvas...')
 
     // 最简单的Fabric.js初始化
-    const canvas = new Canvas(canvasRef.current, {
+    const canvas = new fabric.Canvas(canvasRef.current, {
       width: 800,
       height: 600,
       backgroundColor: '#ffffff'
@@ -22,7 +22,7 @@ export default function TestCanvas() {
     console.log('✅ Canvas created')
 
     // 添加一个大红色矩形
-    const redRect = new Rect({
+    const redRect = new fabric.Rect({
       left: 100,
       top: 100,
       width: 200,
@@ -35,7 +35,7 @@ export default function TestCanvas() {
     canvas.add(redRect)
 
     // 添加一个蓝色圆形
-    const blueCircle = new Circle({
+    const blueCircle = new fabric.Circle({
       left: 400,
       top: 200,
       radius: 80,
@@ -47,7 +47,7 @@ export default function TestCanvas() {
     canvas.add(blueCircle)
 
     // 添加文本
-    const text = new IText('Test Canvas', {
+    const text = new fabric.IText('Test Canvas', {
       left: 300,
       top: 50,
       fontSize: 30,
@@ -86,7 +86,7 @@ export default function TestCanvas() {
           <button
             onClick={() => {
               if (fabricCanvas) {
-                const randomRect = new Rect({
+                const randomRect = new fabric.Rect({
                   left: Math.random() * 600,
                   top: Math.random() * 400,
                   width: 100,

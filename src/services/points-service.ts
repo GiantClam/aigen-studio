@@ -47,7 +47,7 @@ export class PointsService {
   static async getUserPoints(userId: string): Promise<UserPoints | null> {
     try {
       const { data, error } = await supabase
-        .from('user_points')
+        .from('nanobanana_user_points')
         .select('*')
         .eq('user_id', userId)
         .single()
@@ -74,7 +74,7 @@ export class PointsService {
   ): Promise<PointTransaction[]> {
     try {
       const { data, error } = await supabase
-        .from('point_transactions')
+        .from('nanobanana_point_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -100,7 +100,7 @@ export class PointsService {
       const today = new Date().toISOString().split('T')[0]
       
       const { data, error } = await supabase
-        .from('daily_login_records')
+        .from('nanobanana_daily_login_records')
         .select('id')
         .eq('user_id', userId)
         .eq('login_date', today)
@@ -152,7 +152,7 @@ export class PointsService {
 
       // 记录每日登录
       const { error: loginError } = await supabase
-        .from('daily_login_records')
+        .from('nanobanana_daily_login_records')
         .insert({
           id: transactionId,
           user_id: userId,
@@ -171,7 +171,7 @@ export class PointsService {
 
       // 创建积分交易记录
       const { error: transactionError } = await supabase
-        .from('point_transactions')
+        .from('nanobanana_point_transactions')
         .insert({
           id: transactionId,
           user_id: userId,
@@ -248,7 +248,7 @@ export class PointsService {
 
       // 创建积分交易记录
       const { error } = await supabase
-        .from('point_transactions')
+        .from('nanobanana_point_transactions')
         .insert({
           id: transactionId,
           user_id: userId,
@@ -292,7 +292,7 @@ export class PointsService {
   static async getPointRule(ruleType: string): Promise<PointRule | null> {
     try {
       const { data, error } = await supabase
-        .from('point_rules')
+        .from('nanobanana_point_rules')
         .select('*')
         .eq('rule_type', ruleType)
         .eq('is_active', true)
@@ -316,7 +316,7 @@ export class PointsService {
   static async getAllPointRules(): Promise<PointRule[]> {
     try {
       const { data, error } = await supabase
-        .from('point_rules')
+        .from('nanobanana_point_rules')
         .select('*')
         .order('created_at', { ascending: true })
 
@@ -350,7 +350,7 @@ export class PointsService {
 
       // 创建积分交易记录
       const { error } = await supabase
-        .from('point_transactions')
+        .from('nanobanana_point_transactions')
         .insert({
           id: transactionId,
           user_id: userId,
@@ -409,7 +409,7 @@ export class PointsService {
 
       // 创建用户积分记录
       const { error: pointsError } = await supabase
-        .from('user_points')
+        .from('nanobanana_user_points')
         .insert({
           id: `${userId}_points`,
           user_id: userId,
@@ -429,7 +429,7 @@ export class PointsService {
       // 创建积分交易记录
       const transactionId = `${userId}_reg_${Date.now()}`
       const { error: transactionError } = await supabase
-        .from('point_transactions')
+        .from('nanobanana_point_transactions')
         .insert({
           id: transactionId,
           user_id: userId,

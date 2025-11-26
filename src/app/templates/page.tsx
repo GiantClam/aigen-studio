@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter, Grid, List, Star, Clock, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { fetchTemplates } from '@/services/template-service'
 
 // 动态导入组件以避免SSR问题
 const TemplateCard = dynamic(() => import('@/components/templates/TemplateCard'), {
@@ -47,25 +48,28 @@ export default function TemplatesPage() {
 
   // 获取模板数据
   useEffect(() => {
-    const fetchTemplates = async () => {
+    const run = async () => {
       try {
         setError(null)
-        const response = await fetch('/api/templates')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
+        const raw = await fetchTemplates()
+        const data = Array.isArray(raw) ? raw.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          image_url: t.image_url,
+          prompt: t.prompt,
+          type: (['single-image','multi-image','text-to-image'].includes(t.type) ? t.type : 'single-image') as 'single-image' | 'multi-image' | 'text-to-image',
+          created_at: t.created_at,
+          updated_at: t.updated_at
+        })) : []
         setTemplates(data)
         setFilteredTemplates(data)
       } catch (error) {
-        console.error('Failed to fetch templates:', error)
         setError(error instanceof Error ? error.message : 'Failed to fetch templates')
       } finally {
         setLoading(false)
       }
     }
-
-    fetchTemplates()
+    run()
   }, [])
 
   // 搜索和筛选逻辑

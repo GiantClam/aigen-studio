@@ -3,12 +3,10 @@
  * 处理用户角色和权限验证
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { supabaseServer } from '@/lib/supabase-server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// 使用单例 supabaseServer 客户端，避免创建多个 GoTrueClient 实例
+const supabase = supabaseServer
 
 export interface User {
   id: string
@@ -134,7 +132,7 @@ export class AuthService {
 
       // 检查具体权限
       const { data, error } = await supabase
-        .from('role_permissions')
+        .from('nanobanana_role_permissions')
         .select('is_allowed')
         .eq('role', user.role)
         .eq('resource', resource)

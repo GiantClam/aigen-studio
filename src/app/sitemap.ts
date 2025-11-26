@@ -15,13 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (supabaseUrl && supabaseAnonKey) {
       const supabase = createClient(supabaseUrl, supabaseAnonKey)
       const { data: templates } = await supabase
-        .from('templates')
-        .select('name, updated_at')
+        .from('nanobanana_templates')
+        .select('slug, name, updated_at')
         .eq('isvalid', true)
         .order('updated_at', { ascending: false })
 
       templateUrls = templates?.map((template) => ({
-        url: `${base}/templates/${generateSlug(template.name)}`,
+        url: `${base}/templates/${template.slug || generateSlug(template.name)}`,
         lastModified: new Date(template.updated_at),
         changeFrequency: 'monthly' as const,
         priority: 0.7,
@@ -41,5 +41,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...templateUrls,
   ]
 }
-
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage } from 'fabric'
+import * as fabric from 'fabric'
 import {
   MousePointer2,
   Square,
@@ -51,7 +51,7 @@ interface TemplateData {
 
 export default function ImageEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [canvas, setCanvas] = useState<Canvas | null>(null)
+  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'rectangle' | 'circle' | 'text' | 'brush' | 'eraser'>('select')
   const [isDragOver, setIsDragOver] = useState(false)
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true)
@@ -114,7 +114,7 @@ export default function ImageEditor() {
       const containerHeight = container?.clientHeight || window.innerHeight
 
       // 创建无限画布
-      const fabricCanvas = new Canvas(canvasRef.current, {
+      const fabricCanvas = new fabric.Canvas(canvasRef.current, {
         width: containerWidth,
         height: containerHeight,
         backgroundColor: '#f8fafc', // 浅灰色背景
@@ -183,7 +183,7 @@ export default function ImageEditor() {
           case 'rectangle':
             if (!e.target) {
               toolState.isDrawing = true
-              toolState.activeShape = new Rect({
+              toolState.activeShape = new fabric.Rect({
                 left: pointer.x,
                 top: pointer.y,
                 width: 0,
@@ -202,7 +202,7 @@ export default function ImageEditor() {
           case 'circle':
             if (!e.target) {
               toolState.isDrawing = true
-              toolState.activeShape = new FabricCircle({
+              toolState.activeShape = new fabric.Circle({
                 left: pointer.x,
                 top: pointer.y,
                 radius: 0,
@@ -219,7 +219,7 @@ export default function ImageEditor() {
 
           case 'text':
             if (!e.target) {
-              const textObj = new IText('点击编辑文本', {
+              const textObj = new fabric.IText('点击编辑文本', {
                 left: pointer.x,
                 top: pointer.y,
                 fontFamily: 'Inter, system-ui, sans-serif',
@@ -485,7 +485,8 @@ export default function ImageEditor() {
 
         if (result.success && result.data?.generatedImageUrl) {
           // 创建新的图像对象并添加到画布
-          const editedImg = await FabricImage.fromURL(result.data.generatedImageUrl)
+          // Fabric.js 6.x: fromURL 返回 Promise
+          const editedImg = await fabric.Image.fromURL(result.data.generatedImageUrl, { crossOrigin: 'anonymous' })
           editedImg.set({
             left: 50,
             top: 50,
@@ -527,7 +528,8 @@ export default function ImageEditor() {
 
         if (result.success && result.data?.imageUrl) {
           // 创建新的图像对象并添加到画布
-          const generatedImg = await FabricImage.fromURL(result.data.imageUrl)
+          // Fabric.js 6.x: fromURL 返回 Promise
+          const generatedImg = await fabric.Image.fromURL(result.data.imageUrl)
           generatedImg.set({
             left: 100,
             top: 100,
@@ -579,7 +581,8 @@ export default function ImageEditor() {
       reader.onload = async (e) => {
         const imgUrl = e.target?.result as string
         if (imgUrl) {
-          const img = await FabricImage.fromURL(imgUrl)
+          // Fabric.js 6.x: fromURL 返回 Promise
+          const img = await fabric.Image.fromURL(imgUrl)
           
           // 缩放图片适应画布
           const canvasWidth = canvas.getWidth()

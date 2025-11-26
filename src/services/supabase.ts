@@ -12,4 +12,26 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
 
 export { createClient }
 
+export function getOrCreateAnonymousWorkspaceId(): string {
+  if (typeof window === 'undefined') return ''
+  const key = 'anon_workspace_id'
+  let id = localStorage.getItem(key)
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem(key, id)
+  }
+  return id
+}
+
+export async function upsertWorkspaceForUser(userId: string | null) {
+  if (!supabaseUrl || !supabaseAnonKey) return { data: null, error: null }
+  const id = userId ?? getOrCreateAnonymousWorkspaceId()
+  const { data, error } = await supabase
+    .from('nanobanana_workspace')
+    .upsert({ id, user_id: userId }, { onConflict: 'id' })
+    .select()
+    .single()
+  return { data, error }
+}
+
 

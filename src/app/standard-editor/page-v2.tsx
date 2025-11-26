@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Canvas, Rect, Circle as FabricCircle, IText, FabricImage, Path } from 'fabric'
+import * as fabric from 'fabric'
 import { useSession } from 'next-auth/react'
 import LoginDialog from '@/components/LoginDialog'
-import * as fabric from 'fabric'
 import { exportSelectedObjectsSmart, calculateOptimalMultiplier, getPreciseBounds } from '@/utils/fabric-object-export'
 import { smartUpload, UploadOptions } from '@/utils/gemini-image-upload'
 import {
@@ -56,7 +55,7 @@ export default function StandardEditorV2() {
   const isAuthed = status === 'authenticated'
   const [loginOpen, setLoginOpen] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [canvas, setCanvas] = useState<Canvas | null>(null)
+  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
   const [currentTool, setCurrentTool] = useState<'select' | 'move' | 'draw' | 'rectangle' | 'circle' | 'text' | 'arrow'>('select')
 
   // 上传方式选择
@@ -179,9 +178,8 @@ export default function StandardEditorV2() {
         }
 
         console.log('📸 Creating Fabric image from URL...')
-        const img = await FabricImage.fromURL(imgUrl, {
-          crossOrigin: 'anonymous'
-        })
+        // Fabric.js 6.x: fromURL 返回 Promise
+        const img = await fabric.Image.fromURL(imgUrl, { crossOrigin: 'anonymous' })
 
         // 智能缩放
         const maxDisplayWidth = 250
@@ -340,9 +338,8 @@ export default function StandardEditorV2() {
     try {
       console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
 
-      const img = await FabricImage.fromURL(imageUrl, {
-        crossOrigin: 'anonymous'
-      })
+      // Fabric.js 6.x: fromURL 返回 Promise
+      const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' })
 
       if (bounds) {
         const offsetX = bounds.width + 20

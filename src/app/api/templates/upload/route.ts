@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { generateSlug } from '@/lib/slug-utils'
 
 // 模板类型枚举
 const TEMPLATE_TYPES = {
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     // 上传图片到 Supabase Storage
     const imageBuffer = await imageFile.arrayBuffer()
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('templates')
+      .from('nanobanana_templates')
       .upload(fileName, imageBuffer, {
         contentType: imageFile.type,
         cacheControl: '3600',
@@ -92,12 +93,12 @@ export async function POST(request: NextRequest) {
 
     // 获取图片公开 URL
     const { data: urlData } = supabase.storage
-      .from('templates')
+      .from('nanobanana_templates')
       .getPublicUrl(fileName)
 
     // 保存模板到数据库
     const { data: templateData, error: dbError } = await supabase
-      .from('templates')
+      .from('nanobanana_templates')
       .insert([{
         name: name.trim(),
         image_url: urlData.publicUrl,
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       
       // 如果数据库保存失败，尝试删除已上传的图片
       await supabase.storage
-        .from('templates')
+        .from('nanobanana_templates')
         .remove([fileName])
       
       return NextResponse.json(
@@ -121,11 +122,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const insertedId = templateData[0].id
+    const slugCandidate = generateSlug(templateData[0].name || '')
+
+    if (insertedId) {
+      const { error: slugUpdateError } = await supabase
+        .from('nanobanana_templates')
+        .update({ slug: slugCandidate || String(insertedId).toLowerCase().replace(/_/g, '-') })
+        .eq('id', insertedId)
+
+      if (slugUpdateError) {
+        const fallbackSlug = String(insertedId).toLowerCase().replace(/_/g, '-')
+        await supabase
+          .from('nanobanana_templates')
+          .update({ slug: fallbackSlug })
+          .eq('id', insertedId)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         id: templateData[0].id,
         name: templateData[0].name,
+        slug: slugCandidate || String(insertedId).toLowerCase().replace(/_/g, '-'),
         image_url: templateData[0].image_url,
         prompt: templateData[0].prompt,
         type: templateData[0].type,
