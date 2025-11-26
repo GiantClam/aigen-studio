@@ -14,19 +14,37 @@ if [ -n "$blocked_env" ]; then
   exit 1
 fi
 
-pattern='(-----BEGIN PRIVATE KEY-----|"type"\s*:\s*"service_account"|sk-[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY|NEXTAUTH_SECRET|JWT_SECRET=|DEEPSEEK_API_KEY|CLOUDFLARE_(API_TOKEN|IMAGES_API_TOKEN|R2_SECRET_ACCESS_KEY|R2_ACCESS_KEY_ID)|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9)'
 offenders=""
+
+# Secret detection patterns (avoid matching mere env var names in code)
+secret_patterns='(-----BEGIN PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9)'
+# Quoted long tokens (typical API keys) in source files
+quoted_long_token='["\''][A-Za-z0-9_\-]{40,}["\'']'
 
 for f in $files; do
   case "$f" in
     node_modules/*|.next/*|*.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp|*.mp4|*.mov|*.zip|*.gz|*.tgz|*.wasm|*.ttf|*.otf|*.woff2|*.pdf|*.patch|*.lock|*.tsbuildinfo)
       continue
       ;;
+    # Allowlisted content files
+    *.md|docs/*|*.example|*.sample|githooks/*)
+      continue
+      ;;
   esac
   content=$(git show ":$f" || true)
-  if echo "$content" | grep -E -n "$pattern" >/dev/null 2>&1; then
+  # Block if any clear secret pattern appears
+  if echo "$content" | grep -E -n "$secret_patterns" >/dev/null 2>&1; then
     offenders="$offenders\n$f"
+    continue
   fi
+  # For source files, flag suspicious quoted long tokens
+  case "$f" in
+    *.ts|*.tsx|*.js|*.jsx|*.json)
+      if echo "$content" | grep -E -n "$quoted_long_token" >/dev/null 2>&1; then
+        offenders="$offenders\n$f"
+      fi
+      ;;
+  esac
 done
 
 if [ -n "$offenders" ]; then
