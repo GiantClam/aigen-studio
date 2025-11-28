@@ -402,7 +402,7 @@ export default function StandardEditorV2() {
         const uploadResult = await smartUpload(
           result.imageData,
           message,
-          'gemini-2.5-flash-image-preview',
+          'gemini-2.5-flash-image',
           uploadOptions
         )
 
@@ -419,7 +419,7 @@ export default function StandardEditorV2() {
         const uploadResult = await smartUpload(
           '', // 空字符串表示生成新图片
           message,
-          'gemini-2.5-flash-image-preview',
+          'gemini-2.5-flash-image',
           uploadOptions
         )
 

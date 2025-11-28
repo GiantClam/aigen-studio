@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const {
       prompt,
       image,
-      model = 'gemini-2.5-flash-image-preview',
+      model = 'gemini-2.5-flash-image',
       width = 1024,
       height = 1024,
       canvasId

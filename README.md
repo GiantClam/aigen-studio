@@ -191,7 +191,7 @@ AI 图像编辑和增强
 {
   "imageData": "data:image/jpeg;base64,...",
   "instruction": "Make this image brighter and more colorful",
-  "model": "gemini-2.5-flash-image-preview"
+  "model": "gemini-2.5-flash-image"
 }
 ```
 
@@ -258,7 +258,7 @@ AI 图像内容分析
 ```json
 {
   "prompt": "A beautiful sunset over mountains",
-  "model": "gemini-2.5-flash-image-preview",
+  "model": "gemini-2.5-flash-image",
   "width": 1024,
   "height": 1024
 }

@@ -8,7 +8,7 @@ const getEnv = () => ({
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, image, model = 'veo-2.0-generate-preview' } = await request.json()
+    const { prompt, image, model = 'veo-2.0-generate-001' } = await request.json()
 
     if (!prompt) {
       return NextResponse.json({ success: false, error: 'prompt is required' }, { status: 400 })

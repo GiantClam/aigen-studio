@@ -33,7 +33,7 @@ export interface UploadResult {
 export async function uploadFileDirect(
   file: File,
   instruction: string,
-  model: string = 'gemini-2.5-flash-image-preview'
+  model: string = 'gemini-2.5-flash-image'
 ): Promise<UploadResult> {
   try {
     const formData = new FormData()
@@ -69,7 +69,7 @@ export async function uploadFileDirect(
 export async function uploadViaCloudStorage(
   file: File,
   instruction: string,
-  model: string = 'gemini-2.5-flash-image-preview'
+  model: string = 'gemini-2.5-flash-image'
 ): Promise<UploadResult> {
   try {
     // 步骤1: 上传到云存储
@@ -124,7 +124,7 @@ export async function uploadViaCloudStorage(
 export async function uploadBase64Optimized(
   base64Data: string,
   instruction: string,
-  model: string = 'gemini-2.5-flash-image-preview',
+  model: string = 'gemini-2.5-flash-image',
   options: { maxSizeKB?: number; quality?: number } = {}
 ): Promise<UploadResult> {
   try {
@@ -176,7 +176,7 @@ export async function uploadBase64Optimized(
 export async function smartUpload(
   input: File | string,
   instruction: string,
-  model: string = 'gemini-2.5-flash-image-preview',
+  model: string = 'gemini-2.5-flash-image',
   options: UploadOptions = { method: 'auto' }
 ): Promise<UploadResult> {
   try {
@@ -271,7 +271,7 @@ function fileToBase64(file: File): Promise<string> {
 export async function batchUpload(
   files: File[],
   instruction: string,
-  model: string = 'gemini-2.5-flash-image-preview'
+  model: string = 'gemini-2.5-flash-image'
 ): Promise<UploadResult[]> {
   const results: UploadResult[] = []
   

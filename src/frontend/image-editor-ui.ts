@@ -1200,7 +1200,7 @@ export function generateImageEditorPage(): string {
                     <div class="model-selector-container">
                         <label for="model-selector" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">模型:</label>
                         <select id="model-selector">
-                            <option value="gemini-2.5-flash-image-preview">Gemini 2.5 Flash Image</option>
+                            <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
                             <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image</option>
                         </select>
                     </div>
@@ -3384,7 +3384,7 @@ export function generateImageEditorPage(): string {
             // 获取选中的模型
             function getSelectedModel() {
                 const modelSelector = document.getElementById('model-selector') as HTMLSelectElement;
-                return modelSelector ? modelSelector.value : 'gemini-2.5-flash-image-preview';
+                return modelSelector ? modelSelector.value : 'gemini-2.5-flash-image';
             }
 
             // 发送聊天消息或处理选中对象

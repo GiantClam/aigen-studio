@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       }, { status: 413 })
     }
 
-    const { imageData, instruction, model = 'gemini-2.5-flash-image-preview', canvasId } = await request.json()
+    const { imageData, instruction, model = 'gemini-2.5-flash-image', canvasId } = await request.json()
 
     if (!imageData || !instruction) {
       return NextResponse.json({

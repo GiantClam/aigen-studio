@@ -43,8 +43,8 @@ export function calculateImageCost(
  * 所有模型的价格配置
  */
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  'gemini-2.5-flash-image-preview': {
-    model: 'gemini-2.5-flash-image-preview',
+  'gemini-2.5-flash-image': {
+    model: 'gemini-2.5-flash-image',
     name: 'Gemini 2.5 Flash Image',
     inputCost: {
       perImage: 0, // 免费或包含在输出中

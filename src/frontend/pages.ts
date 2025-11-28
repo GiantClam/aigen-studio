@@ -3387,7 +3387,7 @@ export function generateMultiEngineCanvasPage(): string {
                     status.textContent = \`✨ 提示词已优化: \${cotResult.data.enhancedPrompt.substring(0, 50)}...\`;
 
                     setTimeout(async () => {
-                        status.textContent = '🎨 正在生成图像 (Vertex AI gemini-2.5-flash-image-preview)...';
+                        status.textContent = '🎨 正在生成图像 (Vertex AI gemini-2.5-flash-image)...';
 
                         // 生成图像
                         const imageResponse = await fetch('/api/ai/image/generate', {
@@ -3397,7 +3397,7 @@ export function generateMultiEngineCanvasPage(): string {
                             },
                             body: JSON.stringify({
                                 prompt: cotResult.data.enhancedPrompt,
-                                model: 'gemini-2.5-flash-image-preview',
+                                model: 'gemini-2.5-flash-image',
                                 width: 512,
                                 height: 512
                             })

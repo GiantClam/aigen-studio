@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     
     let imageData: string
     let instruction: string
-    let model = 'gemini-2.5-flash-image-preview'
+    let model = 'gemini-2.5-flash-image'
 
     // 方式1: 文件上传 (multipart/form-data)
     if (contentType.includes('multipart/form-data')) {

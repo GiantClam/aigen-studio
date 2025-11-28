@@ -302,7 +302,7 @@ export class VertexAIService {
     }
 
     try {
-      const model = 'gemini-2.5-flash-image-preview';
+      const model = 'gemini-2.5-flash-image';
       
       // 准备图像数据
       const image = this.base64ToVertexAIImage(imageData);
@@ -394,8 +394,8 @@ export class VertexAIService {
     try {
       // 支持多个模型
       const model = prompt.includes('model:') 
-        ? prompt.match(/model:([^\s]+)/)?.[1] || 'gemini-2.5-flash-image-preview'
-        : 'gemini-2.5-flash-image-preview';
+        ? prompt.match(/model:([^\s]+)/)?.[1] || 'gemini-2.5-flash-image'
+        : 'gemini-2.5-flash-image';
       
       // 从 prompt 中移除 model 参数
       const cleanPrompt = prompt.replace(/model:[^\s]+\s*/g, '').trim();
@@ -534,7 +534,7 @@ export class VertexAIService {
 
     try {
       // 支持多个模型，从 instruction 中提取或使用默认值
-      let model = 'gemini-2.5-flash-image-preview';
+      let model = 'gemini-2.5-flash-image';
       let cleanInstruction = prompt;
       
       if (prompt.includes('model:')) {
