@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 启用严格模式
@@ -19,6 +21,7 @@ const nextConfig = {
     // 确保模块解析正确
     config.resolve.alias = {
       ...config.resolve.alias,
+      '@nanocanvas': path.join(__dirname, 'src/external/nanocanvas')
     }
 
     // 优化模块解析

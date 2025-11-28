@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['google-auth-library'],
@@ -11,6 +13,10 @@ const nextConfig = {
         tls: false,
         crypto: false,
       }
+    }
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@nanocanvas': path.join(process.cwd(), 'src/external/nanocanvas')
     }
     return config
   },
