@@ -1,5 +1,6 @@
 import * as fabric from 'fabric'
-import { BaseTool, ToolType } from './BaseTool'
+import { BaseTool } from './BaseTool'
+import { ToolType } from './BaseTool'
 
 export interface ToolManagerConfig {
   canvas: fabric.Canvas

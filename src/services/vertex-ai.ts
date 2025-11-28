@@ -1,5 +1,4 @@
 import { GoogleAuth } from 'google-auth-library';
-import { GoogleGenAI } from '@google/genai';
 import type { Env } from '../types/env';
 
 /**
@@ -8,7 +7,7 @@ import type { Env } from '../types/env';
  */
 export class VertexAIService {
   private auth: GoogleAuth | null = null;
-  private genAI: GoogleGenAI | null = null;
+  private genAI: null = null;
   private env: Env;
   private projectId: string | null = null;
   private location: string = 'global';
@@ -92,14 +91,7 @@ export class VertexAIService {
         process.env.GOOGLE_CLOUD_PROJECT = project;
       }
 
-      // 初始化 Google GenAI 客户端
-      this.genAI = new GoogleGenAI({
-        vertexai: true,
-        project: project,
-        location: location
-      });
-
-      console.log('Vertex AI initialized successfully');
+      console.log('Vertex AI initialized successfully (REST client)');
     } catch (error) {
       console.error('Failed to initialize Vertex AI:', error instanceof Error ? error.message : String(error));
       this.auth = null;
@@ -111,7 +103,7 @@ export class VertexAIService {
    * 严格模式：如果不可用则抛出错误，不允许降级或模拟
    */
   isAvailable(): boolean {
-    const isConfigured = this.auth !== null && this.genAI !== null && this.projectId !== null;
+    const isConfigured = this.auth !== null && this.projectId !== null;
 
     if (!isConfigured) {
       const missingVars = [];

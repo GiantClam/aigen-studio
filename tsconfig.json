@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@nanocanvas/*": [
+        "./submodules/nanocanvas/*"
       ]
     },
     "target": "ES2017"
@@ -37,6 +40,8 @@
   ],
   "exclude": [
     "node_modules",
-    "external/nanocanvas/vite.config.ts"
+    "external/**",
+    "external/nanocanvas/vite.config.ts",
+    "submodules/**"
   ]
 }

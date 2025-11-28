@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
 export interface AIPanelProps {
-  onGenerate: (prompt: string, settings: GenerationSettings) => Promise<void>
+  onGenerateAction: (prompt: string, settings: GenerationSettings) => Promise<void>
   isGenerating?: boolean
   selectedObjectsCount?: number
   availableProviders?: string[]
@@ -20,7 +20,7 @@ export interface GenerationSettings {
 }
 
 export function AIPanel({
-  onGenerate,
+  onGenerateAction,
   isGenerating = false,
   selectedObjectsCount = 0,
   availableProviders = ['gemini']
@@ -49,7 +49,7 @@ export function AIPanel({
   const handleSubmit = async () => {
     if (!prompt.trim() || isGenerating) return
 
-    await onGenerate(prompt, settings)
+    await onGenerateAction(prompt, settings)
     setPrompt('')
   }
 

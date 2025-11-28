@@ -133,8 +133,9 @@ const App: React.FC<NanoCanvasProps> = ({ config, initialCanvasState, onBillingE
         canvas.on('mouse:down', function(opt: any) {
           const evt = opt.e; if (opt.button === 3 || opt.e.button === 2) { const activeObj = canvas.getActiveObject(); if (opt.target && opt.target !== activeObj) { canvas.setActiveObject(opt.target); } setContextMenu({ visible: true, x: evt.clientX, y: evt.clientY, hasSelection: !!canvas.getActiveObject() }); return; }
           setContextMenu(prev => ({ ...prev, visible: false })); setPromptPopup(prev => ({ ...prev, visible: false }));
-          if (evt.altKey === true) { isDragging = true; canvas.selection = false; lastPosX = evt.clientX; lastPosY = evt.clientY; return; }
-          const pointer = canvas.getPointer(evt); const tool = (canvas as any).customTool; const props = (canvas as any).customProps || {};
+          const tool = (canvas as any).customTool;
+          if (evt.altKey === true || tool === 'move') { isDragging = true; canvas.selection = false; lastPosX = evt.clientX; lastPosY = evt.clientY; return; }
+          const pointer = canvas.getPointer(evt); const props = (canvas as any).customProps || {};
           if (tool === 'rect' || tool === 'circle') {
              isDrawingShape = true; shapeOriginX = pointer.x; shapeOriginY = pointer.y;
              if (tool === 'rect') { activeShape = new fabric.Rect({ left: shapeOriginX, top: shapeOriginY, originX: 'left', originY: 'top', width: 0, height: 0, stroke: props.stroke || '#000000', strokeWidth: props.strokeWidth || 3, fill: 'transparent', transparentCorners: false }); }
@@ -174,6 +175,7 @@ const App: React.FC<NanoCanvasProps> = ({ config, initialCanvasState, onBillingE
        (fabricRef.current as any).customTool = activeTool;
        (fabricRef.current as any).customProps = selectedProperties;
        if (activeTool === 'select') { fabricRef.current.defaultCursor = 'default'; fabricRef.current.isDrawingMode = false; }
+       else if (activeTool === 'move') { fabricRef.current.defaultCursor = 'grab'; fabricRef.current.isDrawingMode = false; }
        else if (activeTool === 'draw') { fabricRef.current.isDrawingMode = true; if(fabricRef.current.freeDrawingBrush) { fabricRef.current.freeDrawingBrush.color = selectedProperties.stroke; fabricRef.current.freeDrawingBrush.width = selectedProperties.strokeWidth; } }
        else { fabricRef.current.defaultCursor = 'crosshair'; fabricRef.current.isDrawingMode = false; fabricRef.current.discardActiveObject(); fabricRef.current.requestRenderAll(); }
     }
@@ -202,7 +204,7 @@ const App: React.FC<NanoCanvasProps> = ({ config, initialCanvasState, onBillingE
     if (!fabricRef.current) return; const activeObj = fabricRef.current.getActiveObject(); if (!activeObj) return; const dataURL = activeObj.toDataURL({ format: 'png', quality: 1, multiplier: 4 }); const link = document.createElement('a'); link.download = `nano-selection-${Date.now()}.png`; link.href = dataURL; document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
-  const handleGenerate = async (prompt: string, model: ModelType) => {
+  const handleGenerate = async (prompt: string, model: ModelType, options?: { includeViewport: boolean }) => {
     if (!fabricRef.current) return;
     setIsGenerating(true);
     try {
@@ -213,7 +215,8 @@ const App: React.FC<NanoCanvasProps> = ({ config, initialCanvasState, onBillingE
         else if (hasImages && hasShapes) { const flatBase64 = activeObj.toDataURL({ format: 'png', multiplier: calculatedMultiplier }).split(',')[1]; imagesPayload = [flatBase64]; const instructions: string[] = []; objs.forEach((o: any) => { if (['rect', 'circle'].includes(o.type)) { const colorName = getColorName(o.stroke || o.fill); const shapeName = o.type === 'rect' ? 'rectangle' : 'circle'; instructions.push(`remove the ${colorName} ${shapeName} annotation`); } }); if (instructions.length > 0) { finalPrompt += ` (IMPORTANT: ${instructions.join(', ')} from the final result, but use it as a reference for the edit).`; } }
         else { const flatBase64 = activeObj.toDataURL({ format: 'png', multiplier: calculatedMultiplier }).split(',')[1]; imagesPayload = [flatBase64]; }
       } else {
-        visualWidth = 400; refWidth = canvas.width; refHeight = canvas.height; const vpt = canvas.viewportTransform; targetX = (-vpt[4] + canvas.width / 2) / vpt[0] - (visualWidth / 2); targetY = (-vpt[5] + canvas.height / 2) / vpt[3] - (visualWidth / 2); if (model !== ModelType.VEO_FAST && model !== ModelType.VEO_HQ) { const base64 = canvas.toDataURL({ format: 'png' }).split(',')[1]; imagesPayload = [base64]; }
+        visualWidth = 400; refWidth = canvas.width; refHeight = canvas.height; const vpt = canvas.viewportTransform; targetX = (-vpt[4] + canvas.width / 2) / vpt[0] - (visualWidth / 2); targetY = (-vpt[5] + canvas.height / 2) / vpt[3] - (visualWidth / 2);
+        if (options?.includeViewport && model !== ModelType.VEO_FAST && model !== ModelType.VEO_HQ) { const base64 = canvas.toDataURL({ format: 'png' }).split(',')[1]; imagesPayload = [base64]; }
       }
 
       if (model === ModelType.VEO_FAST || model === ModelType.VEO_HQ) {

@@ -66,6 +66,7 @@ export default function WorkspacePage() {
   const [loginOpen, setLoginOpen] = useState(false)
   const [canvases, setCanvases] = useState<Canvas[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
+  const [myCanvases, setMyCanvases] = useState<Canvas[]>([])
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [favoriteTemplateIds, setFavoriteTemplateIds] = useState<Set<string>>(new Set())
@@ -92,7 +93,6 @@ export default function WorkspacePage() {
       }
       
       if (!userId) {
-        // 匿名用户：仅显示公开模板
         const templateCanvases: Canvas[] = publicTemplates.map((tpl: Template) => ({
           id: tpl.id,
           title: tpl.name,
@@ -109,6 +109,21 @@ export default function WorkspacePage() {
           tags: tpl.tags || [],
           isFavorited: favoriteTemplateIds.has(tpl.id)
         }))
+        let localCanvases: Canvas[] = []
+        try {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('nc_projects') : null
+          if (raw) {
+            const projects = JSON.parse(raw)
+            localCanvases = (projects || []).map((p: any) => ({
+              id: `local-${p.id}`,
+              title: p.name || '未命名画布',
+              type: 'template' as const,
+              thumbnail: p.thumbnail,
+              lastModified: new Date(p.updatedAt || Date.now()).toLocaleString()
+            }))
+          }
+        } catch {}
+        setMyCanvases(localCanvases)
         setCanvases(templateCanvases)
         return
       }
@@ -116,16 +131,16 @@ export default function WorkspacePage() {
       // 已登录用户：加载用户画布和模板
       const userCanvases = await listUserCanvases(userId)
       
-      const templateCanvases: Canvas[] = [
-        ...userCanvases.map((r) => ({
-          id: r.id,
-          title: r.canvas_title || '未命名画布',
-          type: 'template' as const,
-          lastModified: new Date(r.updated_at).toLocaleString(),
-          difficultyLevel: 'beginner' as const,
-          estimatedTime: 15,
-          authorName: '我'
-        })),
+      const userCanvasCards: Canvas[] = userCanvases.map((r) => ({
+        id: r.id,
+        title: r.canvas_title || '未命名画布',
+        type: 'template' as const,
+        lastModified: new Date(r.updated_at).toLocaleString(),
+        difficultyLevel: 'beginner' as const,
+        estimatedTime: 15,
+        authorName: '我'
+      }))
+      let templateCanvases: Canvas[] = [
         ...publicTemplates.map((tpl: Template) => ({
           id: tpl.id,
           title: tpl.name,
@@ -143,13 +158,31 @@ export default function WorkspacePage() {
           isFavorited: favoriteTemplateIds.has(tpl.id)
         }))
       ]
-      
+      try {
+        const raw = typeof window !== 'undefined' ? localStorage.getItem('nc_projects') : null
+        if (raw) {
+          const projects = JSON.parse(raw)
+          const localCanvases: Canvas[] = (projects || []).map((p: any) => ({
+            id: `local-${p.id}`,
+            title: p.name || '未命名画布',
+            type: 'template' as const,
+            thumbnail: p.thumbnail,
+            lastModified: new Date(p.updatedAt || Date.now()).toLocaleString()
+          }))
+          setMyCanvases([...localCanvases, ...userCanvasCards])
+        } else {
+          setMyCanvases(userCanvasCards)
+        }
+      } catch {}
       setCanvases(templateCanvases)
 
-      // 读取最近任务状态并合并
       const statuses = await fetchLastTaskStatusByCanvasIds(userCanvases.map(r => r.id))
       setCanvases(prev => prev.map(c => ({ 
         ...c, 
+        taskStatus: statuses[c.id]?.status as any || c.taskStatus
+      })))
+      setMyCanvases(prev => prev.map(c => ({
+        ...c,
         taskStatus: statuses[c.id]?.status as any || c.taskStatus
       })))
     }
@@ -181,6 +214,12 @@ export default function WorkspacePage() {
   }
 
   const filteredCanvases = canvases.filter(canvas => {
+    const matchesSearch = canvas.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         canvas.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         canvas.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    return matchesSearch
+  })
+  const filteredMyCanvases = myCanvases.filter(canvas => {
     const matchesSearch = canvas.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          canvas.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          canvas.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -247,6 +286,11 @@ export default function WorkspacePage() {
       return
     }
     // 否则视为用户画布，进入编辑器
+    if (canvasId.startsWith('local-')) {
+      const pid = canvasId.replace('local-', '')
+      router.push(`/standard-editor?localProjectId=${pid}`)
+      return
+    }
     router.push(`/editor-next?canvasId=${canvasId}&tpl=template`)
   }
 
@@ -351,6 +395,37 @@ export default function WorkspacePage() {
                 )
               })}
             </div>
+          </div>
+
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                </div>
+                <h2 className="text-lg font-medium text-gray-900">我的画布</h2>
+              </div>
+            </div>
+            {filteredMyCanvases.length > 0 ? (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  : 'grid-cols-1'
+              }`}>
+                {filteredMyCanvases.map((canvas) => (
+                  <CanvasCard 
+                    key={`my-${canvas.id}`} 
+                    {...canvas} 
+                    onOpen={handleOpenCanvas} 
+                    onRename={handleRename}
+                    onDelete={handleDelete}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500 text-sm">暂无我的画布</div>
+            )}
           </div>
 
           {/* Featured Templates */}

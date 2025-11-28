@@ -4,3 +4,6 @@
 [submodule "external/nanocanvas"]
 	path = external/nanocanvas
 	url = https://github.com/GiantClam/nanocanvas.git
+[submodule "submodules/nanocanvas"]
+	path = submodules/nanocanvas
+	url = https://github.com/GiantClam/nanocanvas

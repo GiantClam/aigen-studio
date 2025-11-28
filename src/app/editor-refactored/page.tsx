@@ -316,7 +316,7 @@ export default function EditorRefactored() {
 
       <div className="w-96 h-full overflow-hidden">
         <AIPanel
-          onGenerate={handleGenerate}
+          onGenerateAction={handleGenerate}
           isGenerating={isGenerating}
           selectedObjectsCount={selectedObjectsCount}
           availableProviders={availableProviders}

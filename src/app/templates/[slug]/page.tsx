@@ -41,7 +41,8 @@ export default function TemplateDetailPage() {
   useEffect(() => {
     const fetchTemplateBySlug = async () => {
       try {
-        const slug = params.slug as string
+        const slug = (params as any)?.slug as string | undefined
+        if (!slug) { setLoading(false); return }
         const response = await fetch(`/api/templates/slug/${slug}`)
         if (response.ok) {
           const tpl = await response.json()
@@ -57,10 +58,8 @@ export default function TemplateDetailPage() {
       }
     }
 
-    if (params.slug) {
-      fetchTemplateBySlug()
-    }
-  }, [params.slug, router])
+    fetchTemplateBySlug()
+  }, [params, router])
 
   // 复制提示词
   const copyPrompt = () => {

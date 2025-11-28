@@ -4,7 +4,7 @@ import './globals.css'
 import SessionProviderClient from '@/components/SessionProviderClient'
 import Link from 'next/link'
 import Image from 'next/image'
-import SiteFooter from '@/components/SiteFooter'
+import LayoutBody from './LayoutBody'
 import Script from 'next/script'
 import { Suspense } from 'react'
 import ChunkErrorHandler from '@/components/ChunkErrorHandler'
@@ -116,11 +116,7 @@ export default function RootLayout({
         <ChunkErrorHandler />
         <ErrorBoundary>
           <SessionProviderClient>
-            <div className="min-h-screen flex flex-col">
-              <main className="flex-1">{children}</main>
-              {/* 统一 Footer 组件，并在编辑器页自动隐藏 */}
-              <SiteFooter />
-            </div>
+            <LayoutBody>{children}</LayoutBody>
           </SessionProviderClient>
         </ErrorBoundary>
       </body>
