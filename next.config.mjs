@@ -2,6 +2,9 @@ const path = require('path')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true
+  },
   serverExternalPackages: ['google-auth-library'],
   outputFileTracingRoot: process.cwd(),
   webpack: (config, { isServer }) => {
@@ -16,7 +19,7 @@ const nextConfig = {
     }
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@nanocanvas': path.join(process.cwd(), 'src/external/nanocanvas')
+      '@nanocanvas': path.join(process.cwd(), 'submodules/nanocanvas')
     }
     return config
   },

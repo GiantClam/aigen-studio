@@ -40,8 +40,8 @@
   ],
   "exclude": [
     "node_modules",
-    "external/**",
     "external/nanocanvas/vite.config.ts",
-    "submodules/**"
+    "submodules/nanocanvas/vite.config.ts",
+    "external/**"
   ]
 }

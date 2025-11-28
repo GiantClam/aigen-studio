@@ -21,7 +21,7 @@ const nextConfig = {
     // 确保模块解析正确
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@nanocanvas': path.join(__dirname, 'src/external/nanocanvas')
+      '@nanocanvas': path.join(__dirname, 'submodules/nanocanvas')
     }
 
     // 优化模块解析
