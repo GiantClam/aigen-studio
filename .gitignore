@@ -75,6 +75,7 @@ jspm_packages/
 .idea/
 *.swp
 *.swo
+.trae/
 
 # OS generated files
 Thumbs.db
