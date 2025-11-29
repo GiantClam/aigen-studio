@@ -649,8 +649,9 @@ export class VertexAIService {
         success: false,
         error: `Failed to edit image with Vertex AI: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
-  }
+  } 
+ 
+ 
 
-  
 }
 }
