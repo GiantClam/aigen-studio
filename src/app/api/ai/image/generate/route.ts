@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { VertexAIService } from '@/services/vertex-ai'
 import { createCanvasTask, updateCanvasTaskStatus } from '@/services/canvas-task-service'
 
+export const runtime = 'nodejs'
+
 // 环境变量适配器
 const getEnv = () => ({
   GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT,
@@ -18,14 +20,16 @@ const getEnv = () => ({
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json()
     const {
       prompt,
       image,
+      imageUrl,
       model = 'gemini-2.5-flash-image',
       width = 1024,
       height = 1024,
       canvasId
-    } = await request.json()
+    } = body
 
     if (!prompt) {
       return NextResponse.json({
@@ -60,8 +64,23 @@ export async function POST(request: NextRequest) {
       taskId = t.taskId
     }
 
-    const result = image
-      ? await vertexAI.editImage(enhancedPrompt, image)
+    // If imageUrl provided, fetch and convert to data URL for edit
+    let inputForEdit: string | undefined = image
+    if (!inputForEdit && imageUrl && typeof imageUrl === 'string') {
+      try {
+        const res = await fetch(imageUrl)
+        if (!res.ok) throw new Error(`Fetch imageUrl failed: ${res.status} ${res.statusText}`)
+        const ct = res.headers.get('content-type') || 'image/png'
+        const buf = Buffer.from(await res.arrayBuffer())
+        const b64 = buf.toString('base64')
+        inputForEdit = `data:${ct};base64,${b64}`
+      } catch (e) {
+        console.warn('Failed to fetch imageUrl, will try generate without edit:', e instanceof Error ? e.message : String(e))
+      }
+    }
+
+    const result = inputForEdit
+      ? await vertexAI.editImage(enhancedPrompt, inputForEdit)
       : await vertexAI.generateImage(enhancedPrompt)
     
     console.log('Vertex AI result:', result)
