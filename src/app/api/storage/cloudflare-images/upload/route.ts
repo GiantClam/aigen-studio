@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       uploadFormData.append('metadata', JSON.stringify({ folder }))
     }
 
+    console.log('Cloudflare Images upload start', { name: file.name, size: (file as any).size, type: (file as any).type, folder })
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`,
       {
@@ -68,14 +69,15 @@ export async function POST(request: NextRequest) {
     const imageId = data.result.id
     const filename = data.result.filename || file.name
 
-    // 生成不同尺寸的 URL
-    const baseUrl = `https://imagedelivery.net/${accountHash}/${imageId}/public`
-    
+    const cfVariants: string[] = Array.isArray(data.result.variants) ? data.result.variants : []
+    const primaryVariant = cfVariants[0] || `https://imagedelivery.net/${accountHash}/${imageId}/public`
+    console.log('Cloudflare Images upload success', { imageId, filename, variantsCount: cfVariants.length, primaryVariant })
     const variants = {
-      original: baseUrl,
-      display: `${baseUrl}?w=800&q=85`,      // 展示用：800px，质量 85%
-      thumbnail: `${baseUrl}?w=200&q=75`,    // 缩略图：200px，质量 75%
-      large: `${baseUrl}?w=1920&q=90`,        // 大图：1920px，质量 90%
+      original: primaryVariant,
+      display: primaryVariant,
+      thumbnail: primaryVariant,
+      large: primaryVariant,
+      all: cfVariants
     }
 
     return NextResponse.json({
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
       data: {
         imageId,
         filename,
-        url: baseUrl,
+        url: primaryVariant,
         variants,
         metadata: data.result.metadata || {},
         uploaded: data.result.uploaded,
@@ -224,4 +226,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-
