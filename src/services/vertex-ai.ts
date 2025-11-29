@@ -238,26 +238,7 @@ export class VertexAIService {
     return {
       maxOutputTokens: 32768,
       temperature: 1,
-      topP: 0.95,
-      responseModalities: ["TEXT", "IMAGE"] as any,
-      safetySettings: [
-        {
-          category: 'HARM_CATEGORY_HATE_SPEECH' as any,
-          threshold: 'OFF' as any,
-        },
-        {
-          category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
-          threshold: 'OFF' as any,
-        },
-        {
-          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
-          threshold: 'OFF' as any,
-        },
-        {
-          category: 'HARM_CATEGORY_HARASSMENT' as any,
-          threshold: 'OFF' as any,
-        }
-      ] as any,
+      topP: 0.95
     };
   }
 
@@ -317,8 +298,7 @@ export class VertexAIService {
           { role: 'user', parts: [image, text] }
         ],
         config: {
-          ...this.getGenerationConfig(),
-          responseModalities: ["TEXT"] // 只需要文本响应
+          ...this.getGenerationConfig()
         },
       };
 
@@ -336,7 +316,13 @@ export class VertexAIService {
         },
         body: JSON.stringify({
           contents: req.contents,
-          generationConfig: req.config
+          generationConfig: req.config,
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any }
+          ] as any
         })
       });
 
@@ -408,26 +394,7 @@ export class VertexAIService {
       const generationConfig = {
         maxOutputTokens: 32768,
         temperature: 1,
-        topP: 0.95,
-        responseModalities: ["TEXT", "IMAGE"],
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_HATE_SPEECH' as any,
-            threshold: 'OFF' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
-            threshold: 'OFF' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
-            threshold: 'OFF' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_HARASSMENT' as any,
-            threshold: 'OFF' as any,
-          }
-        ],
+        topP: 0.95
       };
 
       // 构建请求
@@ -454,7 +421,13 @@ export class VertexAIService {
         },
         body: JSON.stringify({
           contents: req.contents,
-          generationConfig: req.config
+          generationConfig: req.config,
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any }
+          ] as any
         })
       });
 
@@ -572,27 +545,8 @@ export class VertexAIService {
       // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
       const generationConfig = {
         maxOutputTokens: 8192,
-        temperature: 0.4,  // 适中的温度，既保证一致性又允许创造性
-        topP: 0.95,
-        responseModalities: ["IMAGE", "TEXT"],  // 必须包含TEXT，纯IMAGE不支持
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_HATE_SPEECH' as any,
-            threshold: 'BLOCK_NONE' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any,
-            threshold: 'BLOCK_NONE' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any,
-            threshold: 'BLOCK_NONE' as any,
-          },
-          {
-            category: 'HARM_CATEGORY_HARASSMENT' as any,
-            threshold: 'BLOCK_NONE' as any,
-          }
-        ],
+        temperature: 0.4,
+        topP: 0.95
       };
 
       // 构建请求
@@ -616,7 +570,13 @@ export class VertexAIService {
         },
         body: JSON.stringify({
           contents: req.contents,
-          generationConfig: req.config
+          generationConfig: req.config,
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
+            { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any }
+          ] as any
         })
       });
 
