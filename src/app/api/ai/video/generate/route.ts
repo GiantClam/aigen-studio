@@ -118,8 +118,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, data: { videoUrl: saved.url, path: saved.path, contentType: saved.contentType } })
       }
       if (uri) {
-        const res = await fetch(uri)
+        const res = await fetch(uri, { headers: { 'Authorization': `Bearer ${access.token}` } })
         if (!res.ok) {
+          const txt = await res.text().catch(() => '')
+          console.error('Fetch generated uri failed', { status: res.status, statusText: res.statusText, txt, uri })
           return NextResponse.json({ success: false, error: `Fetch generated uri failed: ${res.status} ${res.statusText}` }, { status: 502 })
         }
         const blob = await res.blob()
