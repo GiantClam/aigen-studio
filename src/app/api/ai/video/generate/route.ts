@@ -21,7 +21,7 @@ const getR2 = () => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { prompt, model = 'veo-2.0-generate-001', videoUrl, videoDataBase64, imageDataUrl, folder = 'videos', contentType = 'video/mp4' } = body
+    const { prompt, model = 'veo-2.0-generate-001', videoUrl, videoDataBase64, imageDataUrl, imageUrl, folder = 'videos', contentType = 'video/mp4' } = body
 
     if (!prompt) {
       return NextResponse.json({ success: false, error: 'prompt is required' }, { status: 400 })
@@ -68,6 +68,16 @@ export async function POST(request: NextRequest) {
         const b64 = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl
         const mimeType = imageDataUrl.includes('data:') ? imageDataUrl.split(';')[0].replace('data:', '') : 'image/png'
         parts.unshift({ inlineData: { mimeType, data: b64 } })
+      } else if (imageUrl && typeof imageUrl === 'string') {
+        try {
+          const resImg = await fetch(imageUrl)
+          if (resImg.ok) {
+            const ct = resImg.headers.get('content-type') || 'image/png'
+            const buf = Buffer.from(await resImg.arrayBuffer())
+            const b64 = buf.toString('base64')
+            parts.unshift({ inlineData: { mimeType: ct, data: b64 } })
+          }
+        } catch {}
       }
 
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`
