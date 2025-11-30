@@ -22,6 +22,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { prompt, model = 'veo-2.0-generate-001', videoUrl, videoDataBase64, imageDataUrl, imageUrl, folder = 'videos', contentType = 'video/mp4' } = body
+    console.log('Video.generate request', {
+      ts: new Date().toISOString(),
+      model,
+      promptLen: typeof prompt === 'string' ? prompt.length : 0,
+      hasVideoUrl: !!videoUrl,
+      hasVideoBase64: !!videoDataBase64,
+      hasImageDataUrl: !!imageDataUrl,
+      hasImageUrl: !!imageUrl,
+      folder,
+      contentType
+    })
 
     if (!prompt) {
       return NextResponse.json({ success: false, error: 'prompt is required' }, { status: 400 })
@@ -38,12 +49,14 @@ export async function POST(request: NextRequest) {
       const blob = await res.blob()
       const file = new File([blob], r2.generateFileName(undefined, 'video_'), { type: blob.type || contentType })
       const saved = await r2.uploadFile(file, file.name, folder)
+      console.log('Video.generate save from videoUrl', { size: (blob as any).size, savedUrl: saved.url, path: saved.path, ct: saved.contentType })
       return NextResponse.json({ success: true, data: { videoUrl: saved.url, path: saved.path, contentType: saved.contentType } })
     }
 
     // If client passes base64 video content, store it directly
     if (videoDataBase64 && typeof videoDataBase64 === 'string') {
       const saved = await r2.uploadBase64(videoDataBase64, r2.generateFileName(undefined, 'video_'), folder, contentType)
+      console.log('Video.generate save from base64', { b64Len: videoDataBase64.length, savedUrl: saved.url, path: saved.path, ct: saved.contentType })
       return NextResponse.json({ success: true, data: { videoUrl: saved.url, path: saved.path, contentType: saved.contentType } })
     }
 
@@ -81,6 +94,7 @@ export async function POST(request: NextRequest) {
       }
 
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`
+      console.log('Vertex.generateContent call', { url, location, project, model, partsCount: parts.length })
       const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${access.token}`, 'Content-Type': 'application/json' },
@@ -97,13 +111,16 @@ export async function POST(request: NextRequest) {
       })
       if (!resp.ok) {
         const txt = await resp.text()
+        console.error('Vertex.generateContent failed', { status: resp.status, statusText: resp.statusText, txt })
         return NextResponse.json({ success: false, error: `Vertex error: ${resp.status} ${resp.statusText} - ${txt}` }, { status: 502 })
       }
       const json = await resp.json() as any
+      console.log('Vertex.generateContent response received', { hasCandidates: !!json.candidates, candidatesLen: json.candidates?.length })
       let inlineVideoBase64: string | undefined
       let mimeType: string | undefined
       let uri: string | undefined
       if (json.candidates && json.candidates[0]?.content?.parts) {
+        console.log('Vertex parts', { partsLen: json.candidates[0].content.parts.length })
         for (const part of json.candidates[0].content.parts) {
           if (part.inlineData && String(part.inlineData.mimeType || '').startsWith('video/')) {
             inlineVideoBase64 = part.inlineData.data
@@ -112,12 +129,15 @@ export async function POST(request: NextRequest) {
             uri = part.fileData.uri
           }
         }
+        console.log('Vertex parsed parts summary', { hasInline: !!inlineVideoBase64, mimeType, hasUri: !!uri, uri })
       }
       if (inlineVideoBase64) {
         const saved = await r2.uploadBase64(inlineVideoBase64, r2.generateFileName(undefined, 'video_'), folder, mimeType || contentType)
+        console.log('Video.generate saved inline', { b64Len: inlineVideoBase64.length, savedUrl: saved.url, path: saved.path, ct: saved.contentType })
         return NextResponse.json({ success: true, data: { videoUrl: saved.url, path: saved.path, contentType: saved.contentType } })
       }
       if (uri) {
+        console.log('Video.generate fetch uri', { uri })
         const res = await fetch(uri, { headers: { 'Authorization': `Bearer ${access.token}` } })
         if (!res.ok) {
           const txt = await res.text().catch(() => '')
@@ -127,6 +147,7 @@ export async function POST(request: NextRequest) {
         const blob = await res.blob()
         const file = new File([blob], r2.generateFileName(undefined, 'video_'), { type: blob.type || contentType })
         const saved = await r2.uploadFile(file, file.name, folder)
+        console.log('Video.generate saved from uri', { size: (blob as any).size, savedUrl: saved.url, path: saved.path, ct: saved.contentType })
         return NextResponse.json({ success: true, data: { videoUrl: saved.url, path: saved.path, contentType: saved.contentType } })
       }
       return NextResponse.json({ success: false, error: 'No video content returned from Vertex' }, { status: 502 })
