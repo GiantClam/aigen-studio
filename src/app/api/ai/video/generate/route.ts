@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     if (!videoUrl && !videoDataBase64) {
       // Attempt Vertex AI Veo generation via REST
       const project = process.env.GOOGLE_CLOUD_PROJECT
-      const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-east5'
+      const defaultLocation = process.env.GOOGLE_CLOUD_LOCATION || 'us-east5'
+      const videoLocationOverride = process.env.VIDEO_CLOUD_LOCATION || 'us-central1'
+      const location = String(model || '').startsWith('veo') ? videoLocationOverride : defaultLocation
       const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
       if (!project || !key) {
         return NextResponse.json({ success: false, error: 'Vertex AI not configured' }, { status: 503 })
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
       }
 
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`
-      console.log('Vertex.generateContent call', { url, location, project, model, partsCount: parts.length })
+      console.log('Vertex.generateContent call', { url, location, defaultLocation, project, model, partsCount: parts.length })
       const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${access.token}`, 'Content-Type': 'application/json' },
