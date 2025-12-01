@@ -41,6 +41,10 @@ export interface PointRule {
 }
 
 export class PointsService {
+  static DEFAULT_REGISTRATION_POINTS = 500
+  static DEFAULT_DAILY_LOGIN_POINTS = 100
+  static DEFAULT_COST_NANO_1 = 10
+  static DEFAULT_COST_NANO_2 = 50
   /**
    * 获取用户积分信息
    */
@@ -137,15 +141,9 @@ export class PointsService {
         }
       }
 
-      // 检查积分规则
+      // 检查积分规则（若不存在则使用默认值）
       const rule = await this.getPointRule('daily_login')
-      if (!rule || !rule.is_active) {
-        return {
-          success: false,
-          points: 0,
-          message: '每日登录积分规则未启用'
-        }
-      }
+      const dailyPoints = rule && rule.is_active ? rule.points_value : this.DEFAULT_DAILY_LOGIN_POINTS
 
       const today = new Date().toISOString().split('T')[0]
       const transactionId = `${userId}_daily_${Date.now()}`
@@ -157,7 +155,7 @@ export class PointsService {
           id: transactionId,
           user_id: userId,
           login_date: today,
-          points_awarded: rule.points_value
+          points_awarded: dailyPoints
         })
 
       if (loginError) {
@@ -175,7 +173,7 @@ export class PointsService {
         .insert({
           id: transactionId,
           user_id: userId,
-          points: rule.points_value,
+          points: dailyPoints,
           transaction_type: 'earn',
           source: 'daily_login',
           description: '每日登录赠送积分'
@@ -192,8 +190,8 @@ export class PointsService {
 
       return {
         success: true,
-        points: rule.points_value,
-        message: `每日登录获得 ${rule.points_value} 积分`
+        points: dailyPoints,
+        message: `每日登录获得 ${dailyPoints} 积分`
       }
     } catch (error) {
       console.error('处理每日登录积分异常:', error)
@@ -208,7 +206,7 @@ export class PointsService {
   /**
    * 扣除 AI 生成图片积分
    */
-  static async deductAIGenerationPoints(userId: string): Promise<{
+  static async deductAIGenerationPoints(userId: string, model?: string): Promise<{
     success: boolean
     points: number
     message: string
@@ -224,17 +222,24 @@ export class PointsService {
         }
       }
 
-      // 检查积分规则
-      const rule = await this.getPointRule('ai_generation')
-      if (!rule || !rule.is_active) {
-        return {
-          success: false,
-          points: 0,
-          message: 'AI 生成积分规则未启用'
+      // 根据模型计算扣费（优先读取规则，其次使用默认值）
+      let pointsToDeduct = 0
+      if (model) {
+        const m = (model || '').toLowerCase()
+        if (m.includes('gemini-2.5-flash-image')) {
+          const ruleNano1 = await this.getPointRule('ai_generation_nano1')
+          pointsToDeduct = Math.abs(ruleNano1 && ruleNano1.is_active ? ruleNano1.points_value : this.DEFAULT_COST_NANO_1)
+        } else if (m.includes('gemini-3-pro-image-preview')) {
+          const ruleNano2 = await this.getPointRule('ai_generation_nano2')
+          pointsToDeduct = Math.abs(ruleNano2 && ruleNano2.is_active ? ruleNano2.points_value : this.DEFAULT_COST_NANO_2)
+        } else {
+          const ruleGeneric = await this.getPointRule('ai_generation')
+          pointsToDeduct = Math.abs(ruleGeneric && ruleGeneric.is_active ? ruleGeneric.points_value : this.DEFAULT_COST_NANO_1)
         }
+      } else {
+        const ruleGeneric = await this.getPointRule('ai_generation')
+        pointsToDeduct = Math.abs(ruleGeneric && ruleGeneric.is_active ? ruleGeneric.points_value : this.DEFAULT_COST_NANO_1)
       }
-
-      const pointsToDeduct = Math.abs(rule.points_value)
       
       if (userPoints.current_points < pointsToDeduct) {
         return {
@@ -274,7 +279,7 @@ export class PointsService {
       return {
         success: true,
         points: -pointsToDeduct,
-        message: `成功扣除 ${pointsToDeduct} 积分用于 AI 生成`
+        message: `成功扣除 ${pointsToDeduct} 积分用于 AI 生成（模型：${model || '默认'}）`
       }
     } catch (error) {
       console.error('扣除 AI 生成积分异常:', error)
@@ -329,6 +334,85 @@ export class PointsService {
     } catch (error) {
       console.error('获取积分规则异常:', error)
       return []
+    }
+  }
+
+  /**
+   * 新增或更新单条积分规则（按 rule_type 唯一）
+   */
+  static async upsertRule(rule: Omit<PointRule, 'id'> & { rule_type: string }): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('nanobanana_point_rules')
+        .upsert(
+          {
+            rule_name: rule.rule_name,
+            rule_type: rule.rule_type,
+            points_value: rule.points_value,
+            is_active: rule.is_active,
+            description: rule.description
+          },
+          { onConflict: 'rule_type' }
+        )
+
+      if (error) {
+        console.error('新增/更新积分规则失败:', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('新增/更新积分规则异常:', error)
+      return false
+    }
+  }
+
+  /**
+   * 写入默认积分与扣费规则
+   */
+  static async ensureDefaultRules(): Promise<{ success: boolean; message: string }> {
+    const rules: Array<Omit<PointRule, 'id'> & { rule_type: string }> = [
+      {
+        rule_name: '新用户注册赠送积分',
+        rule_type: 'registration',
+        points_value: this.DEFAULT_REGISTRATION_POINTS,
+        is_active: true,
+        description: '用户注册时一次性赠送积分'
+      },
+      {
+        rule_name: '每日登录赠送积分',
+        rule_type: 'daily_login',
+        points_value: this.DEFAULT_DAILY_LOGIN_POINTS,
+        is_active: true,
+        description: '用户每天首次登录赠送积分'
+      },
+      {
+        rule_name: 'AI 生成扣费（NANO_BANANA_1）',
+        rule_type: 'ai_generation_nano1',
+        points_value: this.DEFAULT_COST_NANO_1,
+        is_active: true,
+        description: '使用 gemini-2.5-flash-image 进行生成时扣除积分'
+      },
+      {
+        rule_name: 'AI 生成扣费（NANO_BANANA_2）',
+        rule_type: 'ai_generation_nano2',
+        points_value: this.DEFAULT_COST_NANO_2,
+        is_active: true,
+        description: '使用 gemini-3-pro-image-preview 进行生成时扣除积分'
+      }
+    ]
+
+    try {
+      for (const rule of rules) {
+        const ok = await this.upsertRule(rule)
+        if (!ok) {
+          return { success: false, message: `写入规则失败: ${rule.rule_type}` }
+        }
+      }
+      return { success: true, message: '默认积分与扣费规则写入成功' }
+    } catch (error) {
+      console.error('写入默认规则异常:', error)
+      return { success: false, message: '写入默认规则异常' }
     }
   }
 
@@ -403,9 +487,9 @@ export class PointsService {
         }
       }
 
-      // 获取注册积分规则，若不存在或未启用，则使用默认 100 分
+      // 获取注册积分规则，若不存在或未启用，则使用默认 500 分
       const rule = await this.getPointRule('registration')
-      const pointsValue = rule && rule.is_active ? rule.points_value : 100
+      const pointsValue = rule && rule.is_active ? rule.points_value : this.DEFAULT_REGISTRATION_POINTS
 
       // 创建用户积分记录
       const { error: pointsError } = await supabase

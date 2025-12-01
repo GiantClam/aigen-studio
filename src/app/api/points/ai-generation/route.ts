@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    const result = await PointsService.deductAIGenerationPoints(user.id)
+    const { model } = await request.json().catch(() => ({ }))
+
+    const result = await PointsService.deductAIGenerationPoints(user.id, model)
     
     if (!result.success) {
       return NextResponse.json({

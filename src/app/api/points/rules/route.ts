@@ -23,6 +23,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const ruleType = searchParams.get('type')
+    const seed = searchParams.get('seed')
+
+    // 开发环境支持通过 GET 触发默认规则写入
+    if (seed === 'true' && process.env.NODE_ENV !== 'production') {
+      const result = await PointsService.ensureDefaultRules()
+      return NextResponse.json({ success: result.success, message: result.message })
+    }
 
     let rules
     if (ruleType) {
@@ -38,6 +45,27 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('获取积分规则失败:', error)
+    return NextResponse.json({ error: '服务器错误' }, { status: 500 })
+  }
+}
+
+/**
+ * 写入/更新默认积分规则（开发环境使用）
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const isDev = process.env.NODE_ENV !== 'production'
+    if (!isDev) {
+      return NextResponse.json({ error: '仅允许在开发环境写入默认规则' }, { status: 403 })
+    }
+
+    const result = await PointsService.ensureDefaultRules()
+    return NextResponse.json({
+      success: result.success,
+      message: result.message
+    }, { status: result.success ? 200 : 500 })
+  } catch (error) {
+    console.error('写入默认积分规则失败:', error)
     return NextResponse.json({ error: '服务器错误' }, { status: 500 })
   }
 }
