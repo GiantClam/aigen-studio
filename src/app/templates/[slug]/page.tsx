@@ -86,7 +86,7 @@ export default function TemplateDetailPage() {
       sessionStorage.setItem('selectedTemplate', JSON.stringify(templateData))
       
       // 跳转到编辑器
-      router.push('/editor-next')
+      router.push('/standard-editor')
     }
   }
 

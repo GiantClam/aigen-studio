@@ -21,7 +21,8 @@ import {
   Minimize2,
   Maximize2,
   X,
-  ArrowUpRight
+  ArrowUpRight,
+  Loader2
 } from 'lucide-react'
 
 // Message interface
@@ -118,6 +119,189 @@ export default function StandardEditorV2() {
     isLoading: false,
     textareaHeight: 72 // 默认3行高度 (24px * 3)
   })
+
+  // Prefill AI dialog from template selection
+  useEffect(() => {
+    try {
+      let initialPrompt = ''
+      const tplStr = sessionStorage.getItem('selectedTemplate')
+      if (tplStr) {
+        const tpl = JSON.parse(tplStr)
+        initialPrompt = (tpl && tpl.prompt) || ''
+      }
+      if (!initialPrompt) {
+        const p = sessionStorage.getItem('nc_initial_prompt')
+        if (p) initialPrompt = p
+      }
+      if (initialPrompt) {
+        setAiDialog(prev => ({ ...prev, visible: true, message: initialPrompt }))
+        setIsChatExpanded(true)
+        try { sessionStorage.removeItem('selectedTemplate') } catch {}
+        try { sessionStorage.removeItem('nc_initial_prompt') } catch {}
+      }
+    } catch {}
+  }, [])
+
+  // 获取选中对象的图片数据 - 使用新的上传方式（提前定义，供 AI 请求使用）
+  const getSelectedObjectsImage = useCallback(async (): Promise<{ imageData: string; bounds: any } | null> => {
+    if (!canvas) return null
+
+    const activeObjects = canvas.getActiveObjects()
+    if (activeObjects.length === 0) return null
+
+    try {
+      console.log('🎯 === USING NEW UPLOAD METHOD ===')
+      console.log('📸 Capturing selected objects...', {
+        count: activeObjects.length,
+        objectTypes: activeObjects.map(obj => obj.type)
+      })
+
+      const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
+
+      const result = await exportSelectedObjectsSmart(canvas, {
+        format: 'jpeg',
+        quality: 0.8,
+        multiplier: Math.min(optimalMultiplier, 2),
+        tightBounds: true,
+        padding: 0,
+        backgroundColor: 'white'
+      })
+
+      if (!result) {
+        console.error('❌ Failed to export selected objects')
+        return null
+      }
+
+      console.log('✅ Export completed:', {
+        imageSize: result.imageData.length,
+        bounds: result.bounds,
+        multiplier: optimalMultiplier
+      })
+
+      return result
+    } catch (error) {
+      console.error('❌ Error generating selected objects image:', error)
+      return null
+    }
+  }, [canvas])
+
+  // 添加AI生成的图片到画布（提前定义，供 AI 请求使用）
+  const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
+    if (!canvas) return
+
+    try {
+      console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
+
+      const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' })
+
+      if (bounds) {
+        const offsetX = bounds.width + 20
+        img.set({
+          left: bounds.left + offsetX,
+          top: bounds.top,
+          scaleX: bounds.width / (img.width || 1),
+          scaleY: bounds.height / (img.height || 1),
+        })
+      } else {
+        const viewport = canvas.getVpCenter()
+        const scale = Math.min(300 / (img.width || 1), 300 / (img.height || 1))
+
+        img.set({
+          left: viewport.x - (img.width || 0) * scale / 2,
+          top: viewport.y - (img.height || 0) * scale / 2,
+          scaleX: scale,
+          scaleY: scale,
+        })
+      }
+
+      img.set({
+        selectable: true,
+        evented: true
+      })
+
+      canvas.add(img)
+      canvas.setActiveObject(img)
+      canvas.renderAll()
+
+      console.log('✅ AI generated image added successfully')
+    } catch (error) {
+      console.error('❌ Failed to add AI generated image:', error)
+      throw error
+    }
+  }, [canvas])
+
+  // 处理AI请求 - 使用新的上传方式（提到前面以便依赖引用）
+  const processAiRequest = useCallback(async (message: string) => {
+    if (!canvas) {
+      console.error('Canvas not available')
+      return
+    }
+
+    if (!isAuthed) {
+      setLoginOpen(true)
+      throw new Error('AUTH_REQUIRED')
+    }
+
+    console.log('🤖 Processing AI request:', message)
+
+    try {
+      const result = await getSelectedObjectsImage()
+
+      if (result) {
+        // 场景1: 有选中对象 - 图像编辑
+        console.log('📸 Selected objects image captured, performing image editing')
+
+        // 使用新的智能上传方式
+        const uploadResult = await smartUpload(
+          result.imageData,
+          message,
+          'gemini-2.5-flash-image',
+          uploadOptions
+        )
+
+        if (uploadResult.success && uploadResult.data?.editedImageUrl) {
+          await addAiGeneratedImage(uploadResult.data.editedImageUrl, result.bounds)
+          console.log('🎨 AI-edited image added to canvas')
+        } else {
+          throw new Error(uploadResult.error || 'No edited image received')
+        }
+      } else {
+        // 场景2: 没有选中对象 - 图像生成
+        console.log('📝 No objects selected, performing image generation')
+
+        const uploadResult = await smartUpload(
+          '', // 空字符串表示生成新图片
+          message,
+          'gemini-2.5-flash-image',
+          uploadOptions
+        )
+
+        if (uploadResult.success && uploadResult.data?.editedImageUrl) {
+          await addAiGeneratedImage(uploadResult.data.editedImageUrl)
+          console.log('🎨 AI-generated image added to canvas')
+        } else {
+          throw new Error(uploadResult.error || 'No generated image received')
+        }
+      }
+    } catch (error) {
+      console.error('❌ AI request failed:', error)
+      throw error
+    }
+  }, [canvas, isAuthed, getSelectedObjectsImage, uploadOptions, addAiGeneratedImage])
+
+  // Send AI request from dialog
+  const handleSend = useCallback(async () => {
+    const msg = aiDialog.message.trim()
+    if (!msg) return
+    setAiDialog(prev => ({ ...prev, isLoading: true }))
+    try {
+      await processAiRequest(msg)
+    } catch (e) {
+      // swallow error, UI can show toast in future
+    } finally {
+      setAiDialog(prev => ({ ...prev, isLoading: false }))
+    }
+  }, [aiDialog.message, processAiRequest])
 
   // Debug logging helper - only logs in development
   const debugLog = (message: string, data?: any) => {
@@ -288,153 +472,9 @@ export default function StandardEditorV2() {
 
   
 
-  // 获取选中对象的图片数据 - 使用新的上传方式
-  const getSelectedObjectsImage = useCallback(async (): Promise<{ imageData: string; bounds: any } | null> => {
-    if (!canvas) return null
 
-    const activeObjects = canvas.getActiveObjects()
-    if (activeObjects.length === 0) return null
+  
 
-    try {
-      console.log('🎯 === USING NEW UPLOAD METHOD ===')
-      console.log('📸 Capturing selected objects...', {
-        count: activeObjects.length,
-        objectTypes: activeObjects.map(obj => obj.type)
-      })
-
-      const optimalMultiplier = calculateOptimalMultiplier(activeObjects)
-
-      const result = await exportSelectedObjectsSmart(canvas, {
-        format: 'jpeg',
-        quality: 0.8,
-        multiplier: Math.min(optimalMultiplier, 2),
-        tightBounds: true,
-        padding: 0,
-        backgroundColor: 'white'
-      })
-
-      if (!result) {
-        console.error('❌ Failed to export selected objects')
-        return null
-      }
-
-      console.log('✅ Export completed:', {
-        imageSize: result.imageData.length,
-        bounds: result.bounds,
-        multiplier: optimalMultiplier
-      })
-
-      return result
-    } catch (error) {
-      console.error('❌ Error generating selected objects image:', error)
-      return null
-    }
-  }, [canvas])
-
-  // 添加AI生成的图片到画布（提前定义，供 processAiRequest 使用）
-  const addAiGeneratedImage = useCallback(async (imageUrl: string, bounds?: any) => {
-    if (!canvas) return
-
-    try {
-      console.log('🖼️ Adding AI generated image to canvas', { imageUrl, bounds })
-
-      // Fabric.js 6.x: fromURL 返回 Promise
-      const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' })
-
-      if (bounds) {
-        const offsetX = bounds.width + 20
-        img.set({
-          left: bounds.left + offsetX,
-          top: bounds.top,
-          scaleX: bounds.width / (img.width || 1),
-          scaleY: bounds.height / (img.height || 1),
-        })
-      } else {
-        const viewport = canvas.getVpCenter()
-        const scale = Math.min(300 / (img.width || 1), 300 / (img.height || 1))
-
-        img.set({
-          left: viewport.x - (img.width || 0) * scale / 2,
-          top: viewport.y - (img.height || 0) * scale / 2,
-          scaleX: scale,
-          scaleY: scale,
-        })
-      }
-
-      img.set({
-        selectable: true,
-        evented: true
-      })
-
-      canvas.add(img)
-      canvas.setActiveObject(img)
-      canvas.renderAll()
-
-      console.log('✅ AI generated image added successfully')
-    } catch (error) {
-      console.error('❌ Failed to add AI generated image:', error)
-      throw error
-    }
-  }, [canvas])
-
-  // 处理AI请求 - 使用新的上传方式
-  const processAiRequest = useCallback(async (message: string) => {
-    if (!canvas) {
-      console.error('Canvas not available')
-      return
-    }
-
-    if (!isAuthed) {
-      setLoginOpen(true)
-      throw new Error('AUTH_REQUIRED')
-    }
-
-    console.log('🤖 Processing AI request:', message)
-
-    try {
-      const result = await getSelectedObjectsImage()
-
-      if (result) {
-        // 场景1: 有选中对象 - 图像编辑
-        console.log('📸 Selected objects image captured, performing image editing')
-
-        // 使用新的智能上传方式
-        const uploadResult = await smartUpload(
-          result.imageData,
-          message,
-          'gemini-2.5-flash-image',
-          uploadOptions
-        )
-
-        if (uploadResult.success && uploadResult.data?.editedImageUrl) {
-          await addAiGeneratedImage(uploadResult.data.editedImageUrl, result.bounds)
-          console.log('🎨 AI-edited image added to canvas')
-        } else {
-          throw new Error(uploadResult.error || 'No edited image received')
-        }
-      } else {
-        // 场景2: 没有选中对象 - 图像生成
-        console.log('📝 No objects selected, performing image generation')
-
-        const uploadResult = await smartUpload(
-          '', // 空字符串表示生成新图片
-          message,
-          'gemini-2.5-flash-image',
-          uploadOptions
-        )
-
-        if (uploadResult.success && uploadResult.data?.editedImageUrl) {
-          await addAiGeneratedImage(uploadResult.data.editedImageUrl)
-          console.log('🎨 AI-generated image added to canvas')
-        } else {
-          throw new Error(uploadResult.error || 'No generated image received')
-        }
-      }
-    } catch (error) {
-      console.error('❌ AI request failed:', error)
-      throw error
-    }
-  }, [canvas, isAuthed, getSelectedObjectsImage, uploadOptions, addAiGeneratedImage])
 
   // 其他组件代码保持不变...
   // (这里省略了画布初始化、工具切换等代码，与原版本相同)
@@ -494,6 +534,46 @@ export default function StandardEditorV2() {
 
       {/* 其他 UI 组件保持不变 */}
       {/* ... */}
+
+      {/* AI 面板 */}
+      <div className="absolute top-6 right-6 z-50 w-[360px]">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/60">
+            <div className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-gray-700" />
+              <span>AI 面板</span>
+            </div>
+            <button
+              className="text-gray-600 hover:text-black"
+              onClick={() => setIsChatExpanded(prev => !prev)}
+              title={isChatExpanded ? '收起' : '展开'}
+            >
+              {isChatExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {isChatExpanded && (
+            <div className="p-4 space-y-3">
+              <textarea
+                value={aiDialog.message}
+                onChange={(e) => setAiDialog(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="描述你要生成或编辑的内容..."
+                className="w-full h-28 resize-none rounded-lg border border-gray-200 bg-white text-sm p-3 outline-none focus:ring-2 focus:ring-gray-900"
+              />
+              <div className="flex items-center justify-end">
+                <button
+                  disabled={aiDialog.isLoading || !aiDialog.message.trim()}
+                  onClick={handleSend}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-black disabled:bg-gray-300 disabled:text-gray-600"
+                >
+                  {aiDialog.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {aiDialog.isLoading ? '生成中' : '发送'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -291,7 +291,7 @@ export default function WorkspacePage() {
       router.push(`/standard-editor?localProjectId=${pid}`)
       return
     }
-    router.push(`/editor-next?canvasId=${canvasId}&tpl=template`)
+    router.push(`/standard-editor?canvasId=${canvasId}&tpl=template`)
   }
 
   const handleToggleFavorite = async (templateId: string) => {
