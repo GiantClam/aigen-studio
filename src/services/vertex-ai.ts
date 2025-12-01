@@ -182,6 +182,70 @@ export class VertexAIService {
     return this.location || 'us-central1';
   }
 
+  private getLocationsForModel(model: string): string[] {
+    const m = (model || '').toLowerCase();
+    if (m.includes('gemini-3-pro-image-preview')) return ['us-east4', 'us-central1'];
+    return [this.resolveLocationForModel(model)];
+  }
+
+  private getModelSettings(model: string) {
+    const m = (model || '').toLowerCase();
+    if (m.includes('gemini-3-pro-image-preview')) {
+      return {
+        generationConfig: {
+          maxOutputTokens: 32768,
+          temperature: 1,
+          topP: 0.95,
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: {
+            aspectRatio: '1:1',
+            imageSize: '1K',
+            outputMimeType: 'image/png'
+          }
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+        ]
+      }
+    }
+    return {
+      generationConfig: {
+        maxOutputTokens: 32768,
+        temperature: 1,
+        topP: 0.95
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
+      ]
+    }
+  }
+
+  private getEditModelSettings(model: string) {
+    const m = (model || '').toLowerCase();
+    if (m.includes('gemini-3-pro-image-preview')) {
+      return this.getModelSettings(model)
+    }
+    return {
+      generationConfig: {
+        maxOutputTokens: 8192,
+        temperature: 0.4,
+        topP: 0.95
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
+      ]
+    }
+  }
+
   /**
    * 带重试机制的 fetch
    */
@@ -397,11 +461,8 @@ export class VertexAIService {
       console.log('   Prompt:', prompt.substring(0, 100) + '...');
 
       // 准备生成配置
-      const generationConfig = {
-        maxOutputTokens: 32768,
-        temperature: 1,
-        topP: 0.95
-      };
+      const settings = this.getModelSettings(useModel)
+      const generationConfig = settings.generationConfig
 
       // 构建请求
       const req = {
@@ -417,26 +478,37 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const loc = this.resolveLocationForModel(useModel);
-      const url = `https://${loc}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${loc}/publishers/google/models/${useModel}:generateContent`;
-
-      const response = await this.fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: req.contents,
-          generationConfig: req.config,
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any }
-          ] as any
-        })
-      });
+      const locs = this.getLocationsForModel(useModel);
+      let response: Response | null = null;
+      let lastErr: any = null;
+      for (const loc of locs) {
+        try {
+          const url = `https://${loc}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${loc}/publishers/google/models/${useModel}:generateContent`;
+          response = await this.fetchWithRetry(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: req.contents,
+              generationConfig: req.config,
+              safetySettings: settings.safetySettings as any
+            })
+          });
+          if (response && response.ok) break;
+        } catch (e: any) {
+          lastErr = e;
+          const msg = String(e?.message || '');
+          if (msg.includes('HTTP 404') || msg.includes('Not Found')) {
+            continue;
+          }
+          throw e;
+        }
+      }
+      if (!response) {
+        throw lastErr || new Error('No response from Vertex AI');
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -541,11 +613,8 @@ export class VertexAIService {
       console.log('   Image type:', mimeType);
 
       // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
-      const generationConfig = {
-        maxOutputTokens: 8192,
-        temperature: 0.4,
-        topP: 0.95
-      };
+      const settings = this.getEditModelSettings(useModel)
+      const generationConfig = settings.generationConfig
 
       // 构建请求
       const req = {
@@ -558,26 +627,37 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const locEdit = this.resolveLocationForModel(useModel);
-      const url = `https://${locEdit}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${locEdit}/publishers/google/models/${useModel}:generateContent`;
-
-      const response = await this.fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: req.contents,
-          generationConfig: req.config,
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HATE_SPEECH' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT' as any, threshold: 'BLOCK_NONE' as any },
-            { category: 'HARM_CATEGORY_HARASSMENT' as any, threshold: 'BLOCK_NONE' as any }
-          ] as any
-        })
-      });
+      const locsEdit = this.getLocationsForModel(useModel);
+      let response: Response | null = null;
+      let lastErr: any = null;
+      for (const loc of locsEdit) {
+        try {
+          const url = `https://${loc}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${loc}/publishers/google/models/${useModel}:generateContent`;
+          response = await this.fetchWithRetry(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: req.contents,
+              generationConfig: req.config,
+              safetySettings: settings.safetySettings as any
+            })
+          });
+          if (response && response.ok) break;
+        } catch (e: any) {
+          lastErr = e;
+          const msg = String(e?.message || '');
+          if (msg.includes('HTTP 404') || msg.includes('Not Found')) {
+            continue;
+          }
+          throw e;
+        }
+      }
+      if (!response) {
+        throw lastErr || new Error('No response from Vertex AI');
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
