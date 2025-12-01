@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
 
     const { model } = await request.json().catch(() => ({ }))
 
-    const result = await PointsService.deductAIGenerationPoints(user.id, model)
+    const uid = typeof user.id === 'string' && /^\d+$/.test(user.id) ? parseInt(user.id as string, 10) : user.id
+    const result = await PointsService.deductAIGenerationPoints(uid as any, model)
     
     if (!result.success) {
       return NextResponse.json({

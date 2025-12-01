@@ -43,12 +43,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!supabaseServer) return true
 
-        await supabaseServer.from('users').upsert(
+        await supabaseServer.from('nanobanana_users').upsert(
           {
             email,
-            name,
-            avatar_url: image,
-            provider
+            name
           },
           { onConflict: 'email' }
         )
@@ -62,5 +60,4 @@ export const authOptions: NextAuthOptions = {
   }
 }
  
-
 

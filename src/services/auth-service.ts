@@ -9,7 +9,7 @@ import { supabaseServer } from '@/lib/supabase-server'
 const supabase = supabaseServer
 
 export interface User {
-  id: string
+  id: string | number
   email: string
   name?: string
   role: 'user' | 'admin'
@@ -32,7 +32,7 @@ export class AuthService {
   static async getUser(userId: string): Promise<User | null> {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('nanobanana_users')
         .select('*')
         .eq('id', userId)
         .single()
@@ -55,7 +55,7 @@ export class AuthService {
   static async getUserByEmail(email: string): Promise<User | null> {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('nanobanana_users')
         .select('*')
         .eq('email', email)
         .single()
@@ -81,7 +81,7 @@ export class AuthService {
       if (existing) return existing
 
       const { data, error } = await supabase
-        .from('users')
+        .from('nanobanana_users')
         .insert({ email, name: name || null, role: 'user' })
         .select('*')
         .single()
@@ -163,7 +163,7 @@ export class AuthService {
   }> {
     try {
       const { error } = await supabase
-        .from('users')
+        .from('nanobanana_users')
         .update({ role })
         .eq('id', userId)
 
@@ -194,7 +194,7 @@ export class AuthService {
   static async getAllUsers(): Promise<User[]> {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('nanobanana_users')
         .select('*')
         .order('created_at', { ascending: false })
 

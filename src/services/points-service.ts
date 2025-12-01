@@ -49,12 +49,12 @@ export class PointsService {
   /**
    * 确保用户积分记录存在，不存在则初始化为 DEFAULT_REGISTRATION_POINTS
    */
-  static async ensureUserPoints(userId: string): Promise<UserPoints | null> {
+  static async ensureUserPoints(userId: string | number): Promise<UserPoints | null> {
     try {
       const { data: existing } = await supabase
         .from('nanobanana_user_points')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId as any)
         .maybeSingle()
 
       if (existing) {
@@ -66,7 +66,7 @@ export class PointsService {
         .from('nanobanana_user_points')
         .upsert({
           id,
-          user_id: userId,
+          user_id: userId as any,
           current_points: this.DEFAULT_REGISTRATION_POINTS,
           total_earned: this.DEFAULT_REGISTRATION_POINTS,
           total_spent: 0,
@@ -91,11 +91,13 @@ export class PointsService {
    * 获取用户积分信息
    */
   static async getUserPoints(userId: string): Promise<UserPoints | null> {
+    // overload retained for backward compatibility; call site may pass number
+    const uid: any = (/^\d+$/.test(String(userId)) ? parseInt(String(userId), 10) : userId)
     try {
       const { data, error } = await supabase
         .from('nanobanana_user_points')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .single()
 
       if (error) {
@@ -248,14 +250,14 @@ export class PointsService {
   /**
    * 扣除 AI 生成图片积分
    */
-  static async deductAIGenerationPoints(userId: string, model?: string): Promise<{
+  static async deductAIGenerationPoints(userId: string | number, model?: string): Promise<{
     success: boolean
     points: number
     message: string
   }> {
     try {
       // 检查用户积分是否足够
-      let userPoints = await this.getUserPoints(userId)
+      let userPoints = await this.getUserPoints(String(userId))
       if (!userPoints) {
         userPoints = await this.ensureUserPoints(userId)
       }
