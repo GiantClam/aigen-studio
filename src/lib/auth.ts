@@ -35,29 +35,44 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account, profile }) {
       try {
-        // Upsert minimal user profile to Supabase `users` table
         const email = user.email || null
         const name = user.name || null
-        const image = user.image || null
-        const provider = account?.provider || null
 
-        if (!supabaseServer) return true
+        if (!supabaseServer || !email) return true
 
-        await supabaseServer.from('nanobanana_users').upsert(
-          {
-            email,
-            name
-          },
-          { onConflict: 'email' }
-        )
+        const { data: existing, error: qErr } = await supabaseServer
+          .from('nanobanana_users')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (qErr) {
+          console.warn('Query nanobanana_users failed', qErr)
+        }
+
+        if (!existing) {
+          const { error: insErr } = await supabaseServer
+            .from('nanobanana_users')
+            .insert({ email, name, role: 'user' })
+          if (insErr) {
+            console.error('Insert nanobanana_users failed', insErr)
+          }
+        } else if (name) {
+          const { error: updErr } = await supabaseServer
+            .from('nanobanana_users')
+            .update({ name })
+            .eq('id', existing.id)
+          if (updErr) {
+            console.warn('Update nanobanana_users name failed', updErr)
+          }
+        }
 
         return true
       } catch (e) {
-        console.error('Supabase upsert user failed:', e)
-        return true // do not block sign-in
+        console.error('Supabase user sync failed:', e)
+        return true
       }
     }
   }
 }
  
-
