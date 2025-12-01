@@ -90,9 +90,8 @@ export class PointsService {
   /**
    * 获取用户积分信息
    */
-  static async getUserPoints(userId: string): Promise<UserPoints | null> {
-    // overload retained for backward compatibility; call site may pass number
-    const uid: any = (/^\d+$/.test(String(userId)) ? parseInt(String(userId), 10) : userId)
+  static async getUserPoints(userId: string | number): Promise<UserPoints | null> {
+    const uid: any = (/^\d+$/.test(String(userId)) ? parseInt(String(userId as any), 10) : userId)
     try {
       const { data, error } = await supabase
         .from('nanobanana_user_points')
@@ -116,15 +115,16 @@ export class PointsService {
    * 获取用户积分交易记录
    */
   static async getUserTransactions(
-    userId: string,
+    userId: string | number,
     limit: number = 50,
     offset: number = 0
   ): Promise<PointTransaction[]> {
     try {
+      const uid: any = (/^\d+$/.test(String(userId)) ? parseInt(String(userId), 10) : userId)
       const { data, error } = await supabase
         .from('nanobanana_point_transactions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
 
@@ -143,14 +143,14 @@ export class PointsService {
   /**
    * 检查用户今日是否已登录
    */
-  static async hasLoggedInToday(userId: string): Promise<boolean> {
+  static async hasLoggedInToday(userId: string | number): Promise<boolean> {
     try {
       const today = new Date().toISOString().split('T')[0]
       
       const { data, error } = await supabase
         .from('nanobanana_daily_login_records')
         .select('id')
-        .eq('user_id', userId)
+        .eq('user_id', userId as any)
         .eq('login_date', today)
         .single()
 
@@ -169,7 +169,7 @@ export class PointsService {
   /**
    * 处理每日登录积分
    */
-  static async processDailyLogin(userId: string): Promise<{
+  static async processDailyLogin(userId: string | number): Promise<{
     success: boolean
     points: number
     message: string
@@ -190,14 +190,14 @@ export class PointsService {
       const dailyPoints = rule && rule.is_active ? rule.points_value : this.DEFAULT_DAILY_LOGIN_POINTS
 
       const today = new Date().toISOString().split('T')[0]
-      const transactionId = `${userId}_daily_${Date.now()}`
+      const transactionId = `${String(userId)}_daily_${Date.now()}`
 
       // 记录每日登录
       const { error: loginError } = await supabase
         .from('nanobanana_daily_login_records')
         .insert({
           id: transactionId,
-          user_id: userId,
+          user_id: userId as any,
           login_date: today,
           points_awarded: dailyPoints
         })
@@ -216,7 +216,7 @@ export class PointsService {
         .from('nanobanana_point_transactions')
         .insert({
           id: transactionId,
-          user_id: userId,
+          user_id: userId as any,
           points: dailyPoints,
           transaction_type: 'earn',
           source: 'daily_login',

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 
 interface User {
-  id: string
+  id: string | number
   email: string
   name?: string
   role: 'user' | 'admin'
@@ -85,9 +85,9 @@ export default function UsersAdminPage() {
   }, [session])
 
   // 更新用户角色
-  const updateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
+  const updateUserRole = async (userId: string | number, newRole: 'user' | 'admin') => {
     try {
-      const result = await AuthService.setUserRole(userId, newRole)
+      const result = await AuthService.setUserRole(String(userId), newRole)
       if (result.success) {
         await fetchUsers() // 刷新用户列表
         setShowRoleModal(false)

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // 若无积分记录，自动初始化（注册赠送）
     if (!userPoints) {
-      await PointsService.initializeUserPoints(user.id)
+      await PointsService.ensureUserPoints(user.id)
       userPoints = await PointsService.getUserPoints(user.id)
     }
 
