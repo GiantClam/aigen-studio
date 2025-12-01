@@ -97,24 +97,38 @@ export async function POST(request: NextRequest) {
 
       const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`
       console.log('Vertex.generateContent call', { url, location, defaultLocation, project, model, partsCount: parts.length })
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${access.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [ { role: 'user', parts } ],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.4, topP: 0.95 },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
-          ]
+      // Retry on 429 (rate limit) with simple exponential backoff
+      const doCall = async (): Promise<Response> => {
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${access.token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [ { role: 'user', parts } ],
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.4, topP: 0.95 },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' }
+            ]
+          })
         })
-      })
+      }
+      let resp = await doCall()
+      if (!resp.ok && resp.status === 429) {
+        console.warn('Vertex.generateContent rate limited (429), retrying...')
+        await new Promise(r => setTimeout(r, 2000))
+        resp = await doCall()
+        if (!resp.ok && resp.status === 429) {
+          await new Promise(r => setTimeout(r, 5000))
+          resp = await doCall()
+        }
+      }
       if (!resp.ok) {
         const txt = await resp.text()
         console.error('Vertex.generateContent failed', { status: resp.status, statusText: resp.statusText, txt })
-        return NextResponse.json({ success: false, error: `Vertex error: ${resp.status} ${resp.statusText} - ${txt}` }, { status: 502 })
+        const status = resp.status === 429 ? 429 : 502
+        return NextResponse.json({ success: false, error: `Vertex error: ${resp.status} ${resp.statusText} - ${txt}` }, { status })
       }
       const json = await resp.json() as any
       console.log('Vertex.generateContent response received', { hasCandidates: !!json.candidates, candidatesLen: json.candidates?.length })
