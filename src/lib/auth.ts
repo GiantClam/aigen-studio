@@ -37,6 +37,9 @@ export const authOptions: NextAuthOptions = {
       try {
         const email = user.email || null
         const name = user.name || null
+        const finalName = (name && name.trim())
+          ? name.trim()
+          : (email ? (email.split('@')[0] || '') : `user_${Date.now()}`)
 
         if (!supabaseServer || !email) return true
 
@@ -53,17 +56,21 @@ export const authOptions: NextAuthOptions = {
         if (!existing) {
           const { error: insErr } = await supabaseServer
             .from('nanobanana_users')
-            .insert({ email, name, role: 'user' })
+            .insert({ email, name: finalName, role: 'user' })
           if (insErr) {
             console.error('Insert nanobanana_users failed', insErr)
           }
-        } else if (name) {
-          const { error: updErr } = await supabaseServer
-            .from('nanobanana_users')
-            .update({ name })
-            .eq('id', existing.id)
-          if (updErr) {
-            console.warn('Update nanobanana_users name failed', updErr)
+        } else {
+          const updatePayload: Record<string, any> = {}
+          if (finalName) updatePayload.name = finalName
+          if (Object.keys(updatePayload).length > 0) {
+            const { error: updErr } = await supabaseServer
+              .from('nanobanana_users')
+              .update(updatePayload)
+              .eq('id', existing.id)
+            if (updErr) {
+              console.warn('Update nanobanana_users failed', updErr)
+            }
           }
         }
 

@@ -82,7 +82,11 @@ export class AuthService {
 
       const { data, error } = await supabase
         .from('nanobanana_users')
-        .insert({ email, name: name || null, role: 'user' })
+        .insert({
+          email,
+          name: (name && name.trim()) ? name.trim() : (email ? email.split('@')[0] : `user_${Date.now()}`),
+          role: 'user'
+        })
         .select('*')
         .single()
 
