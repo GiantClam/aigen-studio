@@ -23,6 +23,9 @@ export async function GET(request: NextRequest, context: any) {
     const videoUrl = typeof payload.videoUrl === 'string' ? payload.videoUrl : undefined
     return NextResponse.json({ success: true, data: { status, payload, statusCode: data.status_code, ...(videoUrl ? { videoUrl } : {}) } })
   }
+  if (status === 'in_progress') {
+    return NextResponse.json({ success: true, data: { status: 'in_progress' } })
+  }
   console.log('[video.jobs] start processing', { taskId })
   await supabaseServer.from('nanobanana_canvas_task').update({ status: 'in_progress' }).eq('task_id', taskId)
   const payload = (data.payload || {}) as any
