@@ -85,10 +85,16 @@ export default function StandardEditorStandalone() {
         #nc-standalone-root { position: fixed; inset: 0; z-index: 9999; background: #ffffff; }
       `}</style>
       <div id="nc-standalone-root" ref={hostRef}>
-        {mountNode && createPortal(
-          <NanoCanvasApp config={config} initialCanvasState={initialJson} />,
-          mountNode
-        )}
+        {mountNode
+          ? createPortal(
+              <NanoCanvasApp config={config} initialCanvasState={initialJson} />,
+              mountNode
+            )
+          : (
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <NanoCanvasApp config={config} initialCanvasState={initialJson} />
+              </div>
+            )}
       </div>
     </>
   )
