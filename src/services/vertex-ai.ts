@@ -365,7 +365,7 @@ export class VertexAIService {
   /**
    * 生成图像（如果模型支持）
    */
-  async generateImage(prompt: string): Promise<{
+  async generateImage(prompt: string, model?: string): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -378,16 +378,11 @@ export class VertexAIService {
     }
 
     try {
-      // 支持多个模型
-      const model = prompt.includes('model:') 
-        ? prompt.match(/model:([^\s]+)/)?.[1] || 'gemini-2.5-flash-image'
-        : 'gemini-2.5-flash-image';
-      
-      // 从 prompt 中移除 model 参数
-      const cleanPrompt = prompt.replace(/model:[^\s]+\s*/g, '').trim();
+      const useModel = (model && model.trim()) || 'gemini-2.5-flash-image'
+      const cleanPrompt = prompt.trim();
 
       console.log('🎨 Generating image with Vertex AI REST API...');
-      console.log('   Model:', model);
+      console.log('   Model:', useModel);
       console.log('   Prompt:', prompt.substring(0, 100) + '...');
 
       // 准备生成配置
@@ -399,7 +394,7 @@ export class VertexAIService {
 
       // 构建请求
       const req = {
-        model: model,
+        model: useModel,
         contents: [
           {
             role: 'user',
@@ -411,7 +406,7 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
+      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${useModel}:generateContent`;
 
       const response = await this.fetchWithRetry(url, {
         method: 'POST',
@@ -463,7 +458,7 @@ export class VertexAIService {
       const responseData: any = {
         textResponse: textResponse,
         imageResponse: imageResponse,
-        model: model,
+        model: useModel,
         prompt: prompt,
         timestamp: new Date().toISOString()
       };
@@ -493,7 +488,7 @@ export class VertexAIService {
   /**
    * 编辑图像（基于输入图像和提示）
    */
-  async editImage(prompt: string, inputImage: string): Promise<{
+  async editImage(prompt: string, inputImage: string, model?: string): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -506,17 +501,8 @@ export class VertexAIService {
     }
 
     try {
-      // 支持多个模型，从 instruction 中提取或使用默认值
-      let model = 'gemini-2.5-flash-image';
-      let cleanInstruction = prompt;
-      
-      if (prompt.includes('model:')) {
-        const modelMatch = prompt.match(/model:([^\s]+)/);
-        if (modelMatch) {
-          model = modelMatch[1];
-          cleanInstruction = prompt.replace(/model:[^\s]+\s*/g, '').trim();
-        }
-      }
+      const useModel = (model && model.trim()) || 'gemini-2.5-flash-image'
+      const cleanInstruction = prompt.trim();
 
       // 处理输入图像（移除data URL前缀）
       const imageData = inputImage.includes(',') ? inputImage.split(',')[1] : inputImage;
@@ -538,7 +524,7 @@ export class VertexAIService {
       ];
 
       console.log('🖼️ Editing image with Google GenAI SDK...');
-      console.log('   Model:', model);
+      console.log('   Model:', useModel);
       console.log('   Original prompt:', prompt.substring(0, 100) + '...');
       console.log('   Image type:', mimeType);
 
@@ -551,7 +537,7 @@ export class VertexAIService {
 
       // 构建请求
       const req = {
-        model: model,
+        model: useModel,
         contents: [
           { role: 'user', parts: parts }
         ],
@@ -560,7 +546,7 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
+      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${useModel}:generateContent`;
 
       const response = await this.fetchWithRetry(url, {
         method: 'POST',
@@ -618,7 +604,7 @@ export class VertexAIService {
       const responseData: any = {
         textResponse: textResponse,
         imageResponse: imageResponse,
-        model: model,
+        model: useModel,
         prompt: prompt,
         timestamp: new Date().toISOString()
       };
