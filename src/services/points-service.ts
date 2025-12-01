@@ -45,6 +45,48 @@ export class PointsService {
   static DEFAULT_DAILY_LOGIN_POINTS = 100
   static DEFAULT_COST_NANO_1 = 10
   static DEFAULT_COST_NANO_2 = 50
+
+  /**
+   * 确保用户积分记录存在，不存在则初始化为 DEFAULT_REGISTRATION_POINTS
+   */
+  static async ensureUserPoints(userId: string): Promise<UserPoints | null> {
+    try {
+      const { data: existing } = await supabase
+        .from('nanobanana_user_points')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      if (existing) {
+        return existing as UserPoints
+      }
+
+      const id = `${userId}_points`
+      const { data, error } = await supabase
+        .from('nanobanana_user_points')
+        .upsert({
+          id,
+          user_id: userId,
+          current_points: this.DEFAULT_REGISTRATION_POINTS,
+          total_earned: this.DEFAULT_REGISTRATION_POINTS,
+          total_spent: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .select('*')
+        .single()
+
+      if (error) {
+        console.error('初始化用户积分失败:', error)
+        return null
+      }
+
+      return data as UserPoints
+    } catch (error) {
+      console.error('初始化用户积分异常:', error)
+      return null
+    }
+  }
   /**
    * 获取用户积分信息
    */
@@ -213,7 +255,10 @@ export class PointsService {
   }> {
     try {
       // 检查用户积分是否足够
-      const userPoints = await this.getUserPoints(userId)
+      let userPoints = await this.getUserPoints(userId)
+      if (!userPoints) {
+        userPoints = await this.ensureUserPoints(userId)
+      }
       if (!userPoints) {
         return {
           success: false,
