@@ -172,6 +172,17 @@ export class VertexAIService {
   }
 
   /**
+   * 根据模型选择合适的可用区域
+   */
+  private resolveLocationForModel(model: string): string {
+    const m = (model || '').toLowerCase();
+    // 预览/高质量图像模型通常仅在 us-central1 提供
+    if (m.includes('gemini-3-pro-image-preview')) return 'us-central1';
+    if (m.includes('gemini-2.5-flash-image')) return this.location || 'us-central1';
+    return this.location || 'us-central1';
+  }
+
+  /**
    * 带重试机制的 fetch
    */
   private async fetchWithRetry(url: string, options: any, maxRetries: number = 3): Promise<Response> {
@@ -406,7 +417,8 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${useModel}:generateContent`;
+      const loc = this.resolveLocationForModel(useModel);
+      const url = `https://${loc}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${loc}/publishers/google/models/${useModel}:generateContent`;
 
       const response = await this.fetchWithRetry(url, {
         method: 'POST',
@@ -546,7 +558,8 @@ export class VertexAIService {
 
       // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
-      const url = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${useModel}:generateContent`;
+      const locEdit = this.resolveLocationForModel(useModel);
+      const url = `https://${locEdit}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${locEdit}/publishers/google/models/${useModel}:generateContent`;
 
       const response = await this.fetchWithRetry(url, {
         method: 'POST',
