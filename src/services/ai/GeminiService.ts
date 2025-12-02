@@ -40,12 +40,18 @@ export class GeminiService implements IAIImageService {
       const { prompt, images = [], parameters = {} } = request
 
       let result
+      const modelName = parameters.modelName || undefined
+      const opts = {
+        aspectRatio: parameters.aspectRatio,
+        imageSize: parameters.imageSize
+      }
+
       if (images.length === 0) {
-        result = await this.vertexAI.generateImage(prompt)
+        result = await this.vertexAI.generateImage(prompt, modelName, opts as any)
       } else if (images.length === 1) {
-        result = await this.vertexAI.editImage(images[0], prompt)
+        result = await this.vertexAI.editImage(images[0], prompt, modelName, opts as any)
       } else {
-        result = await this.vertexAI.editImage(images[0], prompt)
+        result = await this.vertexAI.editImage(images[0], prompt, modelName, opts as any)
       }
 
       if (result.success && result.data) {
@@ -86,7 +92,7 @@ export class GeminiService implements IAIImageService {
     }
 
     try {
-      const { prompt, images = [], maskData } = request
+      const { prompt, images = [], maskData, parameters = {} } = request
 
       if (images.length === 0) {
         return {
@@ -96,7 +102,12 @@ export class GeminiService implements IAIImageService {
         }
       }
 
-      const result = await this.vertexAI.editImage(images[0], prompt)
+      const modelName = parameters.modelName || undefined
+      const opts = {
+        aspectRatio: parameters.aspectRatio,
+        imageSize: parameters.imageSize
+      }
+      const result = await this.vertexAI.editImage(images[0], prompt, modelName, opts as any)
 
       if (result.success && result.data) {
         return {

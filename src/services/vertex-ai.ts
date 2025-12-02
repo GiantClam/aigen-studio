@@ -464,7 +464,7 @@ export class VertexAIService {
   /**
    * 生成图像（如果模型支持）
    */
-  async generateImage(prompt: string, model?: string): Promise<{
+  async generateImage(prompt: string, model?: string, options?: { aspectRatio?: string; imageSize?: '1K' | '2K' | '4K' }): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -482,8 +482,12 @@ export class VertexAIService {
 
       // HQ 模型使用 Google GenAI SDK，其它模型使用 Vertex REST
       const isHQ = useModel.toLowerCase().includes('gemini-3-pro-image-preview');
-      const settings = this.getModelSettings(useModel);
-      const generationConfig = settings.generationConfig;
+        const settings = this.getModelSettings(useModel);
+        const generationConfig = settings.generationConfig;
+        const genCfgForGemini: any = { ...generationConfig };
+        if (genCfgForGemini && 'responseMimeType' in genCfgForGemini) {
+          delete genCfgForGemini.responseMimeType;
+        }
 
       if (isHQ) {
         console.log('🎨 Generating image with Google GenAI SDK...');
@@ -504,18 +508,26 @@ export class VertexAIService {
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
         ];
 
-        const result = await ai.models.generateContent({
-          model: useModel,
-          contents,
-          generationConfig,
-          safetySettings,
-          responseModalities: ['TEXT', 'IMAGE'],
-          imageConfig: {
-            aspectRatio: '1:1',
-            imageSize: '1K',
-            outputMimeType: 'image/png'
+        let result;
+        try {
+          result = await ai.models.generateContent({
+            model: useModel,
+            contents,
+            responseModalities: ['IMAGE'],
+            imageConfig: {
+              aspectRatio: options?.aspectRatio || '1:1',
+              imageSize: options?.imageSize || '1K'
+            },
+            generationConfig: genCfgForGemini,
+            safetySettings
+          });
+        } catch (e: any) {
+          const msg = String(e?.message || '');
+          if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
+            throw new Error('GenAI SDK unauthorized: check GOOGLE_API_KEY/GEMINI_API_KEY configuration');
           }
-        });
+          throw e;
+        }
 
         const res = (result?.response || result) as any;
 
@@ -644,7 +656,7 @@ export class VertexAIService {
   /**
    * 编辑图像（基于输入图像和提示）
    */
-  async editImage(imageOrPrompt: string, promptOrImage: string, model?: string): Promise<{
+  async editImage(imageOrPrompt: string, promptOrImage: string, model?: string, options?: { aspectRatio?: string; imageSize?: '1K' | '2K' | '4K' }): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -700,12 +712,20 @@ export class VertexAIService {
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
         ];
 
+        const genCfgForGemini: any = { ...generationConfig };
+        if (genCfgForGemini && 'responseMimeType' in genCfgForGemini) {
+          delete genCfgForGemini.responseMimeType;
+        }
         const result = await ai.models.generateContent({
           model: useModel,
           contents,
-          generationConfig,
-          safetySettings,
-          responseModalities: ['IMAGE']
+          responseModalities: ['IMAGE'],
+          imageConfig: {
+            aspectRatio: options?.aspectRatio || '1:1',
+            imageSize: options?.imageSize || '1K'
+          },
+          generationConfig: genCfgForGemini,
+          safetySettings
         });
 
         const res = (result?.response || result) as any;

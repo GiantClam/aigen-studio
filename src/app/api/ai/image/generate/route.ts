@@ -110,15 +110,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: false,
           error: 'No image generated - missing image URL in response'
-        }, { status: 500 })
+        }, { status: 422 })
       }
     } else {
       console.error('Vertex AI generation failed:', result)
       if (taskId) await updateCanvasTaskStatus(taskId, 'failed', 'PROVIDER_ERROR')
+      const msg = String(result.error || '')
+      const isUnauthorized = msg.includes('401') || msg.toLowerCase().includes('unauthorized')
+      const isUnavailable = msg.toLowerCase().includes('not available')
+      const status = isUnauthorized ? 401 : (isUnavailable ? 503 : 500)
       return NextResponse.json({
         success: false,
         error: result.error || 'Failed to generate image with Vertex AI'
-      }, { status: 500 })
+      }, { status })
     }
   } catch (error) {
     console.error('Image generation error:', error)

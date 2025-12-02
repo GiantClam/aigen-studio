@@ -17,6 +17,8 @@ export interface GenerationSettings {
   aspectRatio: string
   quality: string
   type: 'text-to-image' | 'single-image-to-image' | 'multi-image-to-image' | 'edit'
+  imageSize?: '1K' | '2K' | '4K'
+  modelName?: string
 }
 
 export function AIPanel({
@@ -31,7 +33,9 @@ export function AIPanel({
     provider: 'gemini',
     aspectRatio: '1:1',
     quality: 'high',
-    type: 'text-to-image'
+    type: 'text-to-image',
+    imageSize: '1K',
+    modelName: 'gemini-2.5-flash-image'
   })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -86,7 +90,7 @@ export function AIPanel({
         <div className="p-4 border-b border-gray-200 bg-gray-50 space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              AI 模型
+              提供商
             </label>
             <select
               value={settings.provider}
@@ -103,6 +107,22 @@ export function AIPanel({
             </select>
           </div>
 
+          {settings.provider === 'gemini' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                模型版本
+              </label>
+              <select
+                value={settings.modelName}
+                onChange={(e) => setSettings({ ...settings, modelName: e.target.value as any })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
+                <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (HQ)</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               宽高比
@@ -117,6 +137,21 @@ export function AIPanel({
               <option value="9:16">9:16 (竖向)</option>
               <option value="4:3">4:3</option>
               <option value="3:4">3:4</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              输出尺寸
+            </label>
+            <select
+              value={settings.imageSize}
+              onChange={(e) => setSettings({ ...settings, imageSize: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1K">1K (1024)</option>
+              <option value="2K">2K (2048)</option>
+              <option value="4K">4K (4096)</option>
             </select>
           </div>
 

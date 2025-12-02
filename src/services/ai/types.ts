@@ -20,6 +20,8 @@ export interface ImageGenerationRequest {
   parameters?: {
     aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4'
     quality?: 'low' | 'medium' | 'high'
+    imageSize?: '1K' | '2K' | '4K'
+    modelName?: string
     style?: string
     negativePrompt?: string
     seed?: number

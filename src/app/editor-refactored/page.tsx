@@ -204,7 +204,9 @@ export default function EditorRefactored() {
           images,
           parameters: {
             aspectRatio: settings.aspectRatio,
-            quality: settings.quality
+            quality: settings.quality,
+            imageSize: settings.imageSize,
+            modelName: settings.modelName
           }
         })
       })
