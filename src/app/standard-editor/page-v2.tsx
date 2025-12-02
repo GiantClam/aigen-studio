@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import * as fabric from 'fabric'
 import { useSession } from 'next-auth/react'
 import LoginDialog from '@/components/LoginDialog'
@@ -52,6 +53,9 @@ function createArrowPath(x1: number, y1: number, x2: number, y2: number): string
 }
 
 export default function StandardEditorV2() {
+  const searchParams = useSearchParams()
+  const canvasIdParam = searchParams?.get('canvasId') || null
+  const localProjectId = searchParams?.get('localProjectId') || null
   const { status } = useSession()
   const isAuthed = status === 'authenticated'
   const [loginOpen, setLoginOpen] = useState(false)
@@ -288,6 +292,107 @@ export default function StandardEditorV2() {
       throw error
     }
   }, [canvas, isAuthed, getSelectedObjectsImage, uploadOptions, addAiGeneratedImage])
+
+  // 自动保存：每 30s 保存当前画布 JSON（覆盖写入）
+  useEffect(() => {
+    let timer: any
+    const saveNow = async () => {
+      try {
+        if (!canvas) return
+        const cid = canvasIdParam
+        const fabricJson = canvas.toJSON()
+        const vt = canvas.viewportTransform as any
+        const zoom = canvas.getZoom()
+        const payload = {
+          version: 'nanocanvas-v1',
+          fabric: fabricJson,
+          viewport: { transform: vt, zoom }
+        }
+        if (cid) {
+          await fetch(`/api/canvas/${cid}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ canvasJson: payload })
+          })
+        } else if (localProjectId) {
+          try {
+            const raw = localStorage.getItem('nc_projects')
+            if (!raw) return
+            const arr = JSON.parse(raw) || []
+            const idx = arr.findIndex((p: any) => String(p.id) === String(localProjectId))
+            if (idx >= 0) {
+              arr[idx] = {
+                ...arr[idx],
+                data: payload,
+                updatedAt: new Date().toISOString()
+              }
+              localStorage.setItem('nc_projects', JSON.stringify(arr))
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+    // 初次加载后 30s 执行一次，然后每 30s
+    if (canvas) {
+      timer = setInterval(saveNow, 30000)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [canvas, canvasIdParam, localProjectId])
+
+  // 加载已保存的画布 JSON（包括视口位置与缩放）
+  useEffect(() => {
+    const loadSaved = async () => {
+      try {
+        if (!canvas) return
+        const cid = canvasIdParam
+        if (cid) {
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+          if (!supabaseUrl || !supabaseAnonKey) return
+          const { createClient } = await import('@supabase/supabase-js')
+          const sp = createClient(supabaseUrl, supabaseAnonKey)
+          const { data, error } = await sp
+            .from('nanobanana_user_canvas')
+            .select('canvas_json')
+            .eq('id', cid)
+            .maybeSingle()
+          if (error || !data || !data.canvas_json) return
+          const saved = data.canvas_json
+          if (saved?.fabric) {
+            canvas.loadFromJSON(saved.fabric, () => {
+              if (saved?.viewport?.transform) {
+                canvas.setViewportTransform(saved.viewport.transform)
+              }
+              if (saved?.viewport?.zoom) {
+                canvas.setZoom(saved.viewport.zoom)
+              }
+              canvas.renderAll()
+            })
+          }
+        } else if (localProjectId) {
+          const raw = localStorage.getItem('nc_projects')
+          if (!raw) return
+          const arr = JSON.parse(raw) || []
+          const found = arr.find((p: any) => String(p.id) === String(localProjectId))
+          const saved = found?.data
+          if (saved?.fabric) {
+            canvas.loadFromJSON(saved.fabric, () => {
+              if (saved?.viewport?.transform) {
+                canvas.setViewportTransform(saved.viewport.transform)
+              }
+              if (saved?.viewport?.zoom) {
+                canvas.setZoom(saved.viewport.zoom)
+              }
+              canvas.renderAll()
+            })
+          }
+        }
+      } catch {}
+    }
+    loadSaved()
+  }, [canvas, canvasIdParam, localProjectId])
 
   // Send AI request from dialog
   const handleSend = useCallback(async () => {
