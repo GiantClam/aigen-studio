@@ -30,6 +30,7 @@ interface WorkspaceHeaderProps {
   onViewModeChange: (mode: 'grid' | 'list') => void
   searchQuery: string
   onSearchChange: (query: string) => void
+  userPoints?: number
 }
 
 export function WorkspaceHeader({ 
@@ -37,7 +38,8 @@ export function WorkspaceHeader({
   viewMode, 
   onViewModeChange,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  userPoints
 }: WorkspaceHeaderProps) {
   const { data: session } = useSession()
 
@@ -134,9 +136,8 @@ export function WorkspaceHeader({
                   <p className="font-medium text-sm">{session?.user?.name || '用户'}</p>
                   <p className="text-xs text-gray-500">{session?.user?.email}</p>
                 </div>
-                <Badge className="ml-auto bg-orange-100 text-orange-700 border-orange-200 text-xs">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Pro
+                <Badge className="ml-auto bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
+                  积分 {typeof userPoints === 'number' ? userPoints : '-'}
                 </Badge>
               </div>
               <DropdownMenuSeparator />

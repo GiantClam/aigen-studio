@@ -73,6 +73,7 @@ export default function WorkspacePage() {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userPoints, setUserPoints] = useState<number | null>(null)
 
   // 加载模板画布数据和用户收藏
   useEffect(() => {
@@ -189,6 +190,39 @@ export default function WorkspacePage() {
     
     load()
   }, [session, favoriteTemplateIds])
+
+  useEffect(() => {
+    const run = async () => {
+      if (status !== 'authenticated') return
+      try {
+        const r1 = await fetch('/api/points', { method: 'GET' })
+        if (r1.ok) {
+          const j = await r1.json()
+          if (j?.success && j?.data?.current_points != null) setUserPoints(j.data.current_points)
+        }
+        const r2 = await fetch('/api/points', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'daily_login' }) })
+        if (r2.ok) {
+          const j2 = await r2.json()
+          if (j2?.data?.message) {
+            window.dispatchEvent(new CustomEvent('global-toast', { detail: { message: j2.data.message, type: 'success' } }))
+          }
+          const r3 = await fetch('/api/points', { method: 'GET' })
+          if (r3.ok) {
+            const j3 = await r3.json()
+            if (j3?.success && j3?.data?.current_points != null) setUserPoints(j3.data.current_points)
+          }
+        } else {
+          try {
+            const jErr = await r2.json()
+            if (jErr?.error) {
+              window.dispatchEvent(new CustomEvent('global-toast', { detail: { message: String(jErr.error), type: 'info' } }))
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+    run()
+  }, [status])
 
   // 首次进入 workspace 的引导弹窗（可关闭）
   useEffect(() => {
@@ -363,6 +397,7 @@ export default function WorkspacePage() {
           onViewModeChange={setViewMode}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          userPoints={userPoints ?? undefined}
         />
         
         <div className="flex-1 overflow-y-auto p-8">
