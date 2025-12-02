@@ -105,13 +105,23 @@ export class VertexAIService {
    */
   isAvailable(): boolean {
     const hasRest = this.auth !== null && this.projectId !== null;
-    const hasGenAIKey = !!this.env.GOOGLE_CLOUD_API_KEY || !!process.env.GOOGLE_CLOUD_API_KEY;
+    const hasGenAIKey = !!(
+      this.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY ||
+      (this.env as any).GOOGLE_API_KEY || process.env.GOOGLE_API_KEY ||
+      (this.env as any).GEMINI_API_KEY || process.env.GEMINI_API_KEY ||
+      (this.env as any).AI_STUDIO_API_KEY || process.env.AI_STUDIO_API_KEY
+    );
 
     if (!hasRest && !hasGenAIKey) {
       const missingVars: string[] = [];
       if (!this.env.GOOGLE_CLOUD_PROJECT) missingVars.push('GOOGLE_CLOUD_PROJECT');
       if (!this.env.GOOGLE_SERVICE_ACCOUNT_KEY) missingVars.push('GOOGLE_SERVICE_ACCOUNT_KEY');
-      if (!this.env.GOOGLE_CLOUD_API_KEY && !process.env.GOOGLE_CLOUD_API_KEY) missingVars.push('GOOGLE_CLOUD_API_KEY');
+      if (!(
+        this.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY ||
+        (this.env as any).GOOGLE_API_KEY || process.env.GOOGLE_API_KEY ||
+        (this.env as any).GEMINI_API_KEY || process.env.GEMINI_API_KEY ||
+        (this.env as any).AI_STUDIO_API_KEY || process.env.AI_STUDIO_API_KEY
+      )) missingVars.push('GOOGLE_API_KEY / GEMINI_API_KEY / AI_STUDIO_API_KEY');
 
       throw new Error(
         `Vertex/GenAI not configured. Missing: ${missingVars.join(', ')}.`
@@ -126,9 +136,14 @@ export class VertexAIService {
    */
   private initializeGenAI() {
     if (this.genAI) return;
-    const apiKey = this.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
+    const apiKey = (
+      this.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY ||
+      (this.env as any).GOOGLE_API_KEY || process.env.GOOGLE_API_KEY ||
+      (this.env as any).GEMINI_API_KEY || process.env.GEMINI_API_KEY ||
+      (this.env as any).AI_STUDIO_API_KEY || process.env.AI_STUDIO_API_KEY
+    );
     if (!apiKey) {
-      throw new Error('GOOGLE_CLOUD_API_KEY is not configured for GenAI SDK');
+      throw new Error('GenAI SDK requires GOOGLE_API_KEY/GEMINI_API_KEY/AI_STUDIO_API_KEY');
     }
     this.genAI = new GoogleGenAI({ apiKey });
   }
@@ -494,7 +509,12 @@ export class VertexAIService {
           contents,
           generationConfig,
           safetySettings,
-          responseModalities: ['IMAGE']
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: {
+            aspectRatio: '1:1',
+            imageSize: '1K',
+            outputMimeType: 'image/png'
+          }
         });
 
         const res = (result?.response || result) as any;
