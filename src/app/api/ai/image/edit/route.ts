@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       taskId = t.taskId
     }
 
-    const result = await vertexAI.editImage(instruction, imageData)
+    const result = await vertexAI.editImage(imageData, instruction)
     
     if (result.success) {
       // Check if we actually got an edited image

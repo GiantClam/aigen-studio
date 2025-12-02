@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = inputForEdit
-      ? await vertexAI.editImage(enhancedPrompt, inputForEdit, model)
+      ? await vertexAI.editImage(inputForEdit, enhancedPrompt, model)
       : await vertexAI.generateImage(enhancedPrompt, model)
     
     console.log('Vertex AI result:', result)

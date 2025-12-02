@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Using Vertex AI Gemini 2.5 Flash Image Preview for image editing')
 
-    const result = await vertexAI.editImage(instruction, imageData)
+    const result = await vertexAI.editImage(imageData, instruction)
     
     if (result.success) {
       if (result.data.generatedImageUrl) {

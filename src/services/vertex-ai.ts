@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library';
+import { GoogleGenAI } from '@google/genai'
 import type { Env } from '../types/env';
 
 /**
@@ -7,7 +8,7 @@ import type { Env } from '../types/env';
  */
 export class VertexAIService {
   private auth: GoogleAuth | null = null;
-  private genAI: null = null;
+  private genAI: GoogleGenAI | null = null;
   private env: Env;
   private projectId: string | null = null;
   private location: string = 'global';
@@ -103,20 +104,33 @@ export class VertexAIService {
    * 严格模式：如果不可用则抛出错误，不允许降级或模拟
    */
   isAvailable(): boolean {
-    const isConfigured = this.auth !== null && this.projectId !== null;
+    const hasRest = this.auth !== null && this.projectId !== null;
+    const hasGenAIKey = !!this.env.GOOGLE_CLOUD_API_KEY || !!process.env.GOOGLE_CLOUD_API_KEY;
 
-    if (!isConfigured) {
-      const missingVars = [];
+    if (!hasRest && !hasGenAIKey) {
+      const missingVars: string[] = [];
       if (!this.env.GOOGLE_CLOUD_PROJECT) missingVars.push('GOOGLE_CLOUD_PROJECT');
       if (!this.env.GOOGLE_SERVICE_ACCOUNT_KEY) missingVars.push('GOOGLE_SERVICE_ACCOUNT_KEY');
+      if (!this.env.GOOGLE_CLOUD_API_KEY && !process.env.GOOGLE_CLOUD_API_KEY) missingVars.push('GOOGLE_CLOUD_API_KEY');
 
       throw new Error(
-        `Vertex AI is not properly configured. Missing environment variables: ${missingVars.join(', ')}. ` +
-        `This application requires real Vertex AI access and does not support simulation mode.`
+        `Vertex/GenAI not configured. Missing: ${missingVars.join(', ')}.`
       );
     }
 
     return true;
+  }
+
+  /**
+   * 初始化 Google GenAI SDK 客户端（按需）
+   */
+  private initializeGenAI() {
+    if (this.genAI) return;
+    const apiKey = this.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
+    if (!apiKey) {
+      throw new Error('GOOGLE_CLOUD_API_KEY is not configured for GenAI SDK');
+    }
+    this.genAI = new GoogleGenAI({ apiKey });
   }
 
 
@@ -451,27 +465,79 @@ export class VertexAIService {
       const useModel = (model && model.trim()) || 'gemini-2.5-flash-image'
       const cleanPrompt = prompt.trim();
 
+      // HQ 模型使用 Google GenAI SDK，其它模型使用 Vertex REST
+      const isHQ = useModel.toLowerCase().includes('gemini-3-pro-image-preview');
+      const settings = this.getModelSettings(useModel);
+      const generationConfig = settings.generationConfig;
+
+      if (isHQ) {
+        console.log('🎨 Generating image with Google GenAI SDK...');
+        console.log('   Model:', useModel);
+        console.log('   Prompt:', prompt.substring(0, 100) + '...');
+
+        this.initializeGenAI();
+        const ai = this.genAI as any;
+
+        const contents = [
+          { role: 'user', parts: [{ text: cleanPrompt }] }
+        ];
+
+        const safetySettings = [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+        ];
+
+        const result = await ai.models.generateContent({
+          model: useModel,
+          contents,
+          generationConfig,
+          safetySettings,
+          responseModalities: ['IMAGE']
+        });
+
+        const res = (result?.response || result) as any;
+
+        let textResponse = '';
+        let imageResponse: any = null;
+
+        const parts = res?.candidates?.[0]?.content?.parts || res?.candidates?.[0]?.content?.parts || [];
+        for (const part of parts) {
+          if (part.text) textResponse += part.text;
+          if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+            imageResponse = {
+              mimeType: part.inlineData.mimeType,
+              data: part.inlineData.data
+            };
+          }
+        }
+
+        const responseData: any = {
+          textResponse,
+          imageResponse,
+          model: useModel,
+          prompt,
+          timestamp: new Date().toISOString()
+        };
+        if (imageResponse) {
+          responseData.imageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
+        }
+        return { success: true, data: responseData };
+      }
+
       console.log('🎨 Generating image with Vertex AI REST API...');
       console.log('   Model:', useModel);
       console.log('   Prompt:', prompt.substring(0, 100) + '...');
 
-      // 准备生成配置
-      const settings = this.getModelSettings(useModel)
-      const generationConfig = settings.generationConfig
-
-      // 构建请求
       const req = {
         model: useModel,
         contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Generate an image: ${cleanPrompt}` }]
-          }
+          { role: 'user', parts: [{ text: `Generate an image: ${cleanPrompt}` }] }
         ],
         config: generationConfig,
       };
 
-      // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
       const locs = this.getLocationsForModel(useModel);
       let response: Response | null = null;
@@ -529,11 +595,6 @@ export class VertexAIService {
         }
       }
 
-      console.log('✅ Image generation completed');
-      console.log('   Text response length:', textResponse.length);
-      console.log('   Has image:', !!imageResponse);
-
-      // 构建响应数据
       const responseData: any = {
         textResponse: textResponse,
         imageResponse: imageResponse,
@@ -542,12 +603,8 @@ export class VertexAIService {
         timestamp: new Date().toISOString()
       };
 
-      // 如果有图像响应，转换为 data URL
       if (imageResponse) {
         responseData.imageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
-        console.log('✅ Generated image URL created');
-      } else {
-        console.log('⚠️ No image data in response');
       }
 
       return {
@@ -567,7 +624,7 @@ export class VertexAIService {
   /**
    * 编辑图像（基于输入图像和提示）
    */
-  async editImage(prompt: string, inputImage: string, model?: string): Promise<{
+  async editImage(imageOrPrompt: string, promptOrImage: string, model?: string): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -581,9 +638,11 @@ export class VertexAIService {
 
     try {
       const useModel = (model && model.trim()) || 'gemini-2.5-flash-image'
-      const cleanInstruction = prompt.trim();
+      const firstIsImage = typeof imageOrPrompt === 'string' && (imageOrPrompt.startsWith('data:image') || imageOrPrompt.includes('data:image/') || imageOrPrompt.startsWith('http'))
+      const inputImage = firstIsImage ? imageOrPrompt : promptOrImage
+      const prompt = firstIsImage ? promptOrImage : imageOrPrompt
+      const cleanInstruction = (prompt || '').trim();
 
-      // 处理输入图像（移除data URL前缀）
       const imageData = inputImage.includes(',') ? inputImage.split(',')[1] : inputImage;
       const mimeType = inputImage.includes('data:')
         ? inputImage.split(';')[0].replace('data:', '')
@@ -602,16 +661,65 @@ export class VertexAIService {
         }
       ];
 
-      console.log('🖼️ Editing image with Google GenAI SDK...');
-      console.log('   Model:', useModel);
-      console.log('   Original prompt:', prompt.substring(0, 100) + '...');
-      console.log('   Image type:', mimeType);
-
-      // 准备生成配置 - 针对Gemini 2.5 Flash Image Preview优化
       const settings = this.getEditModelSettings(useModel)
       const generationConfig = settings.generationConfig
 
-      // 构建请求
+      const isHQ = useModel.toLowerCase().includes('gemini-3-pro-image-preview');
+      if (isHQ) {
+        this.initializeGenAI();
+        const ai = this.genAI as any;
+
+        const contents = [
+          { role: 'user', parts }
+        ];
+
+        const safetySettings = [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' }
+        ];
+
+        const result = await ai.models.generateContent({
+          model: useModel,
+          contents,
+          generationConfig,
+          safetySettings,
+          responseModalities: ['IMAGE']
+        });
+
+        const res = (result?.response || result) as any;
+        let textResponse = '';
+        let imageResponse: any = null;
+        const resultParts = res?.candidates?.[0]?.content?.parts || [];
+        for (const part of resultParts) {
+          if (part.text) textResponse += part.text;
+          if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+            imageResponse = {
+              mimeType: part.inlineData.mimeType,
+              data: part.inlineData.data
+            };
+          }
+        }
+
+        const responseData: any = {
+          textResponse,
+          imageResponse,
+          model: useModel,
+          prompt: prompt,
+          timestamp: new Date().toISOString()
+        };
+        if (imageResponse) {
+          responseData.generatedImageUrl = `data:${imageResponse.mimeType};base64,${imageResponse.data}`;
+          responseData.imageUrl = responseData.generatedImageUrl;
+        }
+
+        return {
+          success: true,
+          data: responseData
+        };
+      }
+
       const req = {
         model: useModel,
         contents: [
@@ -620,7 +728,6 @@ export class VertexAIService {
         config: generationConfig,
       };
 
-      // 使用 Vertex AI REST API 调用
       const accessToken = await this.getAccessToken();
       const locsEdit = this.getLocationsForModel(useModel);
       let response: Response | null = null;
@@ -729,3 +836,4 @@ export class VertexAIService {
 
 }
 }
+  
