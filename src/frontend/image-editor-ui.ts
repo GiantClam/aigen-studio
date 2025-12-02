@@ -3387,6 +3387,40 @@ export function generateImageEditorPage(): string {
                 return modelSelector ? modelSelector.value : 'gemini-2.5-flash-image';
             }
 
+            function augmentPromptWithSelection(selectedObject, originalPrompt) {
+                let hasImage = false;
+                const shapeColors = new Set();
+                let objects = [];
+                if (selectedObject && selectedObject.type === 'activeSelection' && typeof selectedObject.getObjects === 'function') {
+                    objects = selectedObject.getObjects();
+                } else if (selectedObject) {
+                    objects = [selectedObject];
+                }
+                objects.forEach((obj) => {
+                    if (obj && (obj.type === 'image' || (typeof fabric !== 'undefined' && obj instanceof fabric.Image))) {
+                        hasImage = true;
+                        return;
+                    }
+                    const shapeTypes = ['rect','circle','triangle','path','line','polygon','polyline'];
+                    if (obj && shapeTypes.includes(obj.type)) {
+                        let color = null;
+                        if (typeof obj.fill === 'string' && obj.fill && obj.fill !== 'transparent') {
+                            color = obj.fill;
+                        } else if (typeof obj.stroke === 'string' && obj.stroke) {
+                            color = obj.stroke;
+                        }
+                        if (color) {
+                            shapeColors.add(color);
+                        }
+                    }
+                });
+                if (hasImage && shapeColors.size > 0) {
+                    const colorsText = Array.from(shapeColors).join('、');
+                    return originalPrompt + ' 删除' + colorsText + '颜色的图形对象';
+                }
+                return originalPrompt;
+            }
+
             // 发送聊天消息或处理选中对象
             async function sendMessage() {
                 const message = chatInput.value.trim();
@@ -3401,8 +3435,8 @@ export function generateImageEditorPage(): string {
                 const activeObject = infiniteEditor.canvas.getActiveObject();
 
                 if (activeObject) {
-                    // 有选中对象，进行AI图像处理
-                    await processSelectedObjectWithAI(activeObject, message);
+                    const augmented = augmentPromptWithSelection(activeObject, message);
+                    await processSelectedObjectWithAI(activeObject, augmented);
                 } else {
                     // 没有选中对象，进行普通聊天
                     await sendChatMessage(message);

@@ -249,16 +249,40 @@ export default function StandardEditorV2() {
     console.log('🤖 Processing AI request:', message)
 
     try {
+      const activeObjects = canvas.getActiveObjects()
+      let hasImage = false
+      const shapeColors = new Set<string>()
+      const shapeTypes = ['rect','circle','triangle','path','line','polygon','polyline']
+      activeObjects.forEach(obj => {
+        if (obj.type === 'image') {
+          hasImage = true
+        } else if (shapeTypes.includes(obj.type)) {
+          const fill = (obj as any).fill
+          const stroke = (obj as any).stroke
+          let color: string | null = null
+          if (typeof fill === 'string' && fill && fill !== 'transparent') {
+            color = fill
+          } else if (typeof stroke === 'string' && stroke) {
+            color = stroke
+          }
+          if (color) shapeColors.add(color)
+        }
+      })
+
+      let finalMessage = message
+      if (hasImage && shapeColors.size > 0) {
+        const colorsText = Array.from(shapeColors).join('、')
+        finalMessage = `${message} 删除${colorsText}颜色的图形对象`
+      }
+
       const result = await getSelectedObjectsImage()
 
       if (result) {
-        // 场景1: 有选中对象 - 图像编辑
         console.log('📸 Selected objects image captured, performing image editing')
 
-        // 使用新的智能上传方式
         const uploadResult = await smartUpload(
           result.imageData,
-          message,
+          finalMessage,
           'gemini-2.5-flash-image',
           uploadOptions
         )
@@ -270,7 +294,6 @@ export default function StandardEditorV2() {
           throw new Error(uploadResult.error || 'No edited image received')
         }
       } else {
-        // 场景2: 没有选中对象 - 图像生成
         console.log('📝 No objects selected, performing image generation')
 
         const uploadResult = await smartUpload(
