@@ -20,18 +20,24 @@ export const metadata: Metadata = {
     template: '%s | Nano Banana Image Editor'
   },
   description:
-    'Nano Banana Image Editor powered by Nano Banana (Gemini 2.5 Flash Image). Create, edit, and refine images with subject consistency, multi-image blending and precise natural‑language edits. Templates for single‑image, multi‑image and text‑to‑image with professional tools and SEO‑ready UI.',
+    'Nano Banana Image Editor powered by Nano Banana (Gemini 2.5 Flash Image) and Nanobanana Pro (Gemini 3 Image Pro). Create, edit, and refine images with subject consistency, multi-image blending and precise natural‑language edits. Professional features, guides and blogs to improve SEO and discoverability.',
   keywords: [
     'Nano Banana',
     'Gemini 2.5 Flash Image',
+    'Nanobanana Pro',
+    'Gemini 3 Image Pro',
     // synonyms kept for SEO but de-emphasized
     'gemini-2.5-image-preview',
+    'gemini-3-image-pro',
     'Gemini 2.5',
     'AI image generation',
     'AI image editing',
     'text to image',
     'multi image generation',
-    'single image generation'
+    'single image generation',
+    'AI features',
+    'AI blogs',
+    'image editor features'
   ],
   alternates: {
     canonical: '/'

@@ -22,7 +22,7 @@ export default function Home() {
                 "name": "What is Nano Banana?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Nano Banana (Gemini 2.5 Flash Image) is the image model we use to power AI image generation and editing on this site."
+                  "text": "Nano Banana Pro (Gemini 3 Pro Image) is the image model we use to power AI image generation and editing on this site."
                 }
               },
               {
@@ -59,7 +59,7 @@ export default function Home() {
               },
               {
                 "@type": "Question",
-                "name": "What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?",
+                "name": "What are the strengths of Nano Banana Pro (Gemini 3 Pro Image)?",
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Nano Banana excels at character/subject consistency across images, natural multi-image blending, precise local edits via natural language, and stable multi-round refinements. These make it ideal for creators who need coherent visual outcomes."
@@ -108,7 +108,7 @@ export default function Home() {
               />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Nano Banana Image Editor</h1>
-                <p className="text-xs text-gray-500">Powered by Nano Banana (Gemini 2.5 Flash Image)</p>
+                <p className="text-xs text-gray-500">Powered by Nano Banana Pro (Gemini 3 Pro Image)</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -156,14 +156,14 @@ export default function Home() {
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium mb-6 border border-white/30">
               <Star className="w-4 h-4" />
-              <span>Nano Banana (Gemini 2.5 Flash Image)</span>
+              <span>Nano Banana Pro (Gemini 3 Pro Image)</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold text-white tracking-tight">
               Fashionable Image Creation & Editing
               <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Faster · More Accurate · More Flexible</span>
             </h2>
             <p className="mt-6 text-lg md:text-xl text-gray-200 max-w-3xl mx-auto">
-              Powered by <a href="#faq" className="underline decoration-white/40 hover:decoration-white">Nano Banana (Gemini 2.5 Flash Image)</a>. Enjoy subject consistency, natural-language local edits, and multi-image blending. Inspired by Pixlr&apos;s modern visual design.
+              Powered by <a href="#faq" className="underline decoration-white/40 hover:decoration-white">Nano Banana Pro (Gemini 3 Pro Image)</a>. Enjoy subject consistency, natural-language local edits, and multi-image blending. Inspired by Pixlr&apos;s modern visual design.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -663,7 +663,7 @@ export default function Home() {
             {/* Nano Banana focused entries for SEO weight */}
             <details className="group bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-4">
               <summary className="cursor-pointer list-none flex items-center justify-between text-white font-semibold">
-                <span>What are the strengths of Nano Banana (Gemini 2.5 Flash Image)?</span>
+                <span>What are the strengths of Nano Banana Pro (Gemini 3 Pro Image)?</span>
                 <span className="ml-4 text-white/70 group-open:rotate-180 transition-transform">▾</span>
               </summary>
               <div className="mt-3 text-gray-200">

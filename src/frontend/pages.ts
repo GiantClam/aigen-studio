@@ -12,7 +12,7 @@ export interface PageData {
 export function generateIndexPage(data?: PageData, env?: any): string {
   const defaultData: PageData = {
     title: 'AI image editor - Professional Image Editor Powered by Gemini 2.5 Flash',
-    description: 'Create, edit, and transform images with Google\'s state-of-the-art Gemini 2.5 Flash Image model. Professional results in seconds, no expertise required.',
+    description: 'Create, edit, and transform images with Nanobanana Pro (Gemini 3 Pro Image). High‑fidelity results with better text rendering, precise layout, and consistent subjects.',
     features: [
       {
         icon: '🎨',
@@ -778,19 +778,15 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">AI image editor - Powered by Gemini 2.5 Flash</h1>
+                <h1 class="hero-title">Nanobanana Pro — Gemini 3 Pro Image</h1>
                 <p class="hero-subtitle">
-                    Create, edit, and transform images with Google's state-of-the-art AI model. Generate photorealistic scenes, edit with natural language, and maintain character consistency across projects.
+                    High‑fidelity image generation and editing with better text rendering, precise layout, and consistent subjects — powered by Gemini 3 Image Pro.
                 </p>
 
                 <div class="hero-actions">
                     <a href="/standard-editor" class="btn btn-hero btn-hero-primary btn-large">
-                        <i class="fas fa-magic"></i>
-                        Start Creating
-                    </a>
-                    <a href="/standard-editor" class="btn btn-hero btn-hero-secondary btn-large">
                         <i class="fas fa-rocket"></i>
-                        Get Started
+                        Try Nanobanana Pro
                     </a>
                 </div>
 
@@ -820,7 +816,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
     <section class="use-cases-section" style="padding: 6rem 0; background: var(--surface);">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Gemini 2.5 Flash Image Capabilities</h2>
+                <h2 class="section-title">Nanobanana Pro (Gemini 3 Pro Image) Capabilities</h2>
                 <p class="section-subtitle">
                     Explore the powerful features of Google's state-of-the-art multimodal image model
                 </p>
@@ -978,6 +974,39 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             </div>
         </div>
     </section>
+
+    <!-- Nanobanana Pro (Gemini 3 Image Pro) -->
+    <section class="pro-section" style="padding: 4rem 0; background: white;">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Nanobanana Pro (Gemini 3 Image Pro)</h2>
+                <p class="section-subtitle">Higher fidelity, better text rendering, improved layout and composition</p>
+            </div>
+
+            <div class="features" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 2rem;">
+                <div class="feature-card" style="background: var(--surface); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border);">
+                    <h3 class="feature-title" style="margin-bottom: 0.5rem;">Crystal-clear Text</h3>
+                    <p class="feature-description">More reliable text placement for logos, posters, packaging and marketing creatives.</p>
+                </div>
+                <div class="feature-card" style="background: var(--surface); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border);">
+                    <h3 class="feature-title" style="margin-bottom: 0.5rem;">Consistent Subjects</h3>
+                    <p class="feature-description">Improved identity and style consistency across single and multi-image workflows.</p>
+                </div>
+                <div class="feature-card" style="background: var(--surface); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border);">
+                    <h3 class="feature-title" style="margin-bottom: 0.5rem;">Precise Layout</h3>
+                    <p class="feature-description">Better alignment, spacing and composition for professional-grade outputs.</p>
+                </div>
+                <div class="feature-card" style="background: var(--surface); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border);">
+                    <h3 class="feature-title" style="margin-bottom: 0.5rem;">Enterprise Ready</h3>
+                    <p class="feature-description">Built for production workloads with robust API access and governance.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="/standard-editor" class="btn btn-secondary">Try Nanobanana Pro</a>
+            </div>
+        </div>
+    </section>
         
         <section class="chat-container">
             <h2 style="margin-bottom: 1rem;">💬 智能聊天体验</h2>
@@ -1001,11 +1030,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
             </div>
 
             <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
-                <a href="/standard-editor" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖼️</div>
-                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">AI Image Editor</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Professional image editing with AI enhancement and smart repair tools</p>
-                </a>
+                
 
                 <a href="/canvas-multi" class="tool-card" style="display: block; background: var(--surface); padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎨</div>
@@ -1040,13 +1065,41 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         </div>
     </section>
 
+    <!-- Blogs Section -->
+    <section class="blogs-section" style="padding: 4rem 0; background: var(--surface);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Blogs & Guides</h2>
+                <p class="section-subtitle">Learn best practices for prompts, editing workflows and model capabilities</p>
+            </div>
+
+            <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
+                <a href="https://developers.googleblog.com/en/how-to-prompt-gemini-2-5-flash-image-generation-for-the-best-results/" target="_blank" rel="noreferrer" class="tool-card" style="display: block; background: white; padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📘</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Prompting Guide for Gemini</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Actionable tips to write clear, effective prompts for image generation.</p>
+                </a>
+                <a href="https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/" target="_blank" rel="noreferrer" class="tool-card" style="display: block; background: white; padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📰</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Model Updates: Gemini 2.5 Flash Image</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Latest capabilities and improvements for image generation and editing.</p>
+                </a>
+                <a href="https://ai.google.dev/gemini-api/docs/models/gemini#image-generation" target="_blank" rel="noreferrer" class="tool-card" style="display: block; background: white; padding: 2rem; border-radius: 1rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.3s ease;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔧</div>
+                    <h3 style="color: var(--text-primary); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Gemini 3 Image Pro Overview</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Understand capabilities and usage of Gemini 3 Image Pro (Nanobanana Pro).</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section class="pricing-section" style="padding: 6rem 0; background: var(--surface);">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Simple, Transparent Pricing</h2>
                 <p class="section-subtitle">
-                    Pay only for what you use with Google's competitive pricing for Gemini 2.5 Flash Image
+                    Pay only for what you use with Google's competitive pricing for Gemini 3 Pro Image (Nanobanana Pro)
                 </p>
             </div>
 
@@ -1055,7 +1108,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
                     <div style="background: var(--primary-color); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 1.5rem;">FREE TIER</div>
                     <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Get Started</h3>
                     <div style="font-size: 3rem; font-weight: 800; color: var(--primary-color); margin-bottom: 0.5rem;">$0</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Try Gemini 2.5 Flash Image for free</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Try Nanobanana Pro for free</p>
                     <ul style="text-align: left; margin-bottom: 2rem; padding-left: 0; list-style: none;">
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>100 free images per month</li>
                         <li style="padding: 0.5rem 0; color: var(--text-secondary); display: flex; align-items: center;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i>All core features included</li>
@@ -1092,7 +1145,7 @@ export function generateIndexPage(data?: PageData, env?: any): string {
         <section class="status">
             <h3>🚀 Technical Architecture</h3>
             <p><strong>Backend:</strong> Cloudflare Workers + Hono Framework</p>
-            <p><strong>AI Services:</strong> Google Gemini 2.5 Flash Image + Vertex AI</p>
+            <p><strong>AI Services:</strong> Google Gemini 3 Pro Image (Nanobanana Pro) + Vertex AI</p>
             <p><strong>Data Storage:</strong> Cloudflare D1 + R2 + KV Storage</p>
             <p><strong>Canvas Engine:</strong> Fabric.js + TLDraw for smooth creative experience</p>
         </section>
