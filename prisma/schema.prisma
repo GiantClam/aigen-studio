@@ -84,6 +84,7 @@ model Template {
   imageUrl  String
   prompt    String
   type      TemplateType
+  model     String?      // 模型标识
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, Filter, Grid, List, Star, Clock, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { fetchTemplates } from '@/services/template-service'
@@ -35,6 +35,9 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -46,31 +49,78 @@ export default function TemplatesPage() {
     style: 'all'
   })
 
+  // 观察器引用
+  const observerTarget = useRef<HTMLDivElement>(null)
+
   // 获取模板数据
-  useEffect(() => {
-    const run = async () => {
-      try {
-        setError(null)
-        const raw = await fetchTemplates()
-        const data = Array.isArray(raw) ? raw.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          image_url: t.image_url,
-          prompt: t.prompt,
-          type: (['single-image','multi-image','text-to-image'].includes(t.type) ? t.type : 'single-image') as 'single-image' | 'multi-image' | 'text-to-image',
-          created_at: t.created_at,
-          updated_at: t.updated_at
-        })) : []
+  const loadTemplates = useCallback(async (pageNum: number, isLoadMore = false) => {
+    try {
+      if (isLoadMore) {
+        setLoadingMore(true)
+      } else {
+        setLoading(true)
+      }
+      setError(null)
+      
+      const response = await fetchTemplates(pageNum, 50)
+      const raw = response.data || []
+      const data = raw.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        image_url: t.image_url,
+        prompt: t.prompt,
+        type: (['single-image','multi-image','text-to-image'].includes(t.type) ? t.type : 'single-image') as 'single-image' | 'multi-image' | 'text-to-image',
+        created_at: t.created_at,
+        updated_at: t.updated_at
+      }))
+
+      if (isLoadMore) {
+        setTemplates(prev => {
+           // 防止重复添加
+           const existingIds = new Set(prev.map(p => p.id));
+           const newData = data.filter(d => !existingIds.has(d.id));
+           return [...prev, ...newData];
+        })
+      } else {
         setTemplates(data)
-        setFilteredTemplates(data)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Failed to fetch templates')
-      } finally {
-        setLoading(false)
+      }
+      
+      setHasMore(response.hasMore)
+      setPage(pageNum)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch templates')
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTemplates(1)
+  }, [loadTemplates])
+
+  // 无限滚动观察器
+  useEffect(() => {
+    const currentTarget = observerTarget.current
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          loadTemplates(page + 1, true)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (currentTarget) {
+      observer.observe(currentTarget)
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
       }
     }
-    run()
-  }, [])
+  }, [hasMore, loadingMore, loading, page, loadTemplates])
 
   // 搜索和筛选逻辑
   useEffect(() => {
@@ -291,6 +341,18 @@ export default function TemplatesPage() {
                 )
               }
             })}
+          </div>
+        )}
+
+        {/* Infinite Scroll Trigger & Loader */}
+        {hasMore && (
+          <div ref={observerTarget} className="h-10 mt-8 flex justify-center w-full">
+            {loadingMore && (
+              <div className="flex items-center gap-2 text-gray-500">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span>Loading more...</span>
+              </div>
+            )}
           </div>
         )}
       </div>

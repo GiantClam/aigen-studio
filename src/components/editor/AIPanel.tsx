@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Sparkles, Image, Loader2, Settings, X } from 'lucide-react'
+import { Send, Sparkles, Image as ImageIcon, Loader2, Settings, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -176,7 +176,7 @@ export function AIPanel({
         <div className="space-y-3">
           {selectedObjectsCount > 0 && (
             <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <Image className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <ImageIcon className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1 text-sm">
                 <p className="font-medium text-blue-900">
                   已选中 {selectedObjectsCount} 个对象

@@ -55,7 +55,8 @@
     "stripe": "^17.7.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "undici": "^6.22.0"
+    "undici": "^6.22.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

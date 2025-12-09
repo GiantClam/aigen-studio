@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     const featured = searchParams.get('featured')
     const search = searchParams.get('search')
     const type = searchParams.get('type')
+    const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50
 
     let query = supabase
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
         author_name,
         created_at,
         updated_at
-      `)
+      `, { count: 'exact' })
       .eq('isvalid', true)
 
     // 应用过滤器
@@ -75,20 +76,28 @@ export async function GET(request: Request) {
       query = query.order('updated_at', { ascending: false })
     }
 
-    // 限制数量
-    query = query.limit(limit)
+    // 限制数量 (分页)
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+    query = query.range(from, to)
 
-    const { data, error } = await query
+    const { data, count, error } = await query
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json([], { status: 200 }) // 返回空数组而不是错误
+      return NextResponse.json({ data: [], total: 0, page, limit }, { status: 200 })
     }
 
-    return NextResponse.json(data || [])
+    return NextResponse.json({
+      data: data || [],
+      total: count || 0,
+      page,
+      limit,
+      hasMore: (count || 0) > page * limit
+    })
   } catch (e: any) {
     console.error('API error:', e)
-    return NextResponse.json([], { status: 200 }) // 返回空数组而不是错误
+    return NextResponse.json({ data: [], total: 0, page: 1, limit: 50 }, { status: 200 })
   }
 }
 

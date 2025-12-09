@@ -43,29 +43,57 @@ export interface TemplateWithCategory extends Template {
   user_rating?: number
 }
 
+export interface TemplatesResponse {
+  data: Template[]
+  total: number
+  page: number
+  limit: number
+  hasMore: boolean
+}
+
 /**
- * 获取所有有效的模板
+ * 获取所有有效的模板 (支持分页)
  */
-export async function fetchTemplates(): Promise<Template[]> {
+export async function fetchTemplates(page = 1, limit = 50): Promise<TemplatesResponse> {
   try {
-    const res = await fetch('/api/templates')
-    if (!res.ok) return []
-    const data = await res.json()
-    return data || []
+    const res = await fetch(`/api/templates?page=${page}&limit=${limit}`)
+    if (!res.ok) return { data: [], total: 0, page, limit, hasMore: false }
+    const result = await res.json()
+    // 兼容旧 API 返回数组的情况 (如果 API 尚未部署)
+    if (Array.isArray(result)) {
+      return {
+        data: result,
+        total: result.length,
+        page: 1,
+        limit: result.length,
+        hasMore: false
+      }
+    }
+    return result
   } catch (error) {
     try {
-      const { data, error: err } = await supabase
+      const from = (page - 1) * limit
+      const to = from + limit - 1
+      
+      const { data, count, error: err } = await supabase
         .from('nanobanana_templates')
-        .select('id,name,slug,image_url,prompt,type,description,category_id,tags,difficulty_level,estimated_time,parameters,preview_images,is_featured,is_premium,usage_count,rating,rating_count,author_name,created_at,updated_at')
+        .select('id,name,slug,image_url,prompt,type,description,category_id,tags,difficulty_level,estimated_time,parameters,preview_images,is_featured,is_premium,usage_count,rating,rating_count,author_name,created_at,updated_at', { count: 'exact' })
         .eq('isvalid', true)
         .order('updated_at', { ascending: false })
-        .limit(50)
+        .range(from, to)
+
       if (err) {
-        return []
+        return { data: [], total: 0, page, limit, hasMore: false }
       }
-      return (data as any[]) || []
+      return {
+        data: (data as any[]) || [],
+        total: count || 0,
+        page,
+        limit,
+        hasMore: (count || 0) > to + 1
+      }
     } catch {
-      return []
+      return { data: [], total: 0, page, limit, hasMore: false }
     }
   }
 }
@@ -77,8 +105,11 @@ export async function fetchFeaturedTemplates(): Promise<Template[]> {
   try {
     const res = await fetch('/api/templates?featured=true&limit=12')
     if (!res.ok) return []
-    const data = await res.json()
-    return data || []
+    const result = await res.json()
+    if (result.data && Array.isArray(result.data)) {
+      return result.data
+    }
+    return Array.isArray(result) ? result : []
   } catch (error) {
     console.error('获取推荐模板错误:', error)
     return []
@@ -154,8 +185,11 @@ export async function fetchTemplatesByCategory(categoryId: string): Promise<Temp
   try {
     const res = await fetch(`/api/templates?category=${encodeURIComponent(categoryId)}`)
     if (!res.ok) return []
-    const data = await res.json()
-    return data || []
+    const result = await res.json()
+    if (result.data && Array.isArray(result.data)) {
+      return result.data
+    }
+    return Array.isArray(result) ? result : []
   } catch (error) {
     console.error('获取分类模板错误:', error)
     return []
@@ -169,8 +203,11 @@ export async function fetchTemplatesByType(type: string): Promise<Template[]> {
   try {
     const res = await fetch(`/api/templates?type=${encodeURIComponent(type)}`)
     if (!res.ok) return []
-    const data = await res.json()
-    return data || []
+    const result = await res.json()
+    if (result.data && Array.isArray(result.data)) {
+      return result.data
+    }
+    return Array.isArray(result) ? result : []
   } catch (error) {
     console.error('获取类型模板错误:', error)
     return []
@@ -184,8 +221,11 @@ export async function searchTemplates(query: string): Promise<Template[]> {
   try {
     const res = await fetch(`/api/templates?search=${encodeURIComponent(query)}`)
     if (!res.ok) return []
-    const data = await res.json()
-    return data || []
+    const result = await res.json()
+    if (result.data && Array.isArray(result.data)) {
+      return result.data
+    }
+    return Array.isArray(result) ? result : []
   } catch (error) {
     console.error('搜索模板错误:', error)
     return []

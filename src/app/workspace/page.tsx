@@ -81,7 +81,8 @@ export default function WorkspacePage() {
       const userId = (session?.user as any)?.id as string | undefined
       
       // 加载模板数据
-      const publicTemplates = await fetchTemplates()
+      const response = await fetchTemplates()
+      const publicTemplates = response.data
       setTemplates(publicTemplates)
       // 加载分类
       const cats = await fetchTemplateCategories()
@@ -504,8 +505,8 @@ export default function WorkspacePage() {
               className={`px-3 py-1.5 text-xs rounded-md border ${!activeCategory ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
               onClick={async () => {
                 setActiveCategory(null)
-                const all = await fetchTemplates()
-                setTemplates(all)
+                const response = await fetchTemplates()
+                setTemplates(response.data)
               }}
             >全部</button>
             {categories.map((c) => (

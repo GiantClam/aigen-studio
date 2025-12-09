@@ -31,10 +31,10 @@ const Dialog = ({ children, open, onOpenChange }: DialogProps) => {
     }
   }, [open])
   
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
     setIsOpen(newOpen)
     onOpenChange?.(newOpen)
-  }
+  }, [onOpenChange])
   
   // 支持 ESC 关闭
   React.useEffect(() => {
@@ -44,7 +44,7 @@ const Dialog = ({ children, open, onOpenChange }: DialogProps) => {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isOpen])
+  }, [isOpen, handleOpenChange])
   
   return (
     <div>
