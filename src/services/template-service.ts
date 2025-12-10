@@ -233,6 +233,22 @@ export async function searchTemplates(query: string): Promise<Template[]> {
 }
 
 /**
+ * 获取模板数量统计
+ */
+export async function fetchTemplateCounts(): Promise<{ all: number, 'single-image': number, 'multi-image': number, 'text-to-image': number }> {
+  try {
+    const res = await fetch('/api/templates/counts')
+    if (!res.ok) {
+      return { all: 0, 'single-image': 0, 'multi-image': 0, 'text-to-image': 0 }
+    }
+    return await res.json()
+  } catch (error) {
+    console.error('获取模板统计错误:', error)
+    return { all: 0, 'single-image': 0, 'multi-image': 0, 'text-to-image': 0 }
+  }
+}
+
+/**
  * 记录模板使用历史
  */
 export async function recordTemplateUsage(userId: string, templateId: string, canvasId?: string, usageType: 'view' | 'use' | 'favorite' | 'share' = 'view'): Promise<boolean> {

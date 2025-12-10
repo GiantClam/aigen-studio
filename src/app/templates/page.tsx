@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, Filter, Grid, List, Star, Clock, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { fetchTemplates } from '@/services/template-service'
+import { fetchTemplates, fetchTemplateCounts } from '@/services/template-service'
 
 // 动态导入组件以避免SSR问题
 const TemplateCard = dynamic(() => import('@/components/templates/TemplateCard'), {
@@ -48,9 +48,24 @@ export default function TemplatesPage() {
     difficulty: 'all',
     style: 'all'
   })
+  const [counts, setCounts] = useState({
+    all: 0,
+    'single-image': 0,
+    'multi-image': 0,
+    'text-to-image': 0
+  })
 
   // 观察器引用
   const observerTarget = useRef<HTMLDivElement>(null)
+
+  // 获取模板数量统计
+  useEffect(() => {
+    const loadCounts = async () => {
+      const data = await fetchTemplateCounts()
+      setCounts(data)
+    }
+    loadCounts()
+  }, [])
 
   // 获取模板数据
   const loadTemplates = useCallback(async (pageNum: number, isLoadMore = false) => {
@@ -169,10 +184,10 @@ export default function TemplatesPage() {
   }, [templates, searchQuery, selectedCategory, filters, sortBy])
 
   const categories = [
-    { id: 'all', name: 'All Templates', count: Array.isArray(templates) ? templates.length : 0 },
-    { id: 'single-image', name: 'Single Image', count: Array.isArray(templates) ? templates.filter(t => t.type === 'single-image').length : 0 },
-    { id: 'multi-image', name: 'Multi Image', count: Array.isArray(templates) ? templates.filter(t => t.type === 'multi-image').length : 0 },
-    { id: 'text-to-image', name: 'Text to Image', count: Array.isArray(templates) ? templates.filter(t => t.type === 'text-to-image').length : 0 }
+    { id: 'all', name: 'All Templates', count: counts.all },
+    { id: 'single-image', name: 'Single Image', count: counts['single-image'] },
+    { id: 'multi-image', name: 'Multi Image', count: counts['multi-image'] },
+    { id: 'text-to-image', name: 'Text to Image', count: counts['text-to-image'] }
   ]
 
   if (loading) {
