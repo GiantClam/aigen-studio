@@ -53,7 +53,22 @@ export async function GET(
       )
     }
 
-    const matchedTemplate = templates?.find((template) => generateSlug(template.name) === slug)
+    const matchedTemplate = templates?.find((template) => {
+      const currentSlug = template.slug || generateSlug(template.name)
+      
+      // 1. 精确匹配
+      if (currentSlug === slug) return true
+      
+      // 2. 尝试匹配旧的 URL 格式 (case-ID-name)
+      // 例如: case-64-steampunk-mechanical-fish -> steampunk-mechanical-fish
+      const oldFormatMatch = slug.match(/^case-\d+-(.+)$/)
+      if (oldFormatMatch) {
+        const legacySlugSuffix = oldFormatMatch[1]
+        if (currentSlug === legacySlugSuffix) return true
+      }
+
+      return false
+    })
 
     if (!matchedTemplate) {
       return NextResponse.json(
